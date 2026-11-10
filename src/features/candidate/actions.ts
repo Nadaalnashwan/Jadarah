@@ -133,7 +133,7 @@ const applySchema = z.object({
   cv_document_id: z.union([z.literal(""), z.string().uuid()]).optional(),
   cover_letter: z.string().max(5000).optional(),
 });
-export async function applyToJob(_: ActionResult | null, form: FormData): Promise<ActionResult<{ id: string }>> {
+export async function applyToJob(_: ActionResult<{ id: string }> | null, form: FormData): Promise<ActionResult<{ id: string }>> {
   await requireCandidate();
   const { locale } = await getI18n();
   const parsed = applySchema.safeParse(Object.fromEntries(form));
