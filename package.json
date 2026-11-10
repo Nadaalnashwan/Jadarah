@@ -17,7 +17,8 @@
     "seed:generate": "tsx scripts/demo/generate-sql.ts",
     "admin:provision": "tsx scripts/provision-admin.ts",
     "demo:seed": "tsx scripts/demo/seed.ts",
-    "demo:reset": "tsx scripts/demo/reset.ts"
+    "demo:reset": "tsx scripts/demo/reset.ts",
+    "ai:verify": "tsx scripts/ai/verify-providers.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.5",

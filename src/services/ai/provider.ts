@@ -1,9 +1,20 @@
 import "server-only";
-import type { z } from "zod";
+import { createHash } from "node:crypto";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { rateLimitUser } from "@/lib/rate-limit";
+import {
+  AI_TIMEOUT_MS,
+  aiStatus,
+  routeFor,
+  taskForOperation,
+  type AIStatus,
+  type AITask,
+  type ProviderConfig,
+  type ProviderName,
+} from "./config";
 
-export type ProviderName = "gemini" | "openai";
+export { aiStatus, type AIStatus, type AITask, type ProviderName };
 
 export class AIUnavailableError extends Error {
   constructor(reason: string) {
@@ -12,43 +23,56 @@ export class AIUnavailableError extends Error {
   }
 }
 
-export interface AIStatus {
-  configured: boolean;
-  provider: ProviderName | null;
-  model: string | null;
+/** Provider failure with a safe, loggable code (never contains prompt or key material). */
+class ProviderError extends Error {
+  constructor(
+    public code: string,
+    public retryable: boolean,
+    public retryAfterMs = 0,
+  ) {
+    super(code);
+  }
 }
 
-/** Which provider is configured (keys never leave the server). */
-export function aiStatus(): AIStatus {
-  const preferred = (process.env.AI_PROVIDER ?? "gemini") as ProviderName;
-  const gemini = Boolean(process.env.GEMINI_API_KEY);
-  const openai = Boolean(process.env.OPENAI_API_KEY);
-  if (preferred === "openai" && openai)
-    return { configured: true, provider: "openai", model: process.env.OPENAI_MODEL ?? "gpt-4.1-mini" };
-  if (gemini)
-    return { configured: true, provider: "gemini", model: process.env.GEMINI_MODEL ?? "gemini-2.5-flash" };
-  if (openai)
-    return { configured: true, provider: "openai", model: process.env.OPENAI_MODEL ?? "gpt-4.1-mini" };
-  return { configured: false, provider: null, model: null };
-}
-
-interface CallInput {
+export interface CallInput {
   system: string;
   prompt: string;
   operation: string;
   userId: string;
-  /** Optional inline file (e.g. a PDF CV) for multimodal providers. */
+  /** Override the operation's default task routing. */
+  task?: AITask;
+  /** Optional inline file (e.g. a PDF CV) — routed to Gemini (multimodal). */
   file?: { mimeType: string; base64: string };
+  /** Cache identical requests from the same user for 10 minutes. */
+  cacheable?: boolean;
 }
 
-const TIMEOUT = Number(process.env.AI_TIMEOUT_MS ?? 25_000);
+type RawOut = { text: string; inTok?: number; outTok?: number };
 
-async function callGemini(
-  input: CallInput,
-  model: string,
-): Promise<{ text: string; inTok?: number; outTok?: number }> {
+const MAX_RETRY_WAIT_MS = 4_000;
+
+async function httpError(res: Response, provider: ProviderName): Promise<ProviderError> {
+  const ra = Number(res.headers.get("retry-after"));
+  const retryAfterMs = Number.isFinite(ra) && ra > 0 ? ra * 1000 : 1000;
+  if (res.status === 429)
+    return new ProviderError(`${provider}_rate_limited`, retryAfterMs <= MAX_RETRY_WAIT_MS, retryAfterMs);
+  if (res.status >= 500) return new ProviderError(`${provider}_http_${res.status}`, true, 800);
+  return new ProviderError(`${provider}_http_${res.status}`, false);
+}
+
+function wrapFetchError(e: unknown, provider: ProviderName): ProviderError {
+  if (e instanceof ProviderError) return e;
+  const name = e instanceof Error ? e.name : "";
+  if (name === "TimeoutError" || name === "AbortError") return new ProviderError(`${provider}_timeout`, true, 0);
+  return new ProviderError(`${provider}_network`, true, 500);
+}
+
+// ---------- Gemini ----------
+async function callGemini(input: CallInput, model: string, jsonSchema?: unknown): Promise<RawOut> {
   const parts: unknown[] = [{ text: input.prompt }];
   if (input.file) parts.push({ inline_data: { mime_type: input.file.mimeType, data: input.file.base64 } });
+  const generationConfig: Record<string, unknown> = { responseMimeType: "application/json", temperature: 0.2 };
+  if (jsonSchema) generationConfig.responseJsonSchema = jsonSchema;
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
     {
@@ -57,98 +81,335 @@ async function callGemini(
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: input.system }] },
         contents: [{ role: "user", parts }],
-        generationConfig: { responseMimeType: "application/json", temperature: 0.2 },
+        generationConfig,
       }),
-      signal: AbortSignal.timeout(TIMEOUT),
+      signal: AbortSignal.timeout(AI_TIMEOUT_MS),
     },
   );
-  if (!res.ok) throw new Error(`gemini_http_${res.status}`);
+  if (!res.ok) throw await httpError(res, "gemini");
   const json = await res.json();
   const text =
     json?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("") ?? "";
-  return {
-    text,
-    inTok: json?.usageMetadata?.promptTokenCount,
-    outTok: json?.usageMetadata?.candidatesTokenCount,
-  };
+  if (!text) throw new ProviderError("gemini_empty", false);
+  return { text, inTok: json?.usageMetadata?.promptTokenCount, outTok: json?.usageMetadata?.candidatesTokenCount };
 }
 
-async function callOpenAI(
+// ---------- OpenAI-compatible (OpenAI + Groq) ----------
+function compatEndpoint(provider: "openai" | "groq") {
+  return provider === "groq"
+    ? { url: "https://api.groq.com/openai/v1/chat/completions", key: process.env.GROQ_API_KEY! }
+    : { url: "https://api.openai.com/v1/chat/completions", key: process.env.OPENAI_API_KEY! };
+}
+
+function compatBody(provider: "openai" | "groq", model: string, input: CallInput, json: boolean, stream: boolean) {
+  const body: Record<string, unknown> = {
+    model,
+    messages: [
+      { role: "system", content: input.system },
+      { role: "user", content: input.prompt },
+    ],
+    stream,
+  };
+  if (json) body.response_format = { type: "json_object" };
+  if (provider === "groq") {
+    body.temperature = 0.3;
+    // gpt-oss reasoning models: keep reasoning short for chat latency.
+    if (model.startsWith("openai/gpt-oss")) body.reasoning_effort = taskOf(input) === "fast" ? "low" : "medium";
+  }
+  // OpenAI reasoning models reject custom temperature, so it is left at the provider default.
+  if (stream && provider === "openai") body.stream_options = { include_usage: true };
+  return body;
+}
+
+async function callCompat(
+  provider: "openai" | "groq",
   input: CallInput,
   model: string,
-): Promise<{ text: string; inTok?: number; outTok?: number }> {
-  if (input.file && input.file.mimeType !== "text/plain") throw new Error("openai_file_unsupported");
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+): Promise<RawOut> {
+  if (input.file && input.file.mimeType !== "text/plain") throw new ProviderError(`${provider}_file_unsupported`, false);
+  const ep = compatEndpoint(provider);
+  const res = await fetch(ep.url, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-    body: JSON.stringify({
-      model,
-      temperature: 0.2,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: input.system },
-        { role: "user", content: input.prompt },
-      ],
-    }),
-    signal: AbortSignal.timeout(TIMEOUT),
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${ep.key}` },
+    body: JSON.stringify(compatBody(provider, model, input, true, false)),
+    signal: AbortSignal.timeout(AI_TIMEOUT_MS),
   });
-  if (!res.ok) throw new Error(`openai_http_${res.status}`);
+  if (!res.ok) throw await httpError(res, provider);
   const json = await res.json();
-  return {
-    text: json?.choices?.[0]?.message?.content ?? "",
-    inTok: json?.usage?.prompt_tokens,
-    outTok: json?.usage?.completion_tokens,
-  };
+  const text = json?.choices?.[0]?.message?.content ?? "";
+  if (!text) throw new ProviderError(`${provider}_empty`, false);
+  return { text, inTok: json?.usage?.prompt_tokens, outTok: json?.usage?.completion_tokens };
+}
+
+function taskOf(input: CallInput): AITask {
+  return input.task ?? taskForOperation(input.operation);
+}
+
+// ---------- logging ----------
+async function logCall(row: {
+  provider: ProviderName;
+  model: string;
+  operation: string;
+  user_id: string;
+  latency_ms: number;
+  input_tokens?: number | null;
+  output_tokens?: number | null;
+  success: boolean;
+  error_code?: string | null;
+}) {
+  try {
+    const supabase = await createClient();
+    await supabase.from("ai_provider_logs").insert({
+      ...row,
+      input_tokens: row.input_tokens ?? null,
+      output_tokens: row.output_tokens ?? null,
+      error_code: row.error_code ?? null,
+    });
+  } catch {
+    // Logging must never break the user-facing request.
+  }
+}
+
+// ---------- per-user response cache ----------
+const cache = new Map<string, { at: number; value: unknown }>();
+const CACHE_TTL = 10 * 60_000;
+function cacheKey(input: CallInput, model: string) {
+  return createHash("sha256")
+    .update([input.userId, input.operation, model, input.system, input.prompt].join("\u0000"))
+    .digest("hex");
+}
+
+function jsonSchemaFor(schema: z.ZodTypeAny): unknown | undefined {
+  if (process.env.GEMINI_JSON_SCHEMA === "false") return undefined;
+  try {
+    const s = z.toJSONSchema(schema, { io: "input", unrepresentable: "any" }) as Record<string, unknown>;
+    delete s.$schema;
+    return s;
+  } catch {
+    return undefined;
+  }
+}
+
+function parseJson(text: string): unknown {
+  const t = text.trim();
+  try {
+    return JSON.parse(t);
+  } catch {
+    const m = t.match(/\{[\s\S]*\}/);
+    if (m) return JSON.parse(m[0]);
+    throw new ProviderError("invalid_json", true, 0);
+  }
 }
 
 /**
- * Call the configured provider and validate the JSON result against a Zod schema.
- * Throws AIUnavailableError when no provider is configured or the call ultimately fails —
- * callers must then fall back to clearly-labelled rule-based behaviour, never fabricate AI output.
+ * Call the provider routed for this task and validate the JSON result against a Zod schema.
+ * Bounded retries (max 2 attempts per provider, ≤4 s backoff, overall deadline), then the next
+ * configured provider in the task's route. Throws AIUnavailableError when nothing succeeds —
+ * callers then fall back to clearly-labelled rule-based behaviour, never fabricated AI output.
  */
 export async function generateJSON<T extends z.ZodTypeAny>(
   input: CallInput,
   schema: T,
-): Promise<{ data: z.infer<T>; provider: ProviderName; model: string }> {
-  const status = aiStatus();
-  if (!status.configured || !status.provider || !status.model) throw new AIUnavailableError("not_configured");
+): Promise<{ data: z.infer<T>; provider: ProviderName; model: string; latencyMs: number }> {
+  const chain = routeFor(taskOf(input), { needsFile: Boolean(input.file && input.file.mimeType !== "text/plain") });
+  if (!chain.length) throw new AIUnavailableError("not_configured");
   if (!(await rateLimitUser("ai", input.userId, 20, 60_000))) throw new AIUnavailableError("rate_limited");
 
-  const supabase = await createClient();
+  const deadline = Date.now() + AI_TIMEOUT_MS * 2;
   let lastError = "unknown";
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (const p of chain) {
+    if (input.cacheable) {
+      const hit = cache.get(cacheKey(input, p.model));
+      if (hit && Date.now() - hit.at < CACHE_TTL)
+        return { data: hit.value as z.infer<T>, provider: p.name, model: p.model, latencyMs: 0 };
+    }
+    for (let attempt = 0; attempt < 2 && Date.now() < deadline; attempt++) {
+      const started = Date.now();
+      try {
+        const out = await callProvider(p, input, schema);
+        const parsed = schema.safeParse(parseJson(out.text));
+        const latency = Date.now() - started;
+        void logCall({
+          provider: p.name,
+          model: p.model,
+          operation: input.operation,
+          user_id: input.userId,
+          latency_ms: latency,
+          input_tokens: out.inTok,
+          output_tokens: out.outTok,
+          success: parsed.success,
+          error_code: parsed.success ? null : "schema_mismatch",
+        });
+        if (parsed.success) {
+          if (input.cacheable) {
+            cache.set(cacheKey(input, p.model), { at: Date.now(), value: parsed.data });
+            if (cache.size > 500) cache.delete(cache.keys().next().value!);
+          }
+          return { data: parsed.data, provider: p.name, model: p.model, latencyMs: latency };
+        }
+        lastError = "schema_mismatch";
+      } catch (e) {
+        const err = e instanceof ProviderError ? e : wrapFetchError(e, p.name);
+        lastError = err.code;
+        void logCall({
+          provider: p.name,
+          model: p.model,
+          operation: input.operation,
+          user_id: input.userId,
+          latency_ms: Date.now() - started,
+          success: false,
+          error_code: err.code,
+        });
+        if (!err.retryable) break;
+        if (err.retryAfterMs) await new Promise((r) => setTimeout(r, Math.min(err.retryAfterMs, MAX_RETRY_WAIT_MS)));
+      }
+    }
+  }
+  throw new AIUnavailableError(lastError);
+}
+
+async function callProvider(p: ProviderConfig, input: CallInput, schema: z.ZodTypeAny): Promise<RawOut> {
+  try {
+    if (p.name === "gemini") return await callGemini(input, p.model, jsonSchemaFor(schema));
+    return await callCompat(p.name, input, p.model);
+  } catch (e) {
+    throw wrapFetchError(e, p.name);
+  }
+}
+
+// ---------- streaming text (assistants) ----------
+export interface StreamResult {
+  provider: ProviderName;
+  model: string;
+  stream: AsyncGenerator<string>;
+}
+
+async function* sseLines(res: Response): AsyncGenerator<string> {
+  const reader = res.body!.getReader();
+  const dec = new TextDecoder();
+  let buf = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    let i: number;
+    while ((i = buf.indexOf("\n")) >= 0) {
+      const line = buf.slice(0, i).trim();
+      buf = buf.slice(i + 1);
+      if (line.startsWith("data:")) yield line.slice(5).trim();
+    }
+  }
+}
+
+async function openStream(p: ProviderConfig, input: CallInput): Promise<Response> {
+  if (p.name === "gemini") {
+    return fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(p.model)}:streamGenerateContent?alt=sse`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY! },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: input.system }] },
+          contents: [{ role: "user", parts: [{ text: input.prompt }] }],
+          generationConfig: { temperature: 0.4 },
+        }),
+        signal: AbortSignal.timeout(AI_TIMEOUT_MS * 2),
+      },
+    );
+  }
+  const ep = compatEndpoint(p.name);
+  return fetch(ep.url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${ep.key}` },
+    body: JSON.stringify(compatBody(p.name, p.model, input, false, true)),
+    signal: AbortSignal.timeout(AI_TIMEOUT_MS * 2),
+  });
+}
+
+/**
+ * Stream plain text from the provider routed for the task (default: fast → Groq).
+ * Connection-level failures fall through to the next configured provider before any
+ * text is emitted; mid-stream failures end the stream (logged).
+ */
+export async function streamText(input: CallInput): Promise<StreamResult> {
+  const chain = routeFor(taskOf(input));
+  if (!chain.length) throw new AIUnavailableError("not_configured");
+  if (!(await rateLimitUser("ai", input.userId, 20, 60_000))) throw new AIUnavailableError("rate_limited");
+
+  let lastError = "unknown";
+  for (const p of chain) {
     const started = Date.now();
+    let res: Response;
     try {
-      const out =
-        status.provider === "gemini"
-          ? await callGemini(input, status.model)
-          : await callOpenAI(input, status.model);
-      const parsed = schema.safeParse(JSON.parse(out.text));
-      await supabase.from("ai_provider_logs").insert({
-        provider: status.provider,
-        model: status.model,
-        operation: input.operation,
-        user_id: input.userId,
-        latency_ms: Date.now() - started,
-        input_tokens: out.inTok ?? null,
-        output_tokens: out.outTok ?? null,
-        success: parsed.success,
-        error_code: parsed.success ? null : "schema_mismatch",
-      });
-      if (parsed.success) return { data: parsed.data, provider: status.provider, model: status.model };
-      lastError = "schema_mismatch";
+      res = await openStream(p, input);
+      if (!res.ok || !res.body) throw await httpError(res, p.name);
     } catch (e) {
-      lastError = e instanceof Error ? e.message.slice(0, 60) : "error";
-      await supabase.from("ai_provider_logs").insert({
-        provider: status.provider,
-        model: status.model,
+      const err = wrapFetchError(e, p.name);
+      lastError = err.code;
+      void logCall({
+        provider: p.name,
+        model: p.model,
         operation: input.operation,
         user_id: input.userId,
         latency_ms: Date.now() - started,
         success: false,
-        error_code: lastError,
+        error_code: err.code,
       });
+      continue;
     }
+    const body = res;
+    async function* gen(): AsyncGenerator<string> {
+      let firstTokenMs: number | null = null;
+      let inTok: number | undefined;
+      let outTok: number | undefined;
+      let ok = true;
+      try {
+        for await (const data of sseLines(body)) {
+          if (data === "[DONE]") break;
+          let j: Record<string, unknown>;
+          try {
+            j = JSON.parse(data);
+          } catch {
+            continue;
+          }
+          let delta = "";
+          if (p.name === "gemini") {
+            const c = (j as { candidates?: { content?: { parts?: { text?: string }[] } }[] }).candidates;
+            delta = c?.[0]?.content?.parts?.map((x) => x.text ?? "").join("") ?? "";
+            const u = (j as { usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number } })
+              .usageMetadata;
+            if (u) [inTok, outTok] = [u.promptTokenCount, u.candidatesTokenCount];
+          } else {
+            const c = (j as { choices?: { delta?: { content?: string } }[] }).choices;
+            delta = c?.[0]?.delta?.content ?? "";
+            const u =
+              (j as { usage?: { prompt_tokens?: number; completion_tokens?: number } }).usage ??
+              (j as { x_groq?: { usage?: { prompt_tokens?: number; completion_tokens?: number } } }).x_groq?.usage;
+            if (u) [inTok, outTok] = [u.prompt_tokens, u.completion_tokens];
+          }
+          if (delta) {
+            firstTokenMs ??= Date.now() - started;
+            yield delta;
+          }
+        }
+      } catch {
+        ok = false;
+      } finally {
+        void logCall({
+          provider: p.name,
+          model: p.model,
+          operation: input.operation,
+          user_id: input.userId,
+          // Time to first token is the latency users feel; total is recorded in error_code-free rows.
+          latency_ms: firstTokenMs ?? Date.now() - started,
+          input_tokens: inTok,
+          output_tokens: outTok,
+          success: ok && firstTokenMs !== null,
+          error_code: ok ? (firstTokenMs === null ? "empty_stream" : null) : "stream_interrupted",
+        });
+      }
+    }
+    return { provider: p.name, model: p.model, stream: gen() };
   }
   throw new AIUnavailableError(lastError);
 }
