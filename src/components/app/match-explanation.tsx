@@ -1,4 +1,4 @@
-import { CheckCircle2, CircleDashed, CircleHelp, CircleSlash } from "lucide-react";
+import { CheckCircle2, CircleDashed, CircleHelp, CircleSlash, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/primitives";
 import type { MatchResult, MatchStatus } from "@/lib/domain/matching";
 import type { Messages } from "@/lib/i18n/messages";
@@ -10,6 +10,19 @@ const ICON: Record<MatchStatus, React.ReactNode> = {
   unverified: <CircleHelp className="text-primary dark:text-lavender size-4" aria-hidden />,
   missing: <CircleSlash className="text-danger size-4" aria-hidden />,
 };
+
+/**
+ * Calibrated on demo data (gemini-embedding-2 @768d, 33 candidates × 30 jobs, 2026-11-11):
+ * unrelated pairs ≈0.66–0.73 (median 0.725), same-role pairs ≈0.85–0.87.
+ */
+function semanticGauge(fit: number) {
+  return Math.max(0, Math.min(1, (fit - 0.65) / 0.23));
+}
+function semanticLabel(fit: number, locale: "ar" | "en") {
+  if (fit >= 0.82) return locale === "ar" ? "قوي" : "Strong";
+  if (fit >= 0.76) return locale === "ar" ? "متوسط" : "Moderate";
+  return locale === "ar" ? "ضعيف" : "Weak";
+}
 
 /** Explainable match: every requirement with its classification, levels and evidence source. */
 export function MatchExplanation({
@@ -47,6 +60,31 @@ export function MatchExplanation({
           </Badge>
         ))}
       </div>
+      {match.semantic && match.semantic.fit !== null && (
+        <div className="bg-accent-soft/60 mt-4 rounded-2xl border p-3">
+          <div className="flex items-center justify-between gap-3">
+            <p className="flex items-center gap-1.5 text-xs font-bold">
+              <Sparkles className="text-primary dark:text-lavender size-3.5" aria-hidden />
+              {locale === "ar" ? "التقارب الدلالي بين الملف والوظيفة" : "Semantic profile ↔ job similarity"}
+            </p>
+            <span className="text-sm font-extrabold">
+              {semanticLabel(match.semantic.fit, locale)}{" "}
+              <span className="ltr-nums text-subtle text-xs font-semibold">{match.semantic.fit.toFixed(2)}</span>
+            </span>
+          </div>
+          <div className="bg-surface mt-2 h-1.5 overflow-hidden rounded-full" aria-hidden>
+            <div
+              className="bg-primary h-full rounded-full transition-[width] duration-700"
+              style={{ width: `${semanticGauge(match.semantic.fit) * 100}%` }}
+            />
+          </div>
+          <p className="text-subtle mt-1.5 text-[11px] leading-snug">
+            {locale === "ar"
+              ? `استنتاج ذكاء اصطناعي (${match.semantic.model}) — للاستئناس فقط ولا يدخل في الدرجة.`
+              : `AI inference (${match.semantic.model}) — context only, not part of the score.`}
+          </p>
+        </div>
+      )}
       <ul className={cn("mt-4 divide-y rounded-2xl border", compact && "text-sm")}>
         {match.requirements.map((r) => (
           <li key={r.skill_id} className="flex items-start gap-3 p-3">
@@ -76,6 +114,17 @@ export function MatchExplanation({
                 {r.source && ` · ${t.match.source[r.source]}`}
               </p>
               {r.evidence && !compact && <p className="text-subtle mt-1 truncate text-xs">“{r.evidence}”</p>}
+              {r.related && (
+                <p className="text-primary dark:text-lavender mt-1 flex items-center gap-1 text-xs">
+                  <Sparkles className="size-3 shrink-0" aria-hidden />
+                  <span>
+                    {locale === "ar" ? "مهارة قريبة لدى المرشح: " : "Related skill the candidate has: "}
+                    <strong>{r.related.name}</strong>{" "}
+                    <span className="ltr-nums text-subtle">({r.related.similarity.toFixed(2)})</span>
+                    {locale === "ar" ? " · استنتاج آلي، يحتاج تحققًا" : " · AI inference, verify"}
+                  </span>
+                </p>
+              )}
             </div>
           </li>
         ))}

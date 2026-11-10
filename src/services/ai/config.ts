@@ -18,7 +18,14 @@ export interface ProviderConfig {
   name: ProviderName;
   configured: boolean;
   model: string;
+  /** Per-call timeout. A primary model with a backup gets a shorter budget so users aren't kept waiting. */
+  timeoutMs: number;
+  /** True when this entry is the approved same-provider backup model (e.g. Gemini 3.5 for 3.8). */
+  backup?: boolean;
 }
+
+export const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS ?? 25_000);
+const PRIMARY_TIMEOUT_MS = Number(process.env.AI_PRIMARY_TIMEOUT_MS ?? 15_000);
 
 export function providerConfig(name: ProviderName): ProviderConfig {
   switch (name) {
@@ -26,19 +33,22 @@ export function providerConfig(name: ProviderName): ProviderConfig {
       return {
         name,
         configured: Boolean(process.env.GEMINI_API_KEY),
-        model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+        model: process.env.GEMINI_MODEL || "gemini-3.5-flash",
+        timeoutMs: process.env.GEMINI_FALLBACK_MODEL ? PRIMARY_TIMEOUT_MS : AI_TIMEOUT_MS,
       };
     case "groq":
       return {
         name,
         configured: Boolean(process.env.GROQ_API_KEY),
         model: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
+        timeoutMs: AI_TIMEOUT_MS,
       };
     case "openai":
       return {
         name,
         configured: Boolean(process.env.OPENAI_API_KEY),
         model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
+        timeoutMs: AI_TIMEOUT_MS * 2,
       };
   }
 }
@@ -78,8 +88,17 @@ function strict() {
   return process.env.AI_STRICT_ROUTING === "true";
 }
 
+/** Approved same-provider backup models (only Gemini today: GEMINI_FALLBACK_MODEL). */
+function withBackups(p: ProviderConfig): ProviderConfig[] {
+  const fb = p.name === "gemini" ? process.env.GEMINI_FALLBACK_MODEL : undefined;
+  return fb && fb !== p.model ? [p, { ...p, model: fb, timeoutMs: AI_TIMEOUT_MS, backup: true }] : [p];
+}
+
 export function routeFor(task: AITask, opts: { needsFile?: boolean } = {}): ProviderConfig[] {
-  const chain = ROUTES[task].map(providerConfig).filter((p) => p.configured);
+  const chain = ROUTES[task]
+    .map(providerConfig)
+    .filter((p) => p.configured)
+    .flatMap(withBackups);
   const eligible = opts.needsFile ? chain.filter((p) => p.name === "gemini") : chain;
   return strict() ? eligible.filter((p) => p.name === ROUTES[task][0]) : eligible;
 }
@@ -110,4 +129,3 @@ export function aiStatus(): AIStatus {
   };
 }
 
-export const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS ?? 25_000);

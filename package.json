@@ -18,7 +18,9 @@
     "admin:provision": "tsx scripts/provision-admin.ts",
     "demo:seed": "tsx scripts/demo/seed.ts",
     "demo:reset": "tsx scripts/demo/reset.ts",
-    "ai:verify": "tsx scripts/ai/verify-providers.ts"
+    "ai:verify": "tsx scripts/ai/verify-providers.ts",
+    "ai:embed-skills": "tsx scripts/ai/embed-skills.ts",
+    "ai:embed-profiles": "tsx scripts/ai/embed-profiles.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.5",

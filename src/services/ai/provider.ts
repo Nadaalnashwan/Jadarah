@@ -56,6 +56,8 @@ async function httpError(res: Response, provider: ProviderName): Promise<Provide
   const retryAfterMs = Number.isFinite(ra) && ra > 0 ? ra * 1000 : 1000;
   if (res.status === 429)
     return new ProviderError(`${provider}_rate_limited`, retryAfterMs <= MAX_RETRY_WAIT_MS, retryAfterMs);
+  // 503 = model overloaded ("high demand"): move straight to the next model instead of retrying it.
+  if (res.status === 503) return new ProviderError(`${provider}_overloaded`, false);
   if (res.status >= 500) return new ProviderError(`${provider}_http_${res.status}`, true, 800);
   return new ProviderError(`${provider}_http_${res.status}`, false);
 }
@@ -63,16 +65,25 @@ async function httpError(res: Response, provider: ProviderName): Promise<Provide
 function wrapFetchError(e: unknown, provider: ProviderName): ProviderError {
   if (e instanceof ProviderError) return e;
   const name = e instanceof Error ? e.name : "";
-  if (name === "TimeoutError" || name === "AbortError") return new ProviderError(`${provider}_timeout`, true, 0);
+  // A timed-out model is not retried (that would double the wait); the next model in the route is tried.
+  if (name === "TimeoutError" || name === "AbortError") return new ProviderError(`${provider}_timeout`, false);
   return new ProviderError(`${provider}_network`, true, 500);
 }
 
 // ---------- Gemini ----------
-async function callGemini(input: CallInput, model: string, jsonSchema?: unknown): Promise<RawOut> {
+function geminiThinking(model: string) {
+  const level = process.env.GEMINI_THINKING_LEVEL ?? "low";
+  return /^gemini-3/.test(model) && level !== "default" ? { thinkingLevel: level } : undefined;
+}
+
+async function callGemini(input: CallInput, p: ProviderConfig, jsonSchema?: unknown): Promise<RawOut> {
+  const model = p.model;
   const parts: unknown[] = [{ text: input.prompt }];
   if (input.file) parts.push({ inline_data: { mime_type: input.file.mimeType, data: input.file.base64 } });
   const generationConfig: Record<string, unknown> = { responseMimeType: "application/json", temperature: 0.2 };
   if (jsonSchema) generationConfig.responseJsonSchema = jsonSchema;
+  const thinking = geminiThinking(model);
+  if (thinking) generationConfig.thinkingConfig = thinking;
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
     {
@@ -83,7 +94,7 @@ async function callGemini(input: CallInput, model: string, jsonSchema?: unknown)
         contents: [{ role: "user", parts }],
         generationConfig,
       }),
-      signal: AbortSignal.timeout(AI_TIMEOUT_MS),
+      signal: AbortSignal.timeout(p.timeoutMs),
     },
   );
   if (!res.ok) throw await httpError(res, "gemini");
@@ -121,18 +132,15 @@ function compatBody(provider: "openai" | "groq", model: string, input: CallInput
   return body;
 }
 
-async function callCompat(
-  provider: "openai" | "groq",
-  input: CallInput,
-  model: string,
-): Promise<RawOut> {
+async function callCompat(provider: "openai" | "groq", input: CallInput, p: ProviderConfig): Promise<RawOut> {
+  const model = p.model;
   if (input.file && input.file.mimeType !== "text/plain") throw new ProviderError(`${provider}_file_unsupported`, false);
   const ep = compatEndpoint(provider);
   const res = await fetch(ep.url, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${ep.key}` },
     body: JSON.stringify(compatBody(provider, model, input, true, false)),
-    signal: AbortSignal.timeout(AI_TIMEOUT_MS),
+    signal: AbortSignal.timeout(p.timeoutMs),
   });
   if (!res.ok) throw await httpError(res, provider);
   const json = await res.json();
@@ -215,7 +223,7 @@ export async function generateJSON<T extends z.ZodTypeAny>(
   if (!chain.length) throw new AIUnavailableError("not_configured");
   if (!(await rateLimitUser("ai", input.userId, 20, 60_000))) throw new AIUnavailableError("rate_limited");
 
-  const deadline = Date.now() + AI_TIMEOUT_MS * 2;
+  const deadline = Date.now() + AI_TIMEOUT_MS * 3;
   let lastError = "unknown";
   for (const p of chain) {
     if (input.cacheable) {
@@ -223,7 +231,8 @@ export async function generateJSON<T extends z.ZodTypeAny>(
       if (hit && Date.now() - hit.at < CACHE_TTL)
         return { data: hit.value as z.infer<T>, provider: p.name, model: p.model, latencyMs: 0 };
     }
-    for (let attempt = 0; attempt < 2 && Date.now() < deadline; attempt++) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (attempt > 0 && Date.now() > deadline) break;
       const started = Date.now();
       try {
         const out = await callProvider(p, input, schema);
@@ -270,8 +279,8 @@ export async function generateJSON<T extends z.ZodTypeAny>(
 
 async function callProvider(p: ProviderConfig, input: CallInput, schema: z.ZodTypeAny): Promise<RawOut> {
   try {
-    if (p.name === "gemini") return await callGemini(input, p.model, jsonSchemaFor(schema));
-    return await callCompat(p.name, input, p.model);
+    if (p.name === "gemini") return await callGemini(input, p, jsonSchemaFor(schema));
+    return await callCompat(p.name, input, p);
   } catch (e) {
     throw wrapFetchError(e, p.name);
   }
@@ -311,7 +320,7 @@ async function openStream(p: ProviderConfig, input: CallInput): Promise<Response
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: input.system }] },
           contents: [{ role: "user", parts: [{ text: input.prompt }] }],
-          generationConfig: { temperature: 0.4 },
+          generationConfig: { temperature: 0.4, ...(geminiThinking(p.model) ? { thinkingConfig: geminiThinking(p.model) } : {}) },
         }),
         signal: AbortSignal.timeout(AI_TIMEOUT_MS * 2),
       },

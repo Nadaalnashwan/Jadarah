@@ -10,6 +10,7 @@ import { formatDate, formatDateTime, formatNumber, pick, tx } from "@/lib/i18n/c
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { matchJob } from "@/services/candidate";
+import { withSemantics } from "@/services/semantic";
 import type { CandidateSkillRecord } from "@/lib/domain/matching";
 import {
   AssignAssessmentForm,
@@ -106,7 +107,13 @@ export default async function CompanyApplicationDetail({ params }: { params: Pro
   const records: CandidateSkillRecord[] = (skills ?? [])
     .filter((x) => x.skill)
     .map((x) => ({ skill_id: x.skill!.id, level: x.level, source: x.source as "cv", evidence: x.evidence }));
-  const match = matchJob(app.job!, records, cp?.years_experience ?? null, locale);
+  const match = await withSemantics(supabase, matchJob(app.job!, records, cp?.years_experience ?? null, locale), {
+    candidateId: candId,
+    jobId: app.job!.id,
+    candidateSkillIds: records.map((r) => r.skill_id),
+    locale,
+    refreshJob: true,
+  });
   const interviewAllowed = canCreateInterview({ status, was_shortlisted: app.was_shortlisted });
 
   return (

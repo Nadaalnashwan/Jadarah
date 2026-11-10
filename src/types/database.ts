@@ -147,6 +147,111 @@ export type Database = {
           },
         ]
       }
+      candidate_embeddings: {
+        Row: {
+          content_hash: string
+          dims: number
+          embedding: string
+          model: string
+          updated_at: string
+          candidate_id: string
+        }
+        Insert: {
+          content_hash: string
+          dims: number
+          embedding: string
+          model: string
+          updated_at?: string
+          candidate_id: string
+        }
+        Update: {
+          content_hash?: string
+          dims?: number
+          embedding?: string
+          model?: string
+          updated_at?: string
+          candidate_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_embeddings_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_embeddings: {
+        Row: {
+          content_hash: string
+          dims: number
+          embedding: string
+          model: string
+          updated_at: string
+          job_id: string
+        }
+        Insert: {
+          content_hash: string
+          dims: number
+          embedding: string
+          model: string
+          updated_at?: string
+          job_id: string
+        }
+        Update: {
+          content_hash?: string
+          dims?: number
+          embedding?: string
+          model?: string
+          updated_at?: string
+          job_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_embeddings_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      skill_embeddings: {
+        Row: {
+          content_hash: string
+          dims: number
+          embedding: string
+          model: string
+          updated_at: string
+          skill_id: string
+        }
+        Insert: {
+          content_hash: string
+          dims: number
+          embedding: string
+          model: string
+          updated_at?: string
+          skill_id: string
+        }
+        Update: {
+          content_hash?: string
+          dims?: number
+          embedding?: string
+          model?: string
+          updated_at?: string
+          skill_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "skill_embeddings_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_provider_logs: {
         Row: {
           created_at: string
@@ -2910,6 +3015,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      related_skills: {
+        Args: { p_have: string[]; p_min?: number; p_model: string; p_required: string[] }
+        Returns: { related_skill_id: string; required_skill_id: string; similarity: number }[]
+      }
+      semantic_fit: {
+        Args: { p_candidate: string; p_job: string; p_model: string }
+        Returns: number
+      }
+      semantic_job_ranking: {
+        Args: { p_limit?: number; p_model: string }
+        Returns: { job_id: string; similarity: number }[]
+      }
       _transition_application: {
         Args: {
           p_app: string

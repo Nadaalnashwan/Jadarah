@@ -11,6 +11,7 @@ import { formatDate, formatNumber, pick, pickArray, tx } from "@/lib/i18n/config
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCandidateSkills, matchJob, toSkillRecords } from "@/services/candidate";
+import { withSemantics } from "@/services/semantic";
 import { ApplyForm } from "./apply-form";
 import { SaveJobButton } from "../save-button";
 
@@ -55,7 +56,14 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
       .eq("candidate_id", session.userId)
       .maybeSingle(),
   ]);
-  const match = matchJob(job, toSkillRecords(skills), cp?.years_experience ?? null, locale);
+  const skillRecords = toSkillRecords(skills);
+  const match = await withSemantics(supabase, matchJob(job, skillRecords, cp?.years_experience ?? null, locale), {
+    candidateId: session.userId,
+    jobId: id,
+    candidateSkillIds: skillRecords.map((s) => s.skill_id),
+    locale,
+    refreshCandidate: true,
+  });
   const closed =
     job.status !== "published" ||
     (job.deadline !== null && job.deadline < new Date().toISOString().slice(0, 10));
