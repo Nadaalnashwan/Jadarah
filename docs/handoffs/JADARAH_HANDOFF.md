@@ -22,7 +22,9 @@ AI-assisted, evidence-based talent intelligence & recruitment platform (candidat
 - Email confirmation ON. Real confirmation + reset emails delivered to the owner's Gmail (plus-addressed test identity `nadooamn+jadarah-e2e1@…`), confirmation link confirmed the user, PKCE callback → reset → new password signs in.
 - SMTP: Supabase default (rate-limited). Custom SMTP needed for production (dashboard only).
 - Site URL / redirect URLs: defaults work for localhost; production domain must be added in the dashboard.
-- **Initial Super Admin (real) NOT provisioned**: requires `SUPABASE_SERVICE_ROLE_KEY`, `INITIAL_ADMIN_EMAIL`, `INITIAL_ADMIN_PASSWORD` in `.env.local`, then `npm run admin:provision`. A demo super admin exists (`platform.admin@jadarah-demo.test`).
+- **Real Super Admin provisioned (2026-11-10)** for the owner's Gmail address (not demo, role `super_admin` only) via SQL with a random unknown password; the owner sets the password through the password-reset email. `npm run admin:provision` remains available for future admins (needs the service-role key). A demo super admin also exists (`platform.admin@jadarah-demo.test`).
+- `/auth/callback` now also handles implicit-flow links (`#access_token=…`, e.g. admin-triggered recovery emails) via the client page `/auth/confirm`; covered by `tests/e2e/auth-confirm.spec.ts`.
+- Supabase default SMTP returned HTTP 429 after a few emails in an hour — custom SMTP is needed before real use.
 
 ## Completed and verified
 - Landing (cinematic, AR/EN, live showcase from demo DB), public pages, public job board.
@@ -58,6 +60,6 @@ npx playwright test             # needs a build (uses npm start) and DEMO_USER_P
 ```
 
 ## Next three priorities
-1. Provision the real Super Admin (`npm run admin:provision`) and configure custom SMTP + production redirect URLs.
+1. Owner completes the admin password via the reset email; configure custom SMTP + production redirect URLs.
 2. Configure an AI provider key (server env) and verify CV parsing, job drafting and question generation end to end.
 3. Deploy to Vercel (see DEPLOYMENT.md), set `environment='production'` for the production database, add CSP.
