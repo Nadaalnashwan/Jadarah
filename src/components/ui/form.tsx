@@ -13,9 +13,14 @@ export function Textarea({ className, ...props }: React.TextareaHTMLAttributes<H
 
 export function Select({ className, children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
-    <select className={cn(fieldBase, "h-11 appearance-none bg-[length:16px] pe-9", className)} {...props}>
-      {children}
-    </select>
+    <div className={cn("relative", className)}>
+      <select className={cn(fieldBase, "h-11 w-full appearance-none pe-9")} {...props}>
+        {children}
+      </select>
+      <svg viewBox="0 0 16 16" className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-subtle" aria-hidden>
+        <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
   );
 }
 

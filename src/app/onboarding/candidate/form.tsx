@@ -1,6 +1,6 @@
 "use client";
 import { useActionState, useMemo, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, FormMessage, Input, Select, Textarea } from "@/components/ui/form";
@@ -40,8 +40,8 @@ export function CandidateOnboardingForm({
         ))}
       </ol>
       <div className="surface-card p-6 sm:p-8">
-        <AnimatePresence mode="wait">
-          <motion.div key={step} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.25 }}>
+        {/* All steps stay mounted so values persist across steps; only visibility changes. */}
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
             <div className={cn("grid gap-4", step !== 0 && "hidden")}>
               <Field label={t.auth.fullName} htmlFor="full_name" required>
                 <Input id="full_name" name="full_name" defaultValue={defaults.full_name} required />
@@ -101,8 +101,7 @@ export function CandidateOnboardingForm({
               ))}
               <p className="ltr-nums mt-3 text-xs text-subtle">{picked.length}/15</p>
             </div>
-          </motion.div>
-        </AnimatePresence>
+        </motion.div>
         {state && !state.ok && <div className="mt-4"><FormMessage>{state.error}</FormMessage></div>}
         <div className="mt-8 flex justify-between">
           <Button type="button" variant="ghost" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
