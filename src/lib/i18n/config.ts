@@ -66,3 +66,8 @@ export function pickArray<T extends Record<string, unknown>>(row: T | null | und
   const fallback = row[`${base}_${locale === "ar" ? "en" : "ar"}`] as string[] | undefined;
   return primary && primary.length ? primary : (fallback ?? []);
 }
+
+/** Inline bilingual string helper for long-tail UI copy: const L = tx(locale); L("Save", "حفظ") */
+export function tx(locale: Locale) {
+  return (en: string, ar: string) => (locale === "ar" ? ar : en);
+}
