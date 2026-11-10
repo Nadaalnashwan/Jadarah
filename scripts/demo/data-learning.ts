@@ -1,0 +1,101 @@
+// slug, title_en, title_ar, provider, url, kind, topic, skills, level, hours, free
+export type Resource = [string, string, string, string, string, string, string, string[], "beginner" | "intermediate" | "advanced", number, boolean];
+
+export const RESOURCES: Resource[] = [
+  ["cs50x", "CS50x: Introduction to Computer Science", "CS50x: مقدمة في علوم الحاسب", "Harvard University", "https://cs50.harvard.edu/x/", "course", "Programming", ["problem-solving", "python", "dsa"], "beginner", 100, true],
+  ["python-tutorial", "The Python Tutorial", "الدليل الرسمي لبايثون", "Python Software Foundation", "https://docs.python.org/3/tutorial/", "documentation", "Programming", ["python"], "beginner", 12, true],
+  ["mdn-js", "JavaScript Guide", "دليل جافاسكربت", "MDN Web Docs", "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide", "documentation", "Programming", ["javascript"], "beginner", 15, true],
+  ["ts-handbook", "The TypeScript Handbook", "دليل TypeScript", "Microsoft", "https://www.typescriptlang.org/docs/handbook/intro.html", "documentation", "Programming", ["typescript"], "intermediate", 10, true],
+  ["react-learn", "Learn React", "تعلّم React", "React", "https://react.dev/learn", "documentation", "Programming", ["react"], "beginner", 12, true],
+  ["nextjs-learn", "Next.js Learn", "تعلّم Next.js", "Vercel", "https://nextjs.org/learn", "course", "Programming", ["nextjs", "react"], "intermediate", 10, true],
+  ["odin-project", "The Odin Project — Full Stack JavaScript", "مشروع أودن — جافاسكربت متكاملة", "The Odin Project", "https://www.theodinproject.com/", "course", "Programming", ["javascript", "nodejs", "git"], "beginner", 200, true],
+  ["fcc-js-algos", "JavaScript Algorithms and Data Structures", "خوارزميات وهياكل بيانات جافاسكربت", "freeCodeCamp", "https://www.freecodecamp.org/learn/javascript-algorithms-and-data-structures-v8/", "course", "Programming", ["javascript", "dsa"], "beginner", 300, true],
+  ["git-book", "Pro Git Book", "كتاب Pro Git", "git-scm.com", "https://git-scm.com/book/en/v2", "book", "Software Engineering", ["git"], "beginner", 10, true],
+  ["spring-guides", "Spring Boot Guides", "أدلة Spring Boot", "Spring", "https://spring.io/guides", "documentation", "Programming", ["spring", "java"], "intermediate", 15, true],
+  ["sqlbolt", "SQLBolt Interactive Lessons", "دروس SQLBolt التفاعلية", "SQLBolt", "https://sqlbolt.com/", "practice", "Data", ["sql"], "beginner", 5, true],
+  ["postgres-tutorial", "PostgreSQL Tutorial", "دليل PostgreSQL", "PostgreSQL Global Development Group", "https://www.postgresql.org/docs/current/tutorial.html", "documentation", "Data", ["postgresql", "sql"], "beginner", 8, true],
+  ["kaggle-pandas", "Kaggle Learn: Pandas", "Kaggle Learn: مكتبة Pandas", "Kaggle", "https://www.kaggle.com/learn/pandas", "course", "Data", ["pandas", "python"], "beginner", 4, true],
+  ["kaggle-viz", "Kaggle Learn: Data Visualization", "Kaggle Learn: تصوير البيانات", "Kaggle", "https://www.kaggle.com/learn/data-visualization", "course", "Data", ["data-visualization", "python"], "beginner", 4, true],
+  ["pandas-start", "pandas Getting Started", "البدء مع pandas", "pandas", "https://pandas.pydata.org/docs/getting_started/index.html", "documentation", "Data", ["pandas"], "beginner", 6, true],
+  ["powerbi-learn", "Power BI Training", "تدريب Power BI", "Microsoft Learn", "https://learn.microsoft.com/en-us/training/powerplatform/power-bi", "course", "Data", ["power-bi", "data-visualization"], "beginner", 20, true],
+  ["tableau-training", "Tableau Free Training Videos", "فيديوهات تدريب Tableau المجانية", "Tableau", "https://www.tableau.com/learn/training", "video", "Data", ["tableau", "data-visualization"], "beginner", 8, true],
+  ["khan-stats", "Statistics and Probability", "الإحصاء والاحتمالات", "Khan Academy", "https://www.khanacademy.org/math/statistics-probability", "course", "Data", ["statistics"], "beginner", 40, true],
+  ["spark-docs", "Apache Spark Quick Start", "البدء السريع مع Apache Spark", "Apache Software Foundation", "https://spark.apache.org/docs/latest/quick-start.html", "documentation", "Data", ["spark", "etl"], "intermediate", 6, true],
+  ["airflow-tutorial", "Airflow Tutorials", "دروس Airflow", "Apache Software Foundation", "https://airflow.apache.org/docs/apache-airflow/stable/tutorial/index.html", "documentation", "Data", ["airflow", "etl"], "intermediate", 6, true],
+  ["google-ml-crash", "Machine Learning Crash Course", "دورة مكثفة في تعلّم الآلة", "Google for Developers", "https://developers.google.com/machine-learning/crash-course", "course", "Machine Learning", ["machine-learning"], "beginner", 15, true],
+  ["sklearn-tutorial", "scikit-learn Tutorials", "دروس scikit-learn", "scikit-learn", "https://scikit-learn.org/stable/tutorial/index.html", "documentation", "Machine Learning", ["scikit-learn", "machine-learning"], "intermediate", 10, true],
+  ["fastai-course", "Practical Deep Learning for Coders", "التعلّم العميق العملي للمبرمجين", "fast.ai", "https://course.fast.ai/", "course", "Machine Learning", ["deep-learning", "pytorch"], "intermediate", 40, true],
+  ["pytorch-tutorials", "PyTorch Tutorials", "دروس PyTorch", "PyTorch", "https://pytorch.org/tutorials/", "documentation", "Machine Learning", ["pytorch", "deep-learning"], "intermediate", 20, true],
+  ["hf-llm-course", "Hugging Face LLM Course", "دورة Hugging Face للنماذج اللغوية", "Hugging Face", "https://huggingface.co/learn/llm-course", "course", "AI", ["nlp", "llm-apps"], "intermediate", 25, true],
+  ["kaggle-intro-ml", "Kaggle Learn: Intro to Machine Learning", "Kaggle Learn: مقدمة في تعلّم الآلة", "Kaggle", "https://www.kaggle.com/learn/intro-to-machine-learning", "course", "AI", ["machine-learning", "python"], "beginner", 3, true],
+  ["ms-ai-beginners", "AI for Beginners", "الذكاء الاصطناعي للمبتدئين", "Microsoft", "https://github.com/microsoft/AI-For-Beginners", "course", "AI", ["machine-learning", "deep-learning"], "beginner", 60, true],
+  ["owasp-top10", "OWASP Top 10", "قائمة OWASP لأهم 10 مخاطر", "OWASP Foundation", "https://owasp.org/www-project-top-ten/", "documentation", "Cybersecurity", ["owasp"], "intermediate", 6, true],
+  ["owasp-cheatsheets", "OWASP Cheat Sheet Series", "سلسلة أوراق OWASP المرجعية", "OWASP Foundation", "https://cheatsheetseries.owasp.org/", "documentation", "Cybersecurity", ["owasp", "api-design"], "intermediate", 10, true],
+  ["nist-csf", "NIST Cybersecurity Framework", "إطار NIST للأمن السيبراني", "NIST", "https://www.nist.gov/cyberframework", "documentation", "Cybersecurity", ["incident-response", "threat-analysis"], "intermediate", 6, true],
+  ["mitre-attack", "MITRE ATT&CK Knowledge Base", "قاعدة معارف MITRE ATT&CK", "MITRE", "https://attack.mitre.org/", "documentation", "Cybersecurity", ["threat-analysis", "siem"], "advanced", 10, true],
+  ["netacad-cyber", "Introduction to Cybersecurity", "مقدمة في الأمن السيبراني", "Cisco Networking Academy", "https://www.netacad.com/courses/introduction-to-cybersecurity", "course", "Cybersecurity", ["network-security"], "beginner", 6, true],
+  ["linux-journey", "Linux Journey", "رحلة لينكس", "Linux Journey", "https://linuxjourney.com/", "course", "Cloud", ["linux"], "beginner", 15, true],
+  ["aws-skill-builder", "AWS Skill Builder", "منصة AWS Skill Builder", "Amazon Web Services", "https://skillbuilder.aws/", "course", "Cloud", ["aws"], "beginner", 20, true],
+  ["az-900", "Azure Fundamentals (AZ-900) Learning Path", "مسار أساسيات Azure (AZ-900)", "Microsoft Learn", "https://learn.microsoft.com/en-us/training/courses/az-900t00", "course", "Cloud", ["azure"], "beginner", 10, true],
+  ["docker-get-started", "Docker Get Started", "البدء مع Docker", "Docker", "https://docs.docker.com/get-started/", "documentation", "Cloud", ["docker"], "beginner", 5, true],
+  ["k8s-basics", "Kubernetes Basics", "أساسيات Kubernetes", "Kubernetes", "https://kubernetes.io/docs/tutorials/kubernetes-basics/", "documentation", "Cloud", ["kubernetes"], "intermediate", 6, true],
+  ["terraform-tutorials", "Terraform Tutorials", "دروس Terraform", "HashiCorp", "https://developer.hashicorp.com/terraform/tutorials", "documentation", "Cloud", ["terraform"], "intermediate", 10, true],
+  ["github-actions", "GitHub Actions Documentation", "توثيق GitHub Actions", "GitHub", "https://docs.github.com/en/actions", "documentation", "Software Engineering", ["ci-cd"], "intermediate", 6, true],
+  ["sre-book", "Site Reliability Engineering (book)", "كتاب هندسة موثوقية المواقع", "Google", "https://sre.google/sre-book/table-of-contents/", "book", "Software Engineering", ["system-design"], "advanced", 30, true],
+  ["system-design-primer", "The System Design Primer", "مدخل تصميم الأنظمة", "Open source (GitHub)", "https://github.com/donnemartin/system-design-primer", "documentation", "Software Engineering", ["system-design", "api-design"], "intermediate", 20, true],
+  ["scrum-guide", "The Scrum Guide", "دليل سكرم", "Scrum.org", "https://scrumguides.org/scrum-guide.html", "documentation", "Product Management", ["agile"], "beginner", 2, true],
+  ["atlassian-agile", "Agile Coach", "مدرب الأجايل", "Atlassian", "https://www.atlassian.com/agile", "article", "Product Management", ["agile", "roadmapping"], "beginner", 6, true],
+  ["svpg-articles", "Product Management Articles", "مقالات إدارة المنتجات", "Silicon Valley Product Group", "https://www.svpg.com/articles/", "article", "Product Management", ["product-strategy"], "intermediate", 8, true],
+  ["iiba-ba", "Business Analysis Body of Knowledge Overview", "نظرة على دليل معارف تحليل الأعمال", "IIBA", "https://www.iiba.org/business-analysis-standards/babok-guide/", "documentation", "Business Analysis", ["requirements", "stakeholder-management"], "intermediate", 4, false],
+  ["bpmn-intro", "BPMN Quick Guide", "دليل BPMN السريع", "BPMN.org", "https://www.bpmn.org/", "documentation", "Business Analysis", ["process-modeling"], "beginner", 3, true],
+  ["nng-articles", "UX Research Articles", "مقالات أبحاث تجربة المستخدم", "Nielsen Norman Group", "https://www.nngroup.com/articles/", "article", "UI/UX", ["user-research", "ui-design"], "beginner", 10, true],
+  ["figma-learn", "Figma Learn", "تعلّم Figma", "Figma", "https://help.figma.com/hc/en-us/categories/360002051613", "documentation", "UI/UX", ["figma", "prototyping"], "beginner", 8, true],
+  ["wcag-quickref", "WCAG Quick Reference", "المرجع السريع لـ WCAG", "W3C WAI", "https://www.w3.org/WAI/WCAG22/quickref/", "documentation", "UI/UX", ["accessibility"], "intermediate", 4, true],
+  ["laws-of-ux", "Laws of UX", "قوانين تجربة المستخدم", "Laws of UX", "https://lawsofux.com/", "article", "UI/UX", ["ui-design"], "beginner", 2, true],
+  ["pmi-fundamentals", "Project Management Basics", "أساسيات إدارة المشاريع", "PMI", "https://www.pmi.org/learning/library", "article", "Business Analysis", ["project-management"], "beginner", 6, true],
+];
+
+export interface PlanTemplate {
+  role_slug: string;
+  title_en: string;
+  title_ar: string;
+  desc_en: string;
+  desc_ar: string;
+  target: "entry" | "junior" | "mid" | "senior";
+  weeks: number;
+  skills: string[];
+  items: [string, string, string | null, string | null, number][]; // title_en, title_ar, skill_slug, resource_slug, hours
+}
+
+export const PLANS: PlanTemplate[] = [
+  { role_slug: "junior-data-analyst", title_en: "Junior Data Analyst", title_ar: "محلل بيانات مبتدئ", desc_en: "From spreadsheets to SQL-driven dashboards.", desc_ar: "من الجداول الإلكترونية إلى لوحات معلومات مبنية على SQL.", target: "junior", weeks: 12,
+    skills: ["sql", "excel", "power-bi", "statistics", "data-visualization", "communication"],
+    items: [["SQL foundations", "أساسيات SQL", "sql", "sqlbolt", 10], ["Descriptive statistics", "الإحصاء الوصفي", "statistics", "khan-stats", 20], ["Dashboards in Power BI", "لوحات المعلومات في Power BI", "power-bi", "powerbi-learn", 20], ["Visual storytelling", "السرد بالمرئيات", "data-visualization", "kaggle-viz", 6], ["Portfolio project: clinic operations dashboard", "مشروع ملف الأعمال: لوحة عمليات عيادة", "data-visualization", null, 20]] },
+  { role_slug: "ai-engineer", title_en: "AI Engineer", title_ar: "مهندس ذكاء اصطناعي", desc_en: "Build safe, evaluated LLM applications.", desc_ar: "بناء تطبيقات نماذج لغوية آمنة ومقيّمة.", target: "mid", weeks: 20,
+    skills: ["python", "machine-learning", "nlp", "llm-apps", "api-design", "mlops"],
+    items: [["Python fluency", "إتقان بايثون", "python", "python-tutorial", 15], ["ML fundamentals", "أساسيات تعلّم الآلة", "machine-learning", "google-ml-crash", 15], ["Transformers and LLMs", "المحولات والنماذج اللغوية", "nlp", "hf-llm-course", 25], ["Designing robust APIs", "تصميم واجهات برمجية متينة", "api-design", "owasp-cheatsheets", 8], ["Capstone: Arabic RAG assistant with evaluation", "مشروع ختامي: مساعد استرجاعي بالعربية مع تقييم", "llm-apps", null, 30]] },
+  { role_slug: "full-stack-developer", title_en: "Full-Stack Developer", title_ar: "مطوّر برمجيات متكامل", desc_en: "Ship modern web products end to end.", desc_ar: "إطلاق منتجات ويب حديثة من البداية للنهاية.", target: "mid", weeks: 24,
+    skills: ["javascript", "typescript", "react", "nodejs", "sql", "git", "testing"],
+    items: [["JavaScript core", "جوهر جافاسكربت", "javascript", "mdn-js", 15], ["TypeScript", "TypeScript", "typescript", "ts-handbook", 10], ["React", "React", "react", "react-learn", 12], ["Full-stack with Next.js", "التطوير المتكامل مع Next.js", "nextjs", "nextjs-learn", 10], ["Git workflows", "سير عمل Git", "git", "git-book", 6], ["Capstone: bilingual booking app", "مشروع ختامي: تطبيق حجوزات ثنائي اللغة", "testing", null, 40]] },
+  { role_slug: "cybersecurity-analyst", title_en: "Cybersecurity Analyst", title_ar: "محلل أمن سيبراني", desc_en: "Detect and respond to threats with confidence.", desc_ar: "رصد التهديدات والاستجابة لها بثقة.", target: "junior", weeks: 16,
+    skills: ["network-security", "linux", "siem", "incident-response", "threat-analysis"],
+    items: [["Security foundations", "أسس الأمن", "network-security", "netacad-cyber", 6], ["Linux command line", "سطر أوامر لينكس", "linux", "linux-journey", 15], ["Frameworks: NIST CSF", "الأطر: NIST CSF", "incident-response", "nist-csf", 6], ["Adversary techniques: ATT&CK", "أساليب الخصوم: ATT&CK", "threat-analysis", "mitre-attack", 10], ["Lab: write three detection rules", "مختبر: كتابة ثلاث قواعد رصد", "siem", null, 12]] },
+  { role_slug: "business-analyst", title_en: "Business Analyst", title_ar: "محلل أعمال", desc_en: "Turn needs into testable requirements.", desc_ar: "تحويل الاحتياجات إلى متطلبات قابلة للاختبار.", target: "junior", weeks: 12,
+    skills: ["requirements", "process-modeling", "stakeholder-management", "sql", "agile"],
+    items: [["BA body of knowledge", "دليل معارف تحليل الأعمال", "requirements", "iiba-ba", 4], ["Process modelling with BPMN", "نمذجة العمليات بـ BPMN", "process-modeling", "bpmn-intro", 6], ["Agile delivery", "التسليم الرشيق", "agile", "scrum-guide", 2], ["SQL for analysts", "SQL للمحللين", "sql", "sqlbolt", 10], ["Case: requirements pack for appointment rescheduling", "حالة: حزمة متطلبات لإعادة جدولة المواعيد", "stakeholder-management", null, 15]] },
+  { role_slug: "cloud-engineer", title_en: "Cloud Engineer", title_ar: "مهندس سحابة", desc_en: "Automate and operate cloud infrastructure.", desc_ar: "أتمتة البنية السحابية وتشغيلها.", target: "mid", weeks: 18,
+    skills: ["linux", "aws", "docker", "kubernetes", "terraform", "ci-cd"],
+    items: [["Linux administration", "إدارة لينكس", "linux", "linux-journey", 15], ["AWS foundations", "أساسيات AWS", "aws", "aws-skill-builder", 20], ["Containers", "الحاويات", "docker", "docker-get-started", 5], ["Kubernetes", "Kubernetes", "kubernetes", "k8s-basics", 6], ["Infrastructure as code", "البنية كشيفرة", "terraform", "terraform-tutorials", 10], ["CI/CD pipelines", "خطوط CI/CD", "ci-cd", "github-actions", 6]] },
+  { role_slug: "machine-learning-engineer", title_en: "Machine Learning Engineer", title_ar: "مهندس تعلّم آلة", desc_en: "Production-grade ML from data to monitoring.", desc_ar: "تعلّم آلة بمستوى الإنتاج من البيانات إلى المراقبة.", target: "mid", weeks: 22,
+    skills: ["python", "machine-learning", "scikit-learn", "deep-learning", "pytorch", "mlops", "docker"],
+    items: [["Intro to ML", "مقدمة في تعلّم الآلة", "machine-learning", "kaggle-intro-ml", 3], ["scikit-learn in depth", "scikit-learn بعمق", "scikit-learn", "sklearn-tutorial", 10], ["Deep learning", "التعلّم العميق", "deep-learning", "fastai-course", 40], ["PyTorch", "PyTorch", "pytorch", "pytorch-tutorials", 20], ["Ship a model as a container", "إطلاق نموذج داخل حاوية", "docker", "docker-get-started", 5], ["Capstone: churn model with monitoring", "مشروع ختامي: نموذج تسرب العملاء مع المراقبة", "mlops", null, 30]] },
+  { role_slug: "product-manager", title_en: "Product Manager", title_ar: "مدير منتج", desc_en: "Lead outcomes with evidence and focus.", desc_ar: "قيادة النتائج بالأدلة والتركيز.", target: "mid", weeks: 14,
+    skills: ["product-strategy", "roadmapping", "agile", "user-research", "stakeholder-management"],
+    items: [["Product thinking", "التفكير المنتجي", "product-strategy", "svpg-articles", 8], ["Scrum and agile", "سكرم والأجايل", "agile", "scrum-guide", 2], ["Roadmaps", "خرائط الطريق", "roadmapping", "atlassian-agile", 6], ["Research methods", "مناهج البحث", "user-research", "nng-articles", 10], ["Case: one-page strategy for a marketplace", "حالة: استراتيجية من صفحة واحدة لسوق إلكتروني", "stakeholder-management", null, 10]] },
+  { role_slug: "ui-ux-designer", title_en: "UI/UX Designer", title_ar: "مصمم واجهات وتجربة مستخدم", desc_en: "Research-led, accessible bilingual design.", desc_ar: "تصميم ثنائي اللغة مبني على البحث ومتاح للجميع.", target: "junior", weeks: 14,
+    skills: ["user-research", "ui-design", "figma", "prototyping", "accessibility"],
+    items: [["UX research basics", "أساسيات أبحاث تجربة المستخدم", "user-research", "nng-articles", 10], ["Laws of UX", "قوانين تجربة المستخدم", "ui-design", "laws-of-ux", 2], ["Figma for product design", "Figma لتصميم المنتجات", "figma", "figma-learn", 8], ["Accessibility (WCAG)", "إتاحة الوصول (WCAG)", "accessibility", "wcag-quickref", 4], ["Case study: RTL-first mobile flow", "دراسة حالة: مسار جوال يبدأ من اليمين لليسار", "prototyping", null, 20]] },
+  { role_slug: "data-engineer", title_en: "Data Engineer", title_ar: "مهندس بيانات", desc_en: "Reliable pipelines and analytics-ready models.", desc_ar: "خطوط بيانات موثوقة ونماذج جاهزة للتحليل.", target: "mid", weeks: 20,
+    skills: ["python", "sql", "data-modeling", "etl", "spark", "airflow"],
+    items: [["Advanced SQL", "SQL متقدم", "sql", "postgres-tutorial", 8], ["Data modelling", "نمذجة البيانات", "data-modeling", "system-design-primer", 10], ["Spark", "Spark", "spark", "spark-docs", 6], ["Orchestration with Airflow", "الجدولة مع Airflow", "airflow", "airflow-tutorial", 6], ["Capstone: daily sales pipeline with quality checks", "مشروع ختامي: خط مبيعات يومي مع فحوص جودة", "etl", null, 25]] },
+];
