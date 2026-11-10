@@ -5,6 +5,38 @@
 ## Project
 AI-assisted, evidence-based talent intelligence & recruitment platform (candidates, companies, Super Admin). Taglines: **أكثر من سيرة ذاتية.** / **Beyond What's Seen.** Brand colours (exact): `#0F1B3D` `#3B66F6` `#A9B8FF` `#CDE7F6` `#F8F6F0`. Fonts: IBM Plex Sans Arabic / Manrope. Original logo: three ascending slabs + "merit diamond" (`src/components/brand/logo.tsx`, `public/brand/*`).
 
+## Session 2026-11-11 — new Mac (current status, read first)
+**Machine setup (this Mac):** Node v24.22.2 LTS at `~/.local/node`, gh 2.103.3 at `~/.local/bin/gh` (user-local, checksum-verified; not on the default PATH — use `export PATH="$HOME/.local/node/bin:$HOME/.local/bin:$PATH"`). Xcode CLT installed. Git identity is repo-local (Nada Al-Nashwan). Push with `git -c credential.helper='!~/.local/bin/gh auth git-credential' push` (gh logged in as Nadaalnashwan). `.env.local` recreated from the target configuration; secrets entered by the owner.
+
+**AI provider status (verified with live keys via `npm run ai:verify`):**
+| Provider | Model | Status |
+|---|---|---|
+| Gemini (structured) | `gemini-3.8-flash` | Model ID exists; **overloaded at Google** (503 "high demand", 20–90 s timeouts) on 2026-11-11 |
+| Gemini backup (owner-approved) | `gemini-3.5-flash` | **Working** — schema-valid CV extraction ~2.7 s. Used automatically when 3.8 is overloaded/times out (15 s primary budget) |
+| Gemini embeddings | `gemini-embedding-2` @768 | **Working** — 699 ms single, 63 texts in 2.4 s |
+| Groq (fast) | `openai/gpt-oss-120b` | **Working** — 539 ms, valid JSON |
+| OpenAI (deep) | `gpt-6.1-sol` | Model ID exists; key valid; **account has no credits** (`credit_balance_exhausted`) — owner must add billing. Deep tasks fall back to Gemini (labelled) meanwhile |
+| Daily.co | — | **Key valid** (domain `midan`); integration not built yet |
+| Resend | — | Future work, lowest priority, not integrated |
+Note: `gemini-2.5-flash` (old default) is retired for new users.
+
+**Done this session**
+- `src/services/ai/config.ts` + `provider.ts`: task routing (fast→Groq, structured→Gemini, deep→OpenAI), approved same-provider backup model, per-model timeouts, bounded retries (overloaded/timeout → next model, no same-model retry), visible cross-provider fallback (`AI_STRICT_ROUTING=true` disables), per-user 10-min cache for `cacheable` calls, Gemini 3 `thinkingLevel`, Gemini `responseJsonSchema` from Zod, SSE `streamText()` for Groq/OpenAI/Gemini (not yet wired into the assistant UI), every call logged to `ai_provider_logs` (provider/model/latency/tokens/error code — no prompts).
+- Migration **0013 `semantic_embeddings` applied**: `skill_embeddings`, `candidate_embeddings`, `job_embeddings` (vector(768), model+dims-keyed, RLS), RPCs `related_skills`, `semantic_fit`, `semantic_job_ranking` (security invoker). Types hand-added to `src/types/database.ts`.
+- Backfilled 63 skills / 33 candidates / 30 jobs (`npm run ai:embed-skills`, `npm run ai:embed-profiles`). Measured: unrelated skill pairs median cosine 0.78 (p99 0.88; Java↔JavaScript 0.90) → related-skill threshold **0.92**. Candidate↔job: top-1 = candidate's own role in **28/28**; fit range 0.66–0.87 (median 0.725) → gauge calibrated 0.65–0.88.
+- Match explanation (candidate job page + company application page) shows semantic similarity and related skills as **labelled AI inference, never part of the evidence score**. Embeddings refresh under the user's session when content hash changes.
+- typecheck, lint, build, 18/18 unit tests pass.
+
+**Not yet verified in the browser:** real-AI features end to end (needs `DEMO_USER_PASSWORD` in `.env.local` to sign in as demo users — it was not available on this Mac).
+
+**Exact next steps**
+1. Owner: add `DEMO_USER_PASSWORD` to `.env.local`; add OpenAI credits.
+2. Browser-verify: CV upload → Gemini parse; job draft; interview questions; assistant (Groq); semantic match panel. Run `npx vitest run` (integration).
+3. Wire `streamText` into the assistants (route handler + streaming chat UI).
+4. Phase 3: AI Assessment Builder (questions + rubric generation), deep rubric-assisted evaluation, career plan generation.
+5. Phase 4–6: internal calendar (availability, conflict-safe booking via DB exclusion constraint, notifications + reminders via pg_cron), Daily rooms/tokens, Final Candidate Evaluation Report.
+6. Phase 7: Playwright E2E, Vercel preview deploy.
+
 ## Repository
 - Repo: https://github.com/Nadaalnashwan/Jadarah — branch `feature/jadarah-greenfield-build` (only branch on the remote; `main` was never created; do not merge without owner approval).
 - Local clone: `~/Developer/Jadarah`.
@@ -12,7 +44,7 @@ AI-assisted, evidence-based talent intelligence & recruitment platform (candidat
 
 ## Supabase
 - Project ref `qqvvlornhvfykusaxaid` (dashboard name "maknon Project"; confirmed by the owner as the new JADARAH project).
-- Migrations 0001–0012 in `supabase/migrations/` — **all applied** (0009 and 0012 were applied by fetching the pinned commit file through the `http` extension; content identical to the repo files).
+- Migrations 0001–0013 in `supabase/migrations/` — **all applied** (0013 on 2026-11-11 via MCP) (0009 and 0012 were applied by fetching the pinned commit file through the `http` extension; content identical to the repo files).
 - RLS on every public table; least-privilege grants (this project grants nothing to API roles by default — migrations 0010/0011 add explicit grants; **any new table/function needs explicit grants**).
 - Storage: 6 private buckets with object policies.
 - Demo seed applied: 61 Auth identities, 10 companies (9 approved, Imtidad pending), 30 jobs (24 published), 32 candidates, 15 assessments/75 questions, 51 resources, 10 plan templates, 12 personal plans, 82+ applications, 28+ interviews. `platform_settings.environment = 'demo'`.
@@ -35,7 +67,7 @@ AI-assisted, evidence-based talent intelligence & recruitment platform (candidat
 - Tests: 18 unit + 12 live integration/security (30/30) + 11 Playwright (desktop + mobile public, 5 role journeys) — all passing. Lint clean, typecheck clean, production build passes.
 
 ## Implemented but not externally configured
-- AI providers (Gemini/OpenAI adapters, logging, schemas) — no API key configured; rule-based fallbacks are active and labelled.
+- AI: see the 2026-11-11 table above (Gemini/Groq/embeddings live; OpenAI blocked on billing). Rule-based fallbacks remain and are labelled.
 - Email notifications — in-app notifications work; outbound email sending not wired to a provider (`notifications.email_status` stays `not_sent`).
 - Deployment — Vercel-ready, not deployed.
 
