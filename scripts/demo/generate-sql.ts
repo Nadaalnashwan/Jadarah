@@ -162,7 +162,7 @@ inc("jobs", jobs.length);
 // ------------------------------------------------------------------ candidates
 interface CandSkill { slug: string; level: number; source: "self" | "cv" | "assessment" | "verified"; evidence: string | null }
 const candSkills = new Map<number, CandSkill[]>();
-CANDIDATES.forEach(([name, roleKey, years, city], i) => {
+CANDIDATES.forEach(([, roleKey, years, city], i) => {
   const id = uid(`cand:${i}`);
   const role = roleByKey.get(roleKey)!;
   const [uniEn] = UNIVERSITIES[i % UNIVERSITIES.length];

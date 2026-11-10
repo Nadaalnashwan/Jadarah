@@ -8,6 +8,29 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfileCompletion } from "@/services/candidate";
 import { AddItemForm, ProfileForm } from "./forms";
 
+type SectionTableName = "candidate_education" | "candidate_experience" | "candidate_projects" | "candidate_certifications";
+function Section({ title, table, items, render, fields, emptyLabel, deleteLabel }: { title: string; table: SectionTableName; items: { id: string }[]; render: (i: never) => React.ReactNode; fields: Parameters<typeof AddItemForm>[0]["fields"]; emptyLabel: string; deleteLabel: string }) {
+  return (
+    <Card>
+      <CardHeader title={title} />
+      <CardBody className="flex flex-col gap-3">
+        {items.length === 0 && <p className="text-sm text-subtle">{emptyLabel}</p>}
+        <ul className="flex flex-col gap-2">
+          {items.map((i) => (
+            <li key={i.id} className="flex items-start justify-between gap-3 rounded-xl border p-3">
+              <div className="min-w-0 text-sm">{render(i as never)}</div>
+              <form action={deleteProfileItem.bind(null, table, i.id)}>
+                <button className="flex size-8 items-center justify-center rounded-full text-subtle hover:bg-danger-soft hover:text-danger" aria-label={deleteLabel}><Trash2 className="size-4" /></button>
+              </form>
+            </li>
+          ))}
+        </ul>
+        <AddItemForm table={table} fields={fields} />
+      </CardBody>
+    </Card>
+  );
+}
+
 export default async function ProfilePage() {
   const session = await requireCandidate();
   const { t, locale } = await getI18n();
@@ -23,26 +46,6 @@ export default async function ProfilePage() {
     getProfileCompletion(supabase, uid, session.profile.full_name),
   ]);
   const languages = Array.isArray(cp?.languages) ? (cp!.languages as { name: string }[]).map((l) => l.name).join(", ") : "";
-
-  const Section = ({ title, table, items, render, fields }: { title: string; table: "candidate_education" | "candidate_experience" | "candidate_projects" | "candidate_certifications"; items: { id: string }[]; render: (i: never) => React.ReactNode; fields: Parameters<typeof AddItemForm>[0]["fields"] }) => (
-    <Card>
-      <CardHeader title={title} />
-      <CardBody className="flex flex-col gap-3">
-        {items.length === 0 && <p className="text-sm text-subtle">{L("Nothing added yet.", "لم يُضف شيء بعد.")}</p>}
-        <ul className="flex flex-col gap-2">
-          {items.map((i) => (
-            <li key={i.id} className="flex items-start justify-between gap-3 rounded-xl border p-3">
-              <div className="min-w-0 text-sm">{render(i as never)}</div>
-              <form action={deleteProfileItem.bind(null, table, i.id)}>
-                <button className="flex size-8 items-center justify-center rounded-full text-subtle hover:bg-danger-soft hover:text-danger" aria-label={t.common.delete}><Trash2 className="size-4" /></button>
-              </form>
-            </li>
-          ))}
-        </ul>
-        <AddItemForm table={table} fields={fields} />
-      </CardBody>
-    </Card>
-  );
 
   return (
     <>
@@ -64,16 +67,16 @@ export default async function ProfilePage() {
             />
           </CardBody>
         </Card>
-        <Section title={L("Experience", "الخبرة")} table="candidate_experience" items={exp ?? []}
+        <Section emptyLabel={L("Nothing added yet.", "لم يُضف شيء بعد.")} deleteLabel={t.common.delete} title={L("Experience", "الخبرة")} table="candidate_experience" items={exp ?? []}
           render={(i: { title: string; company: string; start_date: string; end_date: string | null; is_current: boolean; description: string | null }) => (<><p className="font-semibold">{i.title} · {i.company}</p><p className="text-xs text-subtle">{formatDate(i.start_date, locale)} – {i.is_current ? L("Present", "حتى الآن") : formatDate(i.end_date, locale)}</p>{i.description && <p className="mt-1 text-muted">{i.description}</p>}</>)}
           fields={[{ name: "title", label: L("Title", "المسمى"), required: true }, { name: "company", label: L("Company", "الشركة"), required: true }, { name: "location", label: L("Location", "الموقع") }, { name: "start_date", label: L("Start date", "تاريخ البدء"), type: "date", required: true }, { name: "end_date", label: L("End date", "تاريخ الانتهاء"), type: "date" }, { name: "is_current", label: L("I currently work here", "أعمل هنا حاليًا"), type: "checkbox" }, { name: "description", label: L("What you did", "ما أنجزته"), type: "textarea" }]} />
-        <Section title={L("Education", "التعليم")} table="candidate_education" items={edu ?? []}
+        <Section emptyLabel={L("Nothing added yet.", "لم يُضف شيء بعد.")} deleteLabel={t.common.delete} title={L("Education", "التعليم")} table="candidate_education" items={edu ?? []}
           render={(i: { degree: string; institution: string; end_date: string | null; grade: string | null }) => (<><p className="font-semibold">{i.degree}</p><p className="text-xs text-subtle">{i.institution} · {formatDate(i.end_date, locale, { year: "numeric" })}{i.grade ? ` · ${i.grade}` : ""}</p></>)}
           fields={[{ name: "institution", label: L("Institution", "المؤسسة"), required: true }, { name: "degree", label: L("Degree", "الدرجة"), required: true }, { name: "field", label: L("Field", "التخصص") }, { name: "start_date", label: L("Start", "البداية"), type: "date" }, { name: "end_date", label: L("End", "النهاية"), type: "date" }, { name: "grade", label: L("Grade", "التقدير") }]} />
-        <Section title={L("Projects", "المشاريع")} table="candidate_projects" items={projects ?? []}
+        <Section emptyLabel={L("Nothing added yet.", "لم يُضف شيء بعد.")} deleteLabel={t.common.delete} title={L("Projects", "المشاريع")} table="candidate_projects" items={projects ?? []}
           render={(i: { title: string; description: string | null; url: string | null }) => (<><p className="font-semibold">{i.title}</p>{i.description && <p className="text-muted">{i.description}</p>}{i.url && <a href={i.url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary dark:text-lavender" dir="ltr">{i.url}</a>}</>)}
           fields={[{ name: "title", label: L("Title", "العنوان"), required: true }, { name: "description", label: L("Description", "الوصف"), type: "textarea" }, { name: "url", label: L("Link", "الرابط"), type: "url" }]} />
-        <Section title={L("Certifications", "الشهادات")} table="candidate_certifications" items={certs ?? []}
+        <Section emptyLabel={L("Nothing added yet.", "لم يُضف شيء بعد.")} deleteLabel={t.common.delete} title={L("Certifications", "الشهادات")} table="candidate_certifications" items={certs ?? []}
           render={(i: { name: string; issuer: string | null; issue_date: string | null }) => (<><p className="font-semibold">{i.name}</p><p className="text-xs text-subtle">{i.issuer ?? ""} {i.issue_date ? `· ${formatDate(i.issue_date, locale)}` : ""}</p></>)}
           fields={[{ name: "name", label: L("Name", "الاسم"), required: true }, { name: "issuer", label: L("Issuer", "الجهة المانحة") }, { name: "issue_date", label: L("Issue date", "تاريخ الإصدار"), type: "date" }, { name: "credential_url", label: L("Credential link", "رابط التحقق"), type: "url" }]} />
       </div>
