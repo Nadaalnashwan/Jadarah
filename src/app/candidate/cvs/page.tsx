@@ -13,7 +13,9 @@ export default async function CvsPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("candidate_documents")
-    .select("id, file_name, label, version, is_primary, size_bytes, mime_type, parse_status, parsed_data, created_at")
+    .select(
+      "id, file_name, label, version, is_primary, size_bytes, mime_type, parse_status, parsed_data, created_at",
+    )
     .eq("candidate_id", session.userId)
     .eq("kind", "cv")
     .is("deleted_at", null)
@@ -32,7 +34,13 @@ export default async function CvsPage() {
       />
       <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
         <Card>
-          <CardHeader title={L("Upload a new version", "رفع نسخة جديدة")} description={L("PDF or Word, up to 10 MB. Uploads never overwrite earlier versions.", "PDF أو Word حتى 10 ميجابايت. الرفع لا يستبدل النسخ السابقة.")} />
+          <CardHeader
+            title={L("Upload a new version", "رفع نسخة جديدة")}
+            description={L(
+              "PDF or Word, up to 10 MB. Uploads never overwrite earlier versions.",
+              "PDF أو Word حتى 10 ميجابايت. الرفع لا يستبدل النسخ السابقة.",
+            )}
+          />
           <CardBody>
             <CvUploader userId={session.userId} />
           </CardBody>
@@ -40,9 +48,22 @@ export default async function CvsPage() {
         <Card>
           <CardHeader
             title={L("Versions", "النسخ")}
-            description={ai.configured ? L(`Parsing uses ${ai.provider} — you review every extracted field.`, `يستخدم التحليل ${ai.provider} — وتراجع كل حقل مستخرج.`) : t.common.ruleBased}
+            description={
+              ai.configured
+                ? L(
+                    `Parsing uses ${ai.provider} — you review every extracted field.`,
+                    `يستخدم التحليل ${ai.provider} — وتراجع كل حقل مستخرج.`,
+                  )
+                : t.common.ruleBased
+            }
           />
-          <CardBody>{docs.length ? <CvList docs={docs} /> : <EmptyState title={L("No CV uploaded yet", "لم تُرفع أي سيرة ذاتية بعد")} />}</CardBody>
+          <CardBody>
+            {docs.length ? (
+              <CvList docs={docs} />
+            ) : (
+              <EmptyState title={L("No CV uploaded yet", "لم تُرفع أي سيرة ذاتية بعد")} />
+            )}
+          </CardBody>
         </Card>
       </div>
     </>

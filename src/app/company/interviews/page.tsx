@@ -14,7 +14,9 @@ export default async function InterviewsPage() {
   // RLS returns all company interviews for recruiters and only assigned ones for interviewers.
   const { data } = await supabase
     .from("interviews")
-    .select("id, title, type, status, scheduled_at, timezone, application:applications(job:jobs(title_en, title_ar), candidate:profiles!applications_candidate_id_fkey(full_name)), interview_evaluations(interviewer_id)")
+    .select(
+      "id, title, type, status, scheduled_at, timezone, application:applications(job:jobs(title_en, title_ar), candidate:profiles!applications_candidate_id_fkey(full_name)), interview_evaluations(interviewer_id)",
+    )
     .eq("company_id", s.activeMembership.company_id)
     .order("scheduled_at", { ascending: false });
   const rows = data ?? [];
@@ -24,25 +26,74 @@ export default async function InterviewsPage() {
     const mine = r.interview_evaluations.some((e) => e.interviewer_id === s.userId);
     return (
       <li>
-        <Link href={`/company/interviews/${r.id}`} className="flex flex-wrap items-center gap-4 rounded-2xl border p-4 transition hover:border-primary/40">
-          <span className="flex size-11 items-center justify-center rounded-xl bg-accent-soft text-primary dark:text-lavender"><CalendarClock className="size-5" /></span>
-          <span className="min-w-0 flex-1">
-            <span className="block font-semibold">{r.application?.candidate?.full_name} · {pick(r.application?.job, "title", locale)}</span>
-            <span className="text-xs text-subtle">{r.title} · {formatDateTime(r.scheduled_at, locale, r.timezone)}</span>
+        <Link
+          href={`/company/interviews/${r.id}`}
+          className="hover:border-primary/40 flex flex-wrap items-center gap-4 rounded-2xl border p-4 transition"
+        >
+          <span className="bg-accent-soft text-primary dark:text-lavender flex size-11 items-center justify-center rounded-xl">
+            <CalendarClock className="size-5" />
           </span>
-          {s.activeMembership.role === "interviewer" && <Badge tone={mine ? "positive" : "progress"}>{mine ? L("Evaluated", "تم التقييم") : L("Evaluation due", "التقييم مطلوب")}</Badge>}
-          <Badge tone={r.status === "completed" ? "positive" : r.status === "cancelled" ? "muted" : "progress"}>{r.status === "scheduled" ? L("Scheduled", "مجدولة") : r.status === "completed" ? L("Completed", "مكتملة") : L("Cancelled", "ملغاة")}</Badge>
+          <span className="min-w-0 flex-1">
+            <span className="block font-semibold">
+              {r.application?.candidate?.full_name} · {pick(r.application?.job, "title", locale)}
+            </span>
+            <span className="text-subtle text-xs">
+              {r.title} · {formatDateTime(r.scheduled_at, locale, r.timezone)}
+            </span>
+          </span>
+          {s.activeMembership.role === "interviewer" && (
+            <Badge tone={mine ? "positive" : "progress"}>
+              {mine ? L("Evaluated", "تم التقييم") : L("Evaluation due", "التقييم مطلوب")}
+            </Badge>
+          )}
+          <Badge
+            tone={r.status === "completed" ? "positive" : r.status === "cancelled" ? "muted" : "progress"}
+          >
+            {r.status === "scheduled"
+              ? L("Scheduled", "مجدولة")
+              : r.status === "completed"
+                ? L("Completed", "مكتملة")
+                : L("Cancelled", "ملغاة")}
+          </Badge>
         </Link>
       </li>
     );
   };
   return (
     <>
-      <PageHeader title={t.company.nav.interviews} description={L("Interviews can only be created for shortlisted candidates.", "لا يمكن إنشاء مقابلات إلا للمرشحين في القائمة المختصرة.")} />
-      {rows.length === 0 ? <Card><EmptyState title={L("No interviews yet", "لا توجد مقابلات بعد")} /></Card> : (
+      <PageHeader
+        title={t.company.nav.interviews}
+        description={L(
+          "Interviews can only be created for shortlisted candidates.",
+          "لا يمكن إنشاء مقابلات إلا للمرشحين في القائمة المختصرة.",
+        )}
+      />
+      {rows.length === 0 ? (
+        <Card>
+          <EmptyState title={L("No interviews yet", "لا توجد مقابلات بعد")} />
+        </Card>
+      ) : (
         <div className="flex flex-col gap-8">
-          <section><h2 className="mb-3 font-bold">{L("Upcoming", "القادمة")}</h2>{upcoming.length ? <ul className="flex flex-col gap-2">{upcoming.map((r) => <Row key={r.id} r={r} />)}</ul> : <p className="text-sm text-subtle">—</p>}</section>
-          <section><h2 className="mb-3 font-bold">{L("History", "السجل")}</h2><ul className="flex flex-col gap-2">{past.map((r) => <Row key={r.id} r={r} />)}</ul></section>
+          <section>
+            <h2 className="mb-3 font-bold">{L("Upcoming", "القادمة")}</h2>
+            {upcoming.length ? (
+              <ul className="flex flex-col gap-2">
+                {upcoming.map((r) => (
+                  <Row key={r.id} r={r} />
+                ))}
+              </ul>
+            ) : (
+              <p className="text-subtle text-sm">—</p>
+            )}
+          </section>
+          <section>
+            <h2 className="mb-3 font-bold">{L("History", "السجل")}</h2>
+            <ul className="flex flex-col gap-2">
+              {past.map((r) => (
+                <Row key={r.id} r={r} />
+              ))}
+            </ul>
+          </section>
         </div>
       )}
     </>

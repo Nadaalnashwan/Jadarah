@@ -21,5 +21,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin/demo", label: n.demo, icon: "FlaskConical" },
     { href: "/admin/notifications", label: t.common.notifications, icon: "Bell" },
   ];
-  return <WorkspaceShell session={session} nav={nav} area={t.roles.super_admin} notificationsHref="/admin/notifications">{children}</WorkspaceShell>;
+  return (
+    <WorkspaceShell
+      session={session}
+      nav={nav}
+      area={t.roles.super_admin}
+      notificationsHref="/admin/notifications"
+    >
+      {children}
+    </WorkspaceShell>
+  );
 }

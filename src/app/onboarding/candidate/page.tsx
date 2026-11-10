@@ -25,13 +25,27 @@ export default async function CandidateOnboarding() {
       </header>
       <main id="main" className="mx-auto max-w-3xl px-4 pb-20">
         <p className="eyebrow mb-3">{L("Welcome", "أهلًا بك")}</p>
-        <h1 className="editorial text-4xl font-extrabold sm:text-5xl">{L("Let's build your evidence profile.", "لنبنِ ملفك المدعوم بالأدلة.")}</h1>
-        <p className="mt-3 max-w-xl text-muted">
-          {L("Three quick steps. You can save and finish the rest later from your profile.", "ثلاث خطوات سريعة. يمكنك الحفظ وإكمال البقية لاحقًا من ملفك.")}
+        <h1 className="editorial text-4xl font-extrabold sm:text-5xl">
+          {L("Let's build your evidence profile.", "لنبنِ ملفك المدعوم بالأدلة.")}
+        </h1>
+        <p className="text-muted mt-3 max-w-xl">
+          {L(
+            "Three quick steps. You can save and finish the rest later from your profile.",
+            "ثلاث خطوات سريعة. يمكنك الحفظ وإكمال البقية لاحقًا من ملفك.",
+          )}
         </p>
         <CandidateOnboardingForm
-          defaults={{ full_name: session.profile.full_name, headline: cp?.headline ?? "", city: cp?.city ?? "", summary: cp?.summary ?? "" }}
-          skills={(skills ?? []).map((s) => ({ id: s.id, name: locale === "ar" ? s.name_ar : s.name_en, category: s.category?.slug ?? "" }))}
+          defaults={{
+            full_name: session.profile.full_name,
+            headline: cp?.headline ?? "",
+            city: cp?.city ?? "",
+            summary: cp?.summary ?? "",
+          }}
+          skills={(skills ?? []).map((s) => ({
+            id: s.id,
+            name: locale === "ar" ? s.name_ar : s.name_en,
+            category: s.category?.slug ?? "",
+          }))}
         />
       </main>
     </div>

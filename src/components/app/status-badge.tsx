@@ -11,7 +11,14 @@ export function StatusBadge({ status, t }: { status: ApplicationStatus; t: Messa
 }
 
 export function JobStatusBadge({ status, t }: { status: keyof Messages["jobStatus"]; t: Messages }) {
-  const tone = status === "published" ? "positive" : status === "draft" ? "neutral" : status === "paused" ? "progress" : "muted";
+  const tone =
+    status === "published"
+      ? "positive"
+      : status === "draft"
+        ? "neutral"
+        : status === "paused"
+          ? "progress"
+          : "muted";
   return (
     <Badge tone={tone} dot>
       {t.jobStatus[status]}
@@ -20,7 +27,12 @@ export function JobStatusBadge({ status, t }: { status: keyof Messages["jobStatu
 }
 
 export function CompanyStatusBadge({ status, t }: { status: keyof Messages["companyStatus"]; t: Messages }) {
-  const tone = status === "approved" ? "positive" : status === "rejected" || status === "suspended" ? "negative" : "progress";
+  const tone =
+    status === "approved"
+      ? "positive"
+      : status === "rejected" || status === "suspended"
+        ? "negative"
+        : "progress";
   return (
     <Badge tone={tone} dot>
       {t.companyStatus[status]}

@@ -20,7 +20,14 @@ describe.skipIf(!integrationEnabled)("RLS & authorization (live Supabase)", () =
 
   it("candidates cannot see internal notes, status reasons, evaluations or answer keys", async () => {
     const c = await as("candidate01");
-    for (const table of ["application_notes", "application_status_history", "interview_evaluations", "assessment_options", "assessment_questions", "assessment_evaluations"] as const) {
+    for (const table of [
+      "application_notes",
+      "application_status_history",
+      "interview_evaluations",
+      "assessment_options",
+      "assessment_questions",
+      "assessment_evaluations",
+    ] as const) {
       const { data, error } = await c.from(table).select("id");
       expect(error).toBeNull();
       expect(data).toEqual([]);

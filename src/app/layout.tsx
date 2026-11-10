@@ -21,7 +21,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const ar = locale === "ar";
   return {
     metadataBase: new URL(publicEnv.siteUrl),
-    title: { default: ar ? "جدارة | أكثر من سيرة ذاتية" : "JADARAH | Beyond What's Seen", template: ar ? "%s · جدارة" : "%s · JADARAH" },
+    title: {
+      default: ar ? "جدارة | أكثر من سيرة ذاتية" : "JADARAH | Beyond What's Seen",
+      template: ar ? "%s · جدارة" : "%s · JADARAH",
+    },
     description: ar
       ? "منصة ذكاء المواهب التي تكشف القدرات الحقيقية بالأدلة والتقييم العملي."
       : "The talent intelligence platform that reveals real capability through evidence and practical assessment.",
@@ -51,12 +54,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="min-h-dvh">
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
+          className="focus:bg-primary focus:text-primary-foreground sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-[100] focus:rounded-full focus:px-4 focus:py-2"
         >
           {locale === "ar" ? "تخطَّ إلى المحتوى" : "Skip to content"}
         </a>
         <I18nProvider locale={locale}>{children}</I18nProvider>
-        <Toaster position={locale === "ar" ? "top-left" : "top-right"} richColors closeButton dir={dir(locale)} />
+        <Toaster
+          position={locale === "ar" ? "top-left" : "top-right"}
+          richColors
+          closeButton
+          dir={dir(locale)}
+        />
       </body>
     </html>
   );

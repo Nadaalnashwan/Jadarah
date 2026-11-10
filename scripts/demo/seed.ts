@@ -13,10 +13,14 @@ import { config } from "dotenv";
 config({ path: ".env.local" });
 
 async function main() {
-  if (process.env.JADARAH_ENV === "production") throw new Error("Refusing to seed demo data: JADARAH_ENV=production");
+  if (process.env.JADARAH_ENV === "production")
+    throw new Error("Refusing to seed demo data: JADARAH_ENV=production");
   const dbUrl = process.env.SUPABASE_DB_URL;
   const password = process.env.DEMO_USER_PASSWORD;
-  if (!dbUrl) throw new Error("SUPABASE_DB_URL is required (Supabase → Project Settings → Database → connection string).");
+  if (!dbUrl)
+    throw new Error(
+      "SUPABASE_DB_URL is required (Supabase → Project Settings → Database → connection string).",
+    );
   if (!password || password.length < 12) throw new Error("DEMO_USER_PASSWORD (≥12 chars) is required.");
   const { default: pg } = await import("pg").catch(() => {
     throw new Error("Install the optional dev dependency first: npm i -D pg @types/pg");

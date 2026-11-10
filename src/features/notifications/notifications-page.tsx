@@ -41,12 +41,23 @@ export async function NotificationsPage() {
         ) : (
           <ul className="divide-y">
             {items.map((n) => (
-              <li key={n.id} className={cn("flex items-start gap-4 p-4 sm:p-5", !n.read_at && "bg-accent-soft/40")}>
-                <span className={cn("mt-1.5 size-2 shrink-0 rounded-full", n.read_at ? "bg-transparent" : "bg-primary")} aria-hidden />
+              <li
+                key={n.id}
+                className={cn("flex items-start gap-4 p-4 sm:p-5", !n.read_at && "bg-accent-soft/40")}
+              >
+                <span
+                  className={cn(
+                    "mt-1.5 size-2 shrink-0 rounded-full",
+                    n.read_at ? "bg-transparent" : "bg-primary",
+                  )}
+                  aria-hidden
+                />
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold">{pick(n, "title", locale)}</p>
-                  {pick(n, "body", locale) && <p className="mt-0.5 text-sm text-muted">{pick(n, "body", locale)}</p>}
-                  <p className="mt-1 text-xs text-subtle">{formatRelative(n.created_at, locale)}</p>
+                  {pick(n, "body", locale) && (
+                    <p className="text-muted mt-0.5 text-sm">{pick(n, "body", locale)}</p>
+                  )}
+                  <p className="text-subtle mt-1 text-xs">{formatRelative(n.created_at, locale)}</p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   {n.link && (
@@ -56,7 +67,11 @@ export async function NotificationsPage() {
                   )}
                   {!n.read_at && (
                     <form action={markNotificationRead.bind(null, n.id)}>
-                      <Button variant="ghost" size="sm" aria-label={locale === "ar" ? "تعليم كمقروء" : "Mark as read"}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        aria-label={locale === "ar" ? "تعليم كمقروء" : "Mark as read"}
+                      >
                         <CheckCheck />
                       </Button>
                     </form>

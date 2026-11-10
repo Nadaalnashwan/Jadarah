@@ -9,7 +9,11 @@ export async function getApplicationCvUrl(applicationId: string): Promise<Action
   await requireCompanyMember();
   const { locale } = await getI18n();
   const supabase = await createClient();
-  const { data: app } = await supabase.from("applications").select("cv:candidate_documents(bucket, storage_path, file_name)").eq("id", applicationId).single();
+  const { data: app } = await supabase
+    .from("applications")
+    .select("cv:candidate_documents(bucket, storage_path, file_name)")
+    .eq("id", applicationId)
+    .single();
   const cv = app?.cv;
   if (!cv) return { ok: false, error: localizeError({ code: "42501" }, locale) };
   const { data, error } = await supabase.storage.from(cv.bucket).createSignedUrl(cv.storage_path, 60);

@@ -24,8 +24,22 @@ export const TERMINAL_STATUSES: readonly ApplicationStatus[] = ["hired", "reject
 export const TRANSITIONS: Record<ApplicationStatus, readonly ApplicationStatus[]> = {
   submitted: ["under_review", "assessment_pending", "shortlisted", "rejected", "hired", "withdrawn"],
   under_review: ["assessment_pending", "shortlisted", "rejected", "hired", "withdrawn"],
-  assessment_pending: ["assessment_completed", "under_review", "shortlisted", "rejected", "hired", "withdrawn"],
-  assessment_completed: ["under_review", "assessment_pending", "shortlisted", "rejected", "hired", "withdrawn"],
+  assessment_pending: [
+    "assessment_completed",
+    "under_review",
+    "shortlisted",
+    "rejected",
+    "hired",
+    "withdrawn",
+  ],
+  assessment_completed: [
+    "under_review",
+    "assessment_pending",
+    "shortlisted",
+    "rejected",
+    "hired",
+    "withdrawn",
+  ],
   shortlisted: ["assessment_pending", "interview_scheduled", "rejected", "hired", "withdrawn"],
   interview_scheduled: ["interview_completed", "shortlisted", "rejected", "hired", "withdrawn"],
   interview_completed: ["interview_scheduled", "shortlisted", "rejected", "hired", "withdrawn"],
@@ -63,7 +77,9 @@ export function isTerminal(status: ApplicationStatus): boolean {
 export function canCreateInterview(app: { status: ApplicationStatus; was_shortlisted: boolean }): boolean {
   return (
     app.was_shortlisted &&
-    (app.status === "shortlisted" || app.status === "interview_scheduled" || app.status === "interview_completed")
+    (app.status === "shortlisted" ||
+      app.status === "interview_scheduled" ||
+      app.status === "interview_completed")
   );
 }
 

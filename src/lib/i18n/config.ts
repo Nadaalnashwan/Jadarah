@@ -16,13 +16,24 @@ export function intlLocale(locale: Locale): string {
   return locale === "ar" ? "ar-SA-u-ca-gregory-nu-latn" : "en-GB";
 }
 
-export function formatDate(value: string | Date | null | undefined, locale: Locale, opts?: Intl.DateTimeFormatOptions) {
+export function formatDate(
+  value: string | Date | null | undefined,
+  locale: Locale,
+  opts?: Intl.DateTimeFormatOptions,
+) {
   if (!value) return "—";
   const d = typeof value === "string" ? new Date(value) : value;
-  return new Intl.DateTimeFormat(intlLocale(locale), opts ?? { day: "numeric", month: "short", year: "numeric" }).format(d);
+  return new Intl.DateTimeFormat(
+    intlLocale(locale),
+    opts ?? { day: "numeric", month: "short", year: "numeric" },
+  ).format(d);
 }
 
-export function formatDateTime(value: string | Date | null | undefined, locale: Locale, timeZone = "Asia/Riyadh") {
+export function formatDateTime(
+  value: string | Date | null | undefined,
+  locale: Locale,
+  timeZone = "Asia/Riyadh",
+) {
   if (!value) return "—";
   const d = typeof value === "string" ? new Date(value) : value;
   return new Intl.DateTimeFormat(intlLocale(locale), {
@@ -53,14 +64,22 @@ export function formatRelative(value: string | Date, locale: Locale) {
 }
 
 /** Pick the localized column of a bilingual row: pick(job, "title", "ar") -> job.title_ar */
-export function pick<T extends Record<string, unknown>>(row: T | null | undefined, base: string, locale: Locale): string {
+export function pick<T extends Record<string, unknown>>(
+  row: T | null | undefined,
+  base: string,
+  locale: Locale,
+): string {
   if (!row) return "";
   const primary = row[`${base}_${locale}`];
   const fallback = row[`${base}_${locale === "ar" ? "en" : "ar"}`];
   return String((primary as string) || (fallback as string) || "");
 }
 
-export function pickArray<T extends Record<string, unknown>>(row: T | null | undefined, base: string, locale: Locale): string[] {
+export function pickArray<T extends Record<string, unknown>>(
+  row: T | null | undefined,
+  base: string,
+  locale: Locale,
+): string[] {
   if (!row) return [];
   const primary = row[`${base}_${locale}`] as string[] | undefined;
   const fallback = row[`${base}_${locale === "ar" ? "en" : "ar"}`] as string[] | undefined;

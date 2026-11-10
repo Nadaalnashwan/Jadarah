@@ -26,9 +26,13 @@ export async function signInAction(_: AuthState, form: FormData): Promise<AuthSt
   if (!parsed.success) return { error: t.auth.invalidCredentials };
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email: parsed.data.email, password: parsed.data.password });
+  const { error } = await supabase.auth.signInWithPassword({
+    email: parsed.data.email,
+    password: parsed.data.password,
+  });
   if (error) {
-    if (error.code === "email_not_confirmed") return { error: t.auth.emailNotConfirmed, needsConfirmation: true, email: parsed.data.email };
+    if (error.code === "email_not_confirmed")
+      return { error: t.auth.emailNotConfirmed, needsConfirmation: true, email: parsed.data.email };
     if (error.status === 429) return { error: t.auth.rateLimited };
     return { error: t.auth.invalidCredentials };
   }
@@ -62,7 +66,9 @@ export async function signUpAction(_: AuthState, form: FormData): Promise<AuthSt
     email,
     password,
     options: {
-      emailRedirectTo: callbackUrl(accountType === "company" ? "/onboarding/company" : "/onboarding/candidate"),
+      emailRedirectTo: callbackUrl(
+        accountType === "company" ? "/onboarding/company" : "/onboarding/candidate",
+      ),
       // account_type is a hint only: the database trigger allows just 'candidate' | 'company' and never grants privileged roles.
       data: { full_name: fullName, account_type: accountType, locale, consent: "true" },
     },
@@ -99,7 +105,9 @@ export async function forgotPasswordAction(_: AuthState, form: FormData): Promis
   const parsed = emailOnlySchema.safeParse(Object.fromEntries(form));
   if (!parsed.success) return { fieldErrors: { email: t.common.required } };
   const supabase = await createClient();
-  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, { redirectTo: callbackUrl("/reset-password") });
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+    redirectTo: callbackUrl("/reset-password"),
+  });
   if (error?.status === 429) return { error: t.auth.rateLimited };
   return { info: t.auth.resetSent };
 }

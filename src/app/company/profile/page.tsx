@@ -12,11 +12,32 @@ export default async function CompanyProfilePage() {
   const { t, locale } = await getI18n();
   const L = tx(locale);
   const supabase = await createClient();
-  const { data: c } = await supabase.from("company_profiles").select("*").eq("id", s.activeMembership.company_id).single();
+  const { data: c } = await supabase
+    .from("company_profiles")
+    .select("*")
+    .eq("id", s.activeMembership.company_id)
+    .single();
   return (
     <>
-      <PageHeader title={t.company.nav.profile} actions={<><CompanyStatusBadge status={c!.status} t={t} /><Link href="/company/verification" className="text-sm font-semibold text-primary dark:text-lavender">{L("Verification", "التحقق")}</Link></>} />
-      <Card><CardBody><CompanyForm mode="edit" defaults={{ ...c!, size_range: c!.size_range ?? "11-50" }} /></CardBody></Card>
+      <PageHeader
+        title={t.company.nav.profile}
+        actions={
+          <>
+            <CompanyStatusBadge status={c!.status} t={t} />
+            <Link
+              href="/company/verification"
+              className="text-primary dark:text-lavender text-sm font-semibold"
+            >
+              {L("Verification", "التحقق")}
+            </Link>
+          </>
+        }
+      />
+      <Card>
+        <CardBody>
+          <CompanyForm mode="edit" defaults={{ ...c!, size_range: c!.size_range ?? "11-50" }} />
+        </CardBody>
+      </Card>
     </>
   );
 }

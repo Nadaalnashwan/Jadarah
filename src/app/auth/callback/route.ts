@@ -35,6 +35,9 @@ export async function GET(request: NextRequest) {
   // The email may already be confirmed by Supabase even if the code exchange failed
   // (e.g. link opened in a different browser): ask the user to sign in.
   target.pathname = "/sign-in";
-  target.searchParams.set("link", url.searchParams.get("error_code") === "otp_expired" ? "expired" : "invalid");
+  target.searchParams.set(
+    "link",
+    url.searchParams.get("error_code") === "otp_expired" ? "expired" : "invalid",
+  );
   return NextResponse.redirect(target);
 }

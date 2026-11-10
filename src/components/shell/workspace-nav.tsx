@@ -4,15 +4,59 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import {
-  BarChart3, Bell, Bot, BookOpen, Briefcase, Building2, CalendarClock, ClipboardCheck, Cpu, FileText, FlaskConical,
-  Gauge, GraduationCap, LayoutDashboard, ListChecks, Menu, Route, ScrollText, Search, Send, Settings, ShieldCheck,
-  Sparkles, UserRound, Users, X,
+  BarChart3,
+  Bell,
+  Bot,
+  BookOpen,
+  Briefcase,
+  Building2,
+  CalendarClock,
+  ClipboardCheck,
+  Cpu,
+  FileText,
+  FlaskConical,
+  Gauge,
+  GraduationCap,
+  LayoutDashboard,
+  ListChecks,
+  Menu,
+  Route,
+  ScrollText,
+  Search,
+  Send,
+  Settings,
+  ShieldCheck,
+  Sparkles,
+  UserRound,
+  Users,
+  X,
 } from "lucide-react";
 
 const ICONS = {
-  BarChart3, Bell, Bot, BookOpen, Briefcase, Building2, CalendarClock, ClipboardCheck, Cpu, FileText, FlaskConical,
-  Gauge, GraduationCap, LayoutDashboard, ListChecks, Route, ScrollText, Search, Send, Settings, ShieldCheck, Sparkles,
-  UserRound, Users,
+  BarChart3,
+  Bell,
+  Bot,
+  BookOpen,
+  Briefcase,
+  Building2,
+  CalendarClock,
+  ClipboardCheck,
+  Cpu,
+  FileText,
+  FlaskConical,
+  Gauge,
+  GraduationCap,
+  LayoutDashboard,
+  ListChecks,
+  Route,
+  ScrollText,
+  Search,
+  Send,
+  Settings,
+  ShieldCheck,
+  Sparkles,
+  UserRound,
+  Users,
 } as const;
 export type IconName = keyof typeof ICONS;
 import { cn } from "@/lib/utils";
@@ -29,7 +73,15 @@ function isActive(pathname: string, item: NavItem) {
   return item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(item.href + "/");
 }
 
-function Items({ items, onNavigate, layoutKey }: { items: NavItem[]; onNavigate?: () => void; layoutKey: string }) {
+function Items({
+  items,
+  onNavigate,
+  layoutKey,
+}: {
+  items: NavItem[];
+  onNavigate?: () => void;
+  layoutKey: string;
+}) {
   const pathname = usePathname();
   return (
     <ul className="flex flex-col gap-0.5 px-3">
@@ -50,15 +102,19 @@ function Items({ items, onNavigate, layoutKey }: { items: NavItem[]; onNavigate?
               {active && (
                 <motion.span
                   layoutId={`nav-active-${layoutKey}`}
-                  className="absolute inset-0 -z-0 rounded-xl bg-accent-soft"
+                  className="bg-accent-soft absolute inset-0 -z-0 rounded-xl"
                   transition={{ type: "spring", stiffness: 420, damping: 34 }}
                 />
               )}
-              {active && <span className="absolute start-0 top-2 bottom-2 w-1 rounded-full bg-primary" aria-hidden />}
+              {active && (
+                <span className="bg-primary absolute start-0 top-2 bottom-2 w-1 rounded-full" aria-hidden />
+              )}
               <Icon className={cn("relative size-4", active && "text-primary dark:text-lavender")} />
               <span className="relative flex-1">{item.label}</span>
               {item.badge ? (
-                <span className="ltr-nums relative rounded-full bg-primary px-1.5 text-[0.65rem] font-bold text-white">{item.badge}</span>
+                <span className="ltr-nums bg-primary relative rounded-full px-1.5 text-[0.65rem] font-bold text-white">
+                  {item.badge}
+                </span>
               ) : null}
             </Link>
           </li>
@@ -85,7 +141,7 @@ export function WorkspaceNav({ items, mobile }: { items: NavItem[]; mobile?: boo
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex size-9 items-center justify-center rounded-full hover:bg-surface-2"
+        className="hover:bg-surface-2 flex size-9 items-center justify-center rounded-full"
         aria-label="Menu"
         aria-expanded={open}
       >
@@ -95,7 +151,7 @@ export function WorkspaceNav({ items, mobile }: { items: NavItem[]; mobile?: boo
         {open && (
           <>
             <motion.div
-              className="fixed inset-0 z-50 bg-navy/40 backdrop-blur-sm"
+              className="bg-navy/40 fixed inset-0 z-50 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -103,15 +159,22 @@ export function WorkspaceNav({ items, mobile }: { items: NavItem[]; mobile?: boo
             />
             <motion.nav
               aria-label="Workspace"
-              className="fixed inset-y-0 start-0 z-50 flex w-72 flex-col bg-surface py-4 shadow-2xl"
+              className="bg-surface fixed inset-y-0 start-0 z-50 flex w-72 flex-col py-4 shadow-2xl"
               initial={{ x: "var(--drawer-from)" }}
               animate={{ x: 0 }}
               exit={{ x: "var(--drawer-from)" }}
               transition={{ type: "spring", stiffness: 380, damping: 36 }}
-              style={{ ["--drawer-from" as string]: typeof document !== "undefined" && document.dir === "rtl" ? "100%" : "-100%" }}
+              style={{
+                ["--drawer-from" as string]:
+                  typeof document !== "undefined" && document.dir === "rtl" ? "100%" : "-100%",
+              }}
             >
               <div className="mb-3 flex justify-end px-3">
-                <button onClick={() => setOpen(false)} className="flex size-9 items-center justify-center rounded-full hover:bg-surface-2" aria-label="Close">
+                <button
+                  onClick={() => setOpen(false)}
+                  className="hover:bg-surface-2 flex size-9 items-center justify-center rounded-full"
+                  aria-label="Close"
+                >
                   <X className="size-5" />
                 </button>
               </div>

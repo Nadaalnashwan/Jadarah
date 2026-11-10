@@ -55,7 +55,10 @@ export function hasEvidence(skill: CandidateSkillRecord): boolean {
   return skill.source !== "self" || Boolean(skill.evidence && skill.evidence.trim().length > 0);
 }
 
-export function classifyRequirement(req: JobSkillRequirement, skill: CandidateSkillRecord | undefined): MatchStatus {
+export function classifyRequirement(
+  req: JobSkillRequirement,
+  skill: CandidateSkillRecord | undefined,
+): MatchStatus {
   if (!skill) return "missing";
   if (skill.level < req.min_level) return "partial";
   return hasEvidence(skill) ? "matched" : "unverified";
@@ -95,7 +98,9 @@ export function computeMatch(
   const meets = experience.candidate === null ? null : experience.candidate >= experience.required;
   if (experience.required > 0) {
     const expRatio =
-      experience.candidate === null ? 0 : Math.min(1, experience.candidate / Math.max(1, experience.required));
+      experience.candidate === null
+        ? 0
+        : Math.min(1, experience.candidate / Math.max(1, experience.required));
     score = possible > 0 ? score * 0.85 + expRatio * 15 : expRatio * 100;
   }
 

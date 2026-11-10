@@ -89,12 +89,36 @@ export const en = {
     solutionEyebrow: "The solution",
     solutionTitle: "One connected path from potential to decision.",
     stages: [
-      { key: "profile", title: "Profile", body: "Candidates describe experience, projects and goals in a structured, bilingual profile." },
-      { key: "skills", title: "Skills", body: "Skills are mapped to a shared taxonomy, each tagged with where the claim comes from." },
-      { key: "evidence", title: "Evidence", body: "CV extraction, projects and certifications are attached as evidence the candidate reviews." },
-      { key: "assessment", title: "Assessment", body: "Practical, timed assessments: objective items auto-scored, open work reviewed against rubrics." },
-      { key: "insights", title: "Insights", body: "Every requirement is classified as matched, partial, missing or unverified — with reasons." },
-      { key: "decision", title: "Human decision", body: "Recruiters shortlist, interview and hire. AI never decides." },
+      {
+        key: "profile",
+        title: "Profile",
+        body: "Candidates describe experience, projects and goals in a structured, bilingual profile.",
+      },
+      {
+        key: "skills",
+        title: "Skills",
+        body: "Skills are mapped to a shared taxonomy, each tagged with where the claim comes from.",
+      },
+      {
+        key: "evidence",
+        title: "Evidence",
+        body: "CV extraction, projects and certifications are attached as evidence the candidate reviews.",
+      },
+      {
+        key: "assessment",
+        title: "Assessment",
+        body: "Practical, timed assessments: objective items auto-scored, open work reviewed against rubrics.",
+      },
+      {
+        key: "insights",
+        title: "Insights",
+        body: "Every requirement is classified as matched, partial, missing or unverified — with reasons.",
+      },
+      {
+        key: "decision",
+        title: "Human decision",
+        body: "Recruiters shortlist, interview and hire. AI never decides.",
+      },
     ],
     showcaseEyebrow: "Inside the product",
     showcaseTitle: "Two workspaces. One source of truth.",
@@ -187,7 +211,13 @@ export const en = {
     rejected: "Not selected",
     withdrawn: "Withdrawn",
   },
-  jobStatus: { draft: "Draft", published: "Published", paused: "Paused", closed: "Closed", archived: "Archived" },
+  jobStatus: {
+    draft: "Draft",
+    published: "Published",
+    paused: "Paused",
+    closed: "Closed",
+    archived: "Archived",
+  },
   companyStatus: {
     pending: "Pending review",
     info_requested: "Information requested",

@@ -93,7 +93,8 @@ export function homeFor(session: SessionContext): string {
   if (session.isSuperAdmin) return "/admin";
   if (session.activeMembership) return "/company";
   if (session.profile.account_type === "company") return "/onboarding/company";
-  if (session.isCandidate) return session.profile.onboarding_completed ? "/candidate" : "/onboarding/candidate";
+  if (session.isCandidate)
+    return session.profile.onboarding_completed ? "/candidate" : "/onboarding/candidate";
   return "/";
 }
 

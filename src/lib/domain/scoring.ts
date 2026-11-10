@@ -20,7 +20,10 @@ export function isAutoScored(type: QuestionType, config?: { accepted_answers?: u
   return type === "short_answer" && Array.isArray(config?.accepted_answers);
 }
 
-export function requiresHumanReview(type: QuestionType, config?: { accepted_answers?: unknown } | null): boolean {
+export function requiresHumanReview(
+  type: QuestionType,
+  config?: { accepted_answers?: unknown } | null,
+): boolean {
   return !isAutoScored(type, config);
 }
 
@@ -41,7 +44,11 @@ export function scoreChoice(
   return hits === 1 && wrong === 0 && unique.length === 1 ? points : 0;
 }
 
-export function scoreShortAnswer(answer: string | null | undefined, accepted: readonly string[], points: number): number {
+export function scoreShortAnswer(
+  answer: string | null | undefined,
+  accepted: readonly string[],
+  points: number,
+): number {
   const normalized = (answer ?? "").trim().toLowerCase();
   return accepted.some((a) => a.trim().toLowerCase() === normalized) && normalized !== "" ? points : 0;
 }

@@ -1,6 +1,13 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { motion, useMotionValue, useReducedMotion, useSpring, useTransform, type MotionValue } from "motion/react";
+import {
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useSpring,
+  useTransform,
+  type MotionValue,
+} from "motion/react";
 import { ease } from "@/lib/motion";
 
 const LAYERS = [
@@ -48,7 +55,12 @@ export function SignatureLayers({ labels, className }: { labels: readonly string
 
   return (
     <div ref={ref} className={className}>
-      <svg viewBox="0 0 520 460" className="h-full w-full overflow-visible" role="img" aria-label={labels.join(" → ")}>
+      <svg
+        viewBox="0 0 520 460"
+        className="h-full w-full overflow-visible"
+        role="img"
+        aria-label={labels.join(" → ")}
+      >
         <defs>
           <linearGradient id="thread" x1="0" y1="1" x2="1" y2="0">
             <stop offset="0" stopColor="var(--lavender)" stopOpacity="0.2" />
@@ -144,7 +156,13 @@ function Layer({
         transition={{ duration: 0.9, delay: 0.15 + index * 0.16, ease: ease.out }}
       >
         <path d={d} fill={layer.fill} opacity={"opacity" in layer ? layer.opacity : 1} />
-        <circle cx={x0 + 80} cy={layer.y + h / 2 + 4} r="4" fill={index === 0 ? "var(--ivory)" : "var(--navy)"} opacity="0.85" />
+        <circle
+          cx={x0 + 80}
+          cy={layer.y + h / 2 + 4}
+          r="4"
+          fill={index === 0 ? "var(--ivory)" : "var(--navy)"}
+          opacity="0.85"
+        />
         <text
           x={x0 + 96}
           y={layer.y + h / 2 + 9}

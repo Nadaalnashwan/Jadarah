@@ -25,8 +25,16 @@ function PasswordInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
       <button
         type="button"
         onClick={() => setShow((s) => !s)}
-        className="absolute end-1.5 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-subtle hover:bg-surface-2 hover:text-foreground"
-        aria-label={show ? (locale === "ar" ? "إخفاء كلمة المرور" : "Hide password") : locale === "ar" ? "إظهار كلمة المرور" : "Show password"}
+        className="text-subtle hover:bg-surface-2 hover:text-foreground absolute end-1.5 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full"
+        aria-label={
+          show
+            ? locale === "ar"
+              ? "إخفاء كلمة المرور"
+              : "Hide password"
+            : locale === "ar"
+              ? "إظهار كلمة المرور"
+              : "Show password"
+        }
       >
         {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
       </button>
@@ -41,19 +49,30 @@ export function SignInForm({ next, linkError }: { next?: string; linkError?: str
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="editorial text-4xl font-extrabold">{t.auth.signInTitle}</h1>
-        <p className="mt-2 text-muted">{t.auth.signInBody}</p>
+        <p className="text-muted mt-2">{t.auth.signInBody}</p>
       </div>
       {linkError && <FormMessage tone="info">{t.auth.linkInvalid}</FormMessage>}
       <form action={action} className="flex flex-col gap-4" noValidate>
         <input type="hidden" name="next" value={next ?? ""} />
         <Field label={t.auth.email} htmlFor="email" required>
-          <Input id="email" name="email" type="email" autoComplete="email" required dir="ltr" defaultValue={state?.email} />
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            dir="ltr"
+            defaultValue={state?.email}
+          />
         </Field>
         <Field label={t.auth.password} htmlFor="password" required>
           <PasswordInput id="password" name="password" autoComplete="current-password" required />
         </Field>
         <div className="flex justify-end">
-          <Link href="/forgot-password" className="text-sm font-semibold text-primary hover:underline dark:text-lavender">
+          <Link
+            href="/forgot-password"
+            className="text-primary dark:text-lavender text-sm font-semibold hover:underline"
+          >
             {t.auth.forgot}
           </Link>
         </div>
@@ -63,9 +82,9 @@ export function SignInForm({ next, linkError }: { next?: string; linkError?: str
         </Button>
       </form>
       {state?.needsConfirmation && state.email && <ResendForm email={state.email} />}
-      <p className="text-center text-sm text-muted">
+      <p className="text-muted text-center text-sm">
         {t.auth.noAccount}{" "}
-        <Link href="/sign-up" className="font-semibold text-primary hover:underline dark:text-lavender">
+        <Link href="/sign-up" className="text-primary dark:text-lavender font-semibold hover:underline">
           {t.auth.signUp}
         </Link>
       </p>
@@ -101,7 +120,7 @@ export function SignUpForm({ initialType }: { initialType: "candidate" | "compan
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="editorial text-4xl font-extrabold">{t.auth.signUpTitle}</h1>
-        <p className="mt-2 text-muted">{t.auth.signUpBody}</p>
+        <p className="text-muted mt-2">{t.auth.signUpBody}</p>
       </div>
       <div role="radiogroup" aria-label={t.auth.signUpBody} className="grid grid-cols-2 gap-3">
         {types.map((o) => (
@@ -117,11 +136,15 @@ export function SignUpForm({ initialType }: { initialType: "candidate" | "compan
             )}
           >
             {type === o.key && (
-              <motion.span layoutId="acct-type" className="absolute inset-0 rounded-2xl ring-2 ring-primary" transition={{ type: "spring", stiffness: 400, damping: 32 }} />
+              <motion.span
+                layoutId="acct-type"
+                className="ring-primary absolute inset-0 rounded-2xl ring-2"
+                transition={{ type: "spring", stiffness: 400, damping: 32 }}
+              />
             )}
-            <o.icon className="size-5 text-primary dark:text-lavender" aria-hidden />
+            <o.icon className="text-primary dark:text-lavender size-5" aria-hidden />
             <span className="text-sm font-bold">{o.title}</span>
-            <span className="text-xs leading-snug text-muted">{o.body}</span>
+            <span className="text-muted text-xs leading-snug">{o.body}</span>
           </button>
         ))}
       </div>
@@ -131,36 +154,62 @@ export function SignUpForm({ initialType }: { initialType: "candidate" | "compan
           <Input id="fullName" name="fullName" autoComplete="name" required aria-invalid={!!fe.fullName} />
         </Field>
         <Field label={t.auth.email} htmlFor="email" error={fe.email} required>
-          <Input id="email" name="email" type="email" autoComplete="email" dir="ltr" required aria-invalid={!!fe.email} />
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            dir="ltr"
+            required
+            aria-invalid={!!fe.email}
+          />
         </Field>
-        <Field label={t.auth.password} htmlFor="password" hint={t.auth.passwordHint} error={fe.password} required>
-          <PasswordInput id="password" name="password" autoComplete="new-password" required aria-invalid={!!fe.password} />
+        <Field
+          label={t.auth.password}
+          htmlFor="password"
+          hint={t.auth.passwordHint}
+          error={fe.password}
+          required
+        >
+          <PasswordInput
+            id="password"
+            name="password"
+            autoComplete="new-password"
+            required
+            aria-invalid={!!fe.password}
+          />
         </Field>
         <Field label={t.auth.confirmPassword} htmlFor="confirmPassword" error={fe.confirmPassword} required>
-          <PasswordInput id="confirmPassword" name="confirmPassword" autoComplete="new-password" required aria-invalid={!!fe.confirmPassword} />
+          <PasswordInput
+            id="confirmPassword"
+            name="confirmPassword"
+            autoComplete="new-password"
+            required
+            aria-invalid={!!fe.confirmPassword}
+          />
         </Field>
-        <label className="flex items-start gap-3 text-sm text-muted">
+        <label className="text-muted flex items-start gap-3 text-sm">
           <Checkbox name="consent" required className="mt-1" aria-invalid={!!fe.consent} />
           <span>
             {t.auth.consent}{" "}
-            <Link href="/terms" className="font-semibold text-primary dark:text-lavender">
+            <Link href="/terms" className="text-primary dark:text-lavender font-semibold">
               {t.landing.footerTerms}
             </Link>{" "}
             ·{" "}
-            <Link href="/privacy" className="font-semibold text-primary dark:text-lavender">
+            <Link href="/privacy" className="text-primary dark:text-lavender font-semibold">
               {t.landing.footerPrivacy}
             </Link>
           </span>
         </label>
-        {fe.consent && <p className="text-xs font-medium text-danger">{fe.consent}</p>}
+        {fe.consent && <p className="text-danger text-xs font-medium">{fe.consent}</p>}
         {state?.error && <FormMessage>{state.error}</FormMessage>}
         <Button type="submit" size="lg" loading={pending}>
           {t.auth.signUp}
         </Button>
       </form>
-      <p className="text-center text-sm text-muted">
+      <p className="text-muted text-center text-sm">
         {t.auth.haveAccount}{" "}
-        <Link href="/sign-in" className="font-semibold text-primary hover:underline dark:text-lavender">
+        <Link href="/sign-in" className="text-primary dark:text-lavender font-semibold hover:underline">
           {t.auth.signIn}
         </Link>
       </p>
@@ -175,7 +224,7 @@ export function ForgotPasswordForm() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="editorial text-4xl font-extrabold">{t.auth.forgotTitle}</h1>
-        <p className="mt-2 text-muted">{t.auth.forgotBody}</p>
+        <p className="text-muted mt-2">{t.auth.forgotBody}</p>
       </div>
       <form action={action} className="flex flex-col gap-4" noValidate>
         <Field label={t.auth.email} htmlFor="email" error={state?.fieldErrors?.email} required>
@@ -187,7 +236,7 @@ export function ForgotPasswordForm() {
           {t.auth.sendReset}
         </Button>
       </form>
-      <Link href="/sign-in" className="text-center text-sm font-semibold text-primary dark:text-lavender">
+      <Link href="/sign-in" className="text-primary dark:text-lavender text-center text-sm font-semibold">
         {t.auth.signIn}
       </Link>
     </div>
@@ -202,7 +251,13 @@ export function ResetPasswordForm() {
     <div className="flex flex-col gap-6">
       <h1 className="editorial text-4xl font-extrabold">{t.auth.resetTitle}</h1>
       <form action={action} className="flex flex-col gap-4" noValidate>
-        <Field label={t.auth.password} htmlFor="password" hint={t.auth.passwordHint} error={fe.password} required>
+        <Field
+          label={t.auth.password}
+          htmlFor="password"
+          hint={t.auth.passwordHint}
+          error={fe.password}
+          required
+        >
           <PasswordInput id="password" name="password" autoComplete="new-password" required />
         </Field>
         <Field label={t.auth.confirmPassword} htmlFor="confirmPassword" error={fe.confirmPassword} required>

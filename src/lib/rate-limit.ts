@@ -23,6 +23,11 @@ export async function rateLimit(key: string, limit: number, windowMs: number): P
   return b.count <= limit;
 }
 
-export async function rateLimitUser(key: string, userId: string, limit: number, windowMs: number): Promise<boolean> {
+export async function rateLimitUser(
+  key: string,
+  userId: string,
+  limit: number,
+  windowMs: number,
+): Promise<boolean> {
   return rateLimit(`${key}:${userId}`, limit, windowMs);
 }

@@ -23,15 +23,18 @@ export function SiteFooter({ t, contactEmail }: { t: Messages; contactEmail?: st
     },
   ];
   return (
-    <footer className="border-t bg-surface">
+    <footer className="bg-surface border-t">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr]">
         <div>
           <Logo />
-          <p className="mt-4 max-w-xs text-sm text-muted">{t.brand.tagline}</p>
+          <p className="text-muted mt-4 max-w-xs text-sm">{t.brand.tagline}</p>
           {contactEmail && (
             <p className="mt-4 text-sm">
               <span className="text-subtle">{t.landing.footerContact}: </span>
-              <a className="font-semibold text-primary hover:underline dark:text-lavender" href={`mailto:${contactEmail}`}>
+              <a
+                className="text-primary dark:text-lavender font-semibold hover:underline"
+                href={`mailto:${contactEmail}`}
+              >
                 {contactEmail}
               </a>
             </p>
@@ -43,7 +46,7 @@ export function SiteFooter({ t, contactEmail }: { t: Messages; contactEmail?: st
             <ul className="mt-4 flex flex-col gap-2.5">
               {c.links.map((l) => (
                 <li key={l.href}>
-                  <Link href={l.href} className="text-sm text-muted transition hover:text-foreground">
+                  <Link href={l.href} className="text-muted hover:text-foreground text-sm transition">
                     {l.label}
                   </Link>
                 </li>
@@ -53,7 +56,7 @@ export function SiteFooter({ t, contactEmail }: { t: Messages; contactEmail?: st
         ))}
       </div>
       <div className="border-t">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-xs text-subtle sm:flex-row sm:justify-between sm:px-6">
+        <div className="text-subtle mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-xs sm:flex-row sm:justify-between sm:px-6">
           <p>
             © <span className="ltr-nums">{year}</span> JADARAH · جدارة. {t.landing.footerRights}
           </p>

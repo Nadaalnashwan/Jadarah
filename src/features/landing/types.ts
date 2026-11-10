@@ -23,7 +23,13 @@ export interface ShowcaseData {
     headline: string | null;
     years_experience: number | null;
     skills: ShowcaseSkill[];
-    applications: { status: string; title_en: string; title_ar: string; company_en: string; company_ar: string }[];
+    applications: {
+      status: string;
+      title_en: string;
+      title_ar: string;
+      company_en: string;
+      company_ar: string;
+    }[];
     assessment: { title_en: string; title_ar: string; percentage: number | null } | null;
   } | null;
   job: {
@@ -37,7 +43,14 @@ export interface ShowcaseData {
   company: {
     name_en: string;
     name_ar: string;
-    funnel: { applied: number; reviewed: number; assessed: number; shortlisted: number; interviewed: number; hired: number };
+    funnel: {
+      applied: number;
+      reviewed: number;
+      assessed: number;
+      shortlisted: number;
+      interviewed: number;
+      hired: number;
+    };
     candidates: { alias: string; years: number | null; skills: ShowcaseSkill[] }[];
     upcoming_interviews: number;
   } | null;
@@ -46,6 +59,11 @@ export interface ShowcaseData {
     title_ar: string;
     estimated_weeks: number;
     required_skill_slugs: string[];
-    items: { title_en: string; title_ar: string; skill_slug: string | null; estimated_hours: number | null }[];
+    items: {
+      title_en: string;
+      title_ar: string;
+      skill_slug: string | null;
+      estimated_hours: number | null;
+    }[];
   } | null;
 }

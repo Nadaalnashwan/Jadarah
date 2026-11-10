@@ -23,9 +23,11 @@ function fail(msg: string): never {
 }
 
 async function main() {
-  if (!url || !serviceKey) fail("NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required (server-side only).");
+  if (!url || !serviceKey)
+    fail("NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required (server-side only).");
   if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) fail("INITIAL_ADMIN_EMAIL is missing or invalid.");
-  if (!password || password.length < 12 || !/\d/.test(password) || !/[A-Za-z]/.test(password)) fail("INITIAL_ADMIN_PASSWORD must be ≥12 characters with letters and numbers.");
+  if (!password || password.length < 12 || !/\d/.test(password) || !/[A-Za-z]/.test(password))
+    fail("INITIAL_ADMIN_PASSWORD must be ≥12 characters with letters and numbers.");
 
   const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
 
@@ -54,13 +56,28 @@ async function main() {
     console.log(`✓ Existing identity found for ${email} (password unchanged)`);
   }
 
-  const { error: pErr } = await admin.from("profiles").update({ account_type: "admin", onboarding_completed: true, status: "active" }).eq("id", userId);
+  const { error: pErr } = await admin
+    .from("profiles")
+    .update({ account_type: "admin", onboarding_completed: true, status: "active" })
+    .eq("id", userId);
   if (pErr) fail(`profile update failed: ${pErr.message}`);
   await admin.from("user_roles").delete().eq("user_id", userId).eq("role", "candidate");
-  const { error: rErr } = await admin.from("user_roles").upsert({ user_id: userId, role: "super_admin" }, { onConflict: "user_id,role" });
+  const { error: rErr } = await admin
+    .from("user_roles")
+    .upsert({ user_id: userId, role: "super_admin" }, { onConflict: "user_id,role" });
   if (rErr) fail(`role grant failed: ${rErr.message}`);
-  await admin.from("audit_logs").insert({ actor_id: null, action: "admin.provisioned", entity_type: "user", entity_id: userId, metadata: { source: "scripts/provision-admin.ts" } });
-  console.log("✓ Super Admin role granted. Enable MFA for this account in Supabase (Auth → MFA) where available.");
+  await admin
+    .from("audit_logs")
+    .insert({
+      actor_id: null,
+      action: "admin.provisioned",
+      entity_type: "user",
+      entity_id: userId,
+      metadata: { source: "scripts/provision-admin.ts" },
+    });
+  console.log(
+    "✓ Super Admin role granted. Enable MFA for this account in Supabase (Auth → MFA) where available.",
+  );
 }
 
 main().catch((e) => fail(e instanceof Error ? e.message : String(e)));

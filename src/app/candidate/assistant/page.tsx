@@ -12,8 +12,26 @@ export default async function AssistantPage() {
   const ai = aiStatus();
   return (
     <>
-      <PageHeader eyebrow={t.candidate.nav.assistant} title={L("Your career assistant", "مساعدك المهني")} description={ai.configured ? L(`Powered by ${ai.provider}. It only sees your own profile data and never decides for you.`, `يعمل بواسطة ${ai.provider}. يرى بيانات ملفك فقط ولا يقرر نيابةً عنك.`) : t.common.ruleBased} />
-      <AssistantChat scope="candidate" starters={[L("How can I improve my profile?", "كيف أحسّن ملفي؟"), L("What are my skill gaps?", "ما فجوات مهاراتي؟"), L("How do I prepare for an interview?", "كيف أستعد لمقابلة؟")]} />
+      <PageHeader
+        eyebrow={t.candidate.nav.assistant}
+        title={L("Your career assistant", "مساعدك المهني")}
+        description={
+          ai.configured
+            ? L(
+                `Powered by ${ai.provider}. It only sees your own profile data and never decides for you.`,
+                `يعمل بواسطة ${ai.provider}. يرى بيانات ملفك فقط ولا يقرر نيابةً عنك.`,
+              )
+            : t.common.ruleBased
+        }
+      />
+      <AssistantChat
+        scope="candidate"
+        starters={[
+          L("How can I improve my profile?", "كيف أحسّن ملفي؟"),
+          L("What are my skill gaps?", "ما فجوات مهاراتي؟"),
+          L("How do I prepare for an interview?", "كيف أستعد لمقابلة؟"),
+        ]}
+      />
     </>
   );
 }

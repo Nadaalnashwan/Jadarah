@@ -3,73 +3,61 @@
 > Keep this file current. A new session must be able to resume from GitHub alone.
 
 ## Project
-- Purpose: AI-assisted, evidence-based talent intelligence & recruitment platform (candidates, companies, Super Admin).
-- Taglines: **أكثر من سيرة ذاتية.** / **Beyond What's Seen.**
-- Brand colours (exact): Midnight Navy `#0F1B3D`, Royal Blue `#3B66F6`, Lavender `#A9B8FF`, Sky Blue `#CDE7F6`, Warm Ivory `#F8F6F0`.
-- Fonts: IBM Plex Sans Arabic (AR), Manrope (EN).
+AI-assisted, evidence-based talent intelligence & recruitment platform (candidates, companies, Super Admin). Taglines: **أكثر من سيرة ذاتية.** / **Beyond What's Seen.** Brand colours (exact): `#0F1B3D` `#3B66F6` `#A9B8FF` `#CDE7F6` `#F8F6F0`. Fonts: IBM Plex Sans Arabic / Manrope. Original logo: three ascending slabs + "merit diamond" (`src/components/brand/logo.tsx`, `public/brand/*`).
 
 ## Repository
-- Repo: https://github.com/Nadaalnashwan/Jadarah
-- Working branch: `feature/jadarah-greenfield-build` (never commit to `main`; no merge without approval)
-- Note: the repo was empty; this branch is currently the only branch on the remote.
-- Local clone: `~/Developer/Jadarah`
-- Latest verified pushed commit: see `git ls-remote origin refs/heads/feature/jadarah-greenfield-build` (updated at each checkpoint below)
+- Repo: https://github.com/Nadaalnashwan/Jadarah — branch `feature/jadarah-greenfield-build` (only branch on the remote; `main` was never created; do not merge without owner approval).
+- Local clone: `~/Developer/Jadarah`.
+- Latest verified pushed commit: run `git ls-remote origin refs/heads/feature/jadarah-greenfield-build` (each checkpoint in `git log` is pushed and verified).
 
 ## Supabase
-- Project ref: `qqvvlornhvfykusaxaid` (dashboard name "maknon Project"; confirmed by the owner as the new JADARAH project; it was empty on 2026-11-10)
-- URL: `https://qqvvlornhvfykusaxaid.supabase.co`
-- Migrations: `supabase/migrations/2026111000000{1..8}_*.sql` — **all 8 applied** via Supabase MCP (`list_migrations` shows them).
-- RLS: enabled on every `public` table. Privileged writes only via SECURITY DEFINER RPCs that re-check roles.
-- Storage: 6 private buckets (`candidate-cvs`, `candidate-certificates`, `candidate-projects`, `assessment-attachments`, `company-documents`, `interview-attachments`) with object policies.
-- Types: `src/types/database.ts` (regenerate after schema changes).
-- No service-role key is stored anywhere in the repo. Scripts that need it read `SUPABASE_SERVICE_ROLE_KEY` from `.env.local`.
+- Project ref `qqvvlornhvfykusaxaid` (dashboard name "maknon Project"; confirmed by the owner as the new JADARAH project).
+- Migrations 0001–0012 in `supabase/migrations/` — **all applied** (0009 and 0012 were applied by fetching the pinned commit file through the `http` extension; content identical to the repo files).
+- RLS on every public table; least-privilege grants (this project grants nothing to API roles by default — migrations 0010/0011 add explicit grants; **any new table/function needs explicit grants**).
+- Storage: 6 private buckets with object policies.
+- Demo seed applied: 61 Auth identities, 10 companies (9 approved, Imtidad pending), 30 jobs (24 published), 32 candidates, 15 assessments/75 questions, 51 resources, 10 plan templates, 12 personal plans, 82+ applications, 28+ interviews. `platform_settings.environment = 'demo'`.
+- `http` extension enabled (used for loading the seed). Drop it if not wanted.
 
-## Auth & email status (verified 2026-11-10)
-- Email confirmation is ON (signUp returns no session).
-- Real delivery verified: confirmation email and password-reset email were delivered to an authorized Gmail inbox (plus-addressed test identity) by `noreply@mail.app.supabase.io`.
-- Confirmation link confirmed the address (`auth.users.email_confirmed_at` set).
-- PKCE `/auth/callback?code=` exchange verified via the reset flow → `/reset-password` → password updated → new password signs in.
-- SMTP: **Supabase default SMTP** (rate-limited, only for team-member addresses). Production needs custom SMTP (Dashboard → Auth → SMTP). Not configurable via MCP.
-- Site URL / redirect URLs: default `http://localhost:3000` works locally. Add the production domain in Dashboard → Auth → URL Configuration before deploying.
+## Auth & email (verified 2026-11-10)
+- Email confirmation ON. Real confirmation + reset emails delivered to the owner's Gmail (plus-addressed test identity `nadooamn+jadarah-e2e1@…`), confirmation link confirmed the user, PKCE callback → reset → new password signs in.
+- SMTP: Supabase default (rate-limited). Custom SMTP needed for production (dashboard only).
+- Site URL / redirect URLs: defaults work for localhost; production domain must be added in the dashboard.
+- **Initial Super Admin (real) NOT provisioned**: requires `SUPABASE_SERVICE_ROLE_KEY`, `INITIAL_ADMIN_EMAIL`, `INITIAL_ADMIN_PASSWORD` in `.env.local`, then `npm run admin:provision`. A demo super admin exists (`platform.admin@jadarah-demo.test`).
 
-## Business rules enforced in the database
-- Shortlisted-before-interview: `create_interview()` + trigger `interviews_enforce_shortlist`.
-- Hire without shortlist: allowed (`change_application_status(..., 'hired')`).
-- Status machine: `application_transition_allowed()` + trigger `applications_enforce_transition`; mirrored in `src/lib/domain/application-status.ts`.
-- Internal notes / status reasons: company-only RLS; candidates read `get_application_timeline()`.
-- AI never changes application state (no AI code path calls status RPCs).
+## Completed and verified
+- Landing (cinematic, AR/EN, live showcase from demo DB), public pages, public job board.
+- Auth flows (signup, confirm, sign in, forgot/reset, sign out, suspended gate, safe `next` redirects).
+- Candidate: onboarding (3 steps), overview with interactive charts, profile editor (sections), CV upload/versions/signed download/delete/parse+review, job discovery (search/filters/saved/pagination/match), job detail with explainable match, apply (CV/cover/questions), application timeline (filtered), interviews & shared feedback, withdraw, timed assessment workspace with autosave + results, skill map (radar), career goals → gap analysis → plan → milestones, assistant, notifications, settings/privacy.
+- Company: approval banner, onboarding, verification with private docs, dashboard (funnel, donut, per-job, weekly), jobs CRUD + lifecycle + AI draft (review required), applications (filters/sort/pagination), detail (match, CV, profile, answers, status decisions with internal reason + candidate message, notes, assessment assignment, rubric evaluation, shared feedback, shortlist-gated interview scheduling), compare (2–4), talent pool (opt-in), interviews list/detail (questions + suggestions, confidential evaluations, feedback sharing, complete/cancel/reschedule), team (invite/roles/remove, last-admin guard), analytics, company profile, assistant.
+- Super Admin: live stats & charts, company review (approve/reject/request info/suspend/reactivate) with documents, users (search/filter/suspend/roles/company admin assignment), jobs & assessments oversight, learning resources (add/activate/link check), reports (snapshots), AI usage, audit logs, settings + integration status, demo environment with guarded reset.
+- Tests: 18 unit + 12 live integration/security (30/30) + 11 Playwright (desktop + mobile public, 5 role journeys) — all passing. Lint clean, typecheck clean, production build passes.
+
+## Implemented but not externally configured
+- AI providers (Gemini/OpenAI adapters, logging, schemas) — no API key configured; rule-based fallbacks are active and labelled.
+- Email notifications — in-app notifications work; outbound email sending not wired to a provider (`notifications.email_status` stays `not_sent`).
+- Deployment — Vercel-ready, not deployed.
+
+## Partially implemented / known limitations
+- Assessment `file_upload` question type: candidates can answer by text only; file attachment UI not built (bucket + policies exist).
+- Interview attachments bucket exists; no UI.
+- Rate limiting is in-memory (single instance).
+- Company invitations are not emailed; invitees see them at `/invitations` after signing in with the invited email.
+- E2E does not mutate company approval (covered by live integration RPC tests instead).
+- Arabic numerals: deliberately Latin digits with Gregorian calendar.
 
 ## Required environment variables
-See `.env.example`. Public: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SITE_URL`. Server: `SUPABASE_SERVICE_ROLE_KEY`, `JADARAH_ENV`, `INITIAL_ADMIN_EMAIL`, `INITIAL_ADMIN_PASSWORD`, `DEMO_USER_PASSWORD`, `AI_PROVIDER`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `OPENAI_API_KEY`, `OPENAI_MODEL`, `AI_TIMEOUT_MS`.
+See `.env.example` and README. Local `.env.local` (gitignored) currently holds public Supabase values, `DEMO_USER_PASSWORD`, and the e2e email-test identity.
 
-## Resume commands
+## Resume
 ```bash
-cd ~/Developer/Jadarah
-git checkout feature/jadarah-greenfield-build && git pull
-npm ci
-cp .env.example .env.local   # fill values
-npm run dev
+cd ~/Developer/Jadarah && git pull
+npm ci && npx playwright install chromium
+npm run dev                     # or: npm run build && npm start
+npx vitest run                  # unit + live integration (needs DEMO_USER_PASSWORD)
+npx playwright test             # needs a build (uses npm start) and DEMO_USER_PASSWORD
 ```
 
-## Progress checklist
-- [x] Repo, branch, Next.js 16 scaffold (App Router, TS strict, Tailwind v4)
-- [x] Schema, RLS, storage, business-rule RPCs (applied)
-- [x] Brand system, logo assets, signature animation
-- [x] Landing page (AR/EN), language + theme persistence
-- [x] Auth flows (signup, confirm, sign in, reset, sign out) — verified with real email
-- [ ] Candidate workspace
-- [ ] Company workspace
-- [ ] Super Admin workspace
-- [ ] AI provider layer
-- [ ] Demo seed (10 companies, 30+ candidates, 30+ jobs, 15 assessments, 40+ resources, 10 plans)
-- [ ] Tests (Vitest unit, DB integration/RLS, Playwright E2E)
-- [ ] CI, docs, deployment prep
-
-## Known issues
-- After a successful password reset the redirect sometimes lands on `/` instead of the role home (fallback now `/onboarding`). Re-verify.
-- The in-app browser pane cannot open `*.supabase.co` links; email links were resolved with `curl` and the resulting callback URL opened in the app.
-
 ## Next three priorities
-1. Workspaces (candidate, company, admin) on the existing RPCs.
-2. Demo seed with real Auth identities.
-3. Tests + docs + CI.
+1. Provision the real Super Admin (`npm run admin:provision`) and configure custom SMTP + production redirect URLs.
+2. Configure an AI provider key (server env) and verify CV parsing, job drafting and question generation end to end.
+3. Deploy to Vercel (see DEPLOYMENT.md), set `environment='production'` for the production database, add CSP.

@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://example.supabase.co' }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_placeholder' }}
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      HAS_DEMO_SECRET: ${{ secrets.DEMO_USER_PASSWORD != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test
+      - name: Live integration & security tests (only when demo secrets are configured)
+        if: env.HAS_DEMO_SECRET == 'true'
+        env:
+          DEMO_USER_PASSWORD: ${{ secrets.DEMO_USER_PASSWORD }}
+        run: npm run test:integration
+      - name: Build
+        run: npm run build
+      - name: Secret leak check (no service-role key or private keys in the client bundle or repo)
+        run: |
+          ! grep -rE "service_role|SUPABASE_SERVICE_ROLE_KEY=.+|sk-[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{30,}" .next/static || (echo "Potential secret in client bundle" && exit 1)
+          ! git grep -nE "(SUPABASE_SERVICE_ROLE_KEY|GEMINI_API_KEY|OPENAI_API_KEY|DEMO_USER_PASSWORD|INITIAL_ADMIN_PASSWORD)=[A-Za-z0-9_-]{8,}" -- ':!*.md' ':!.env.example' || (echo "Secret committed" && exit 1)
+      - name: Dependency audit (high severity)
+        run: npm audit --audit-level=high --omit=dev

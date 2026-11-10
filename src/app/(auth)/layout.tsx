@@ -22,10 +22,13 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
           {children}
         </main>
       </div>
-      <aside className="relative hidden overflow-hidden bg-navy p-12 text-ivory lg:flex lg:flex-col lg:justify-between">
-        <div className="pointer-events-none absolute inset-0 opacity-[0.06] [background-image:linear-gradient(var(--ivory)_1px,transparent_1px),linear-gradient(90deg,var(--ivory)_1px,transparent_1px)] [background-size:48px_48px]" />
-        <p className="eyebrow relative !text-lavender">{t.brand.tagline}</p>
-        <SignatureLayers labels={t.landing.layers} className="relative mx-auto aspect-[52/46] w-full max-w-lg" />
+      <aside className="bg-navy text-ivory relative hidden overflow-hidden p-12 lg:flex lg:flex-col lg:justify-between">
+        <div className="pointer-events-none absolute inset-0 [background-image:linear-gradient(var(--ivory)_1px,transparent_1px),linear-gradient(90deg,var(--ivory)_1px,transparent_1px)] [background-size:48px_48px] opacity-[0.06]" />
+        <p className="eyebrow !text-lavender relative">{t.brand.tagline}</p>
+        <SignatureLayers
+          labels={t.landing.layers}
+          className="relative mx-auto aspect-[52/46] w-full max-w-lg"
+        />
         <p className="editorial relative max-w-md text-3xl font-extrabold">{t.landing.closingTitle}</p>
       </aside>
     </div>

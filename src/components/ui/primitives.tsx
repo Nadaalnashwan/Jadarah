@@ -20,7 +20,7 @@ export function CardHeader({
     <div className={cn("flex items-start justify-between gap-4 p-5 pb-0 sm:p-6 sm:pb-0", className)}>
       <div className="min-w-0">
         <h2 className="text-base font-bold tracking-tight">{title}</h2>
-        {description && <p className="mt-1 text-sm text-muted">{description}</p>}
+        {description && <p className="text-muted mt-1 text-sm">{description}</p>}
       </div>
       {action}
     </div>
@@ -68,12 +68,16 @@ export function Badge({
 
 export function Avatar({ name, className }: { name: string; className?: string }) {
   const parts = name.trim().split(/\s+/).slice(0, 2);
-  const text = parts.map((p) => p[0]).join("").toUpperCase() || "؟";
+  const text =
+    parts
+      .map((p) => p[0])
+      .join("")
+      .toUpperCase() || "؟";
   return (
     <span
       aria-hidden
       className={cn(
-        "inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-lavender to-sky text-xs font-bold text-navy",
+        "from-lavender to-sky text-navy inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold",
         className,
       )}
     >
@@ -91,10 +95,10 @@ export function Progress({ value, className, label }: { value: number; className
       aria-valuemax={100}
       aria-valuenow={Math.round(v)}
       aria-label={label}
-      className={cn("h-2 w-full overflow-hidden rounded-full bg-surface-2", className)}
+      className={cn("bg-surface-2 h-2 w-full overflow-hidden rounded-full", className)}
     >
       <div
-        className="h-full rounded-full bg-gradient-to-r from-royal to-lavender transition-[width] duration-700 ease-[cubic-bezier(.22,1,.36,1)] rtl:bg-gradient-to-l"
+        className="from-royal to-lavender h-full rounded-full bg-gradient-to-r transition-[width] duration-700 ease-[cubic-bezier(.22,1,.36,1)] rtl:bg-gradient-to-l"
         style={{ width: `${v}%` }}
       />
     </div>
@@ -117,7 +121,7 @@ export function PageHeader({
       <div className="min-w-0">
         {eyebrow && <p className="eyebrow mb-2">{eyebrow}</p>}
         <h1 className="editorial text-3xl font-extrabold sm:text-4xl">{title}</h1>
-        {description && <p className="mt-2 max-w-2xl text-sm text-muted sm:text-base">{description}</p>}
+        {description && <p className="text-muted mt-2 max-w-2xl text-sm sm:text-base">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </header>
@@ -144,7 +148,7 @@ export function EmptyState({
         <path d="M56 32l6 6-6 6-6-6z" fill="var(--royal)" />
       </svg>
       <h3 className="text-base font-bold">{title}</h3>
-      {body && <p className="mt-1 max-w-sm text-sm text-muted">{body}</p>}
+      {body && <p className="text-muted mt-1 max-w-sm text-sm">{body}</p>}
       {action && <div className="mt-5">{action}</div>}
     </div>
   );
@@ -163,9 +167,9 @@ export function Stat({
 }) {
   return (
     <div className={cn("flex flex-col gap-1", className)}>
-      <span className="text-xs font-semibold text-muted">{label}</span>
+      <span className="text-muted text-xs font-semibold">{label}</span>
       <span className="ltr-nums text-3xl font-extrabold tracking-tight">{value}</span>
-      {hint && <span className="text-xs text-subtle">{hint}</span>}
+      {hint && <span className="text-subtle text-xs">{hint}</span>}
     </div>
   );
 }

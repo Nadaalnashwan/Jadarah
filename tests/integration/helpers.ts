@@ -21,7 +21,10 @@ export async function as(localPart: string): Promise<SupabaseClient<Database>> {
   const hit = cache.get(localPart);
   if (hit) return hit;
   const client = anon();
-  const { error } = await client.auth.signInWithPassword({ email: `${localPart}@${DEMO_DOMAIN}`, password: DEMO_PASSWORD });
+  const { error } = await client.auth.signInWithPassword({
+    email: `${localPart}@${DEMO_DOMAIN}`,
+    password: DEMO_PASSWORD,
+  });
   if (error) throw new Error(`sign-in failed for ${localPart}: ${error.message}`);
   cache.set(localPart, client);
   return client;

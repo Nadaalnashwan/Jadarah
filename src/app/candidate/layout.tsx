@@ -23,7 +23,12 @@ export default async function CandidateLayout({ children }: { children: React.Re
     { href: "/candidate/settings", label: n.settings, icon: "Settings" },
   ];
   return (
-    <WorkspaceShell session={session} nav={nav} area={t.roles.candidate} notificationsHref="/candidate/notifications">
+    <WorkspaceShell
+      session={session}
+      nav={nav}
+      area={t.roles.candidate}
+      notificationsHref="/candidate/notifications"
+    >
       {children}
     </WorkspaceShell>
   );
