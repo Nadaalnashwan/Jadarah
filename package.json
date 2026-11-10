@@ -6,7 +6,18 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:all": "vitest run",
+    "test:e2e": "playwright test",
+    "seed:generate": "tsx scripts/demo/generate-sql.ts",
+    "admin:provision": "tsx scripts/provision-admin.ts",
+    "demo:seed": "tsx scripts/demo/seed.ts",
+    "demo:reset": "tsx scripts/demo/reset.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.5",
