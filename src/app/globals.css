@@ -1,26 +1,227 @@
 @import "tailwindcss";
 
+/* ------------------------------------------------------------------
+   JADARAH brand tokens — the five official colours:
+   Midnight Navy #0F1B3D · Royal Blue #3B66F6 · Lavender #A9B8FF
+   Sky Blue #CDE7F6 · Warm Ivory #F8F6F0
+   Everything else is a derived tint/shade or a semantic status colour.
+------------------------------------------------------------------- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --navy: #0f1b3d;
+  --royal: #3b66f6;
+  --lavender: #a9b8ff;
+  --sky: #cde7f6;
+  --ivory: #f8f6f0;
+
+  /* derived */
+  --navy-900: #0a1330;
+  --navy-800: #15234a;
+  --navy-700: #1e2f5c;
+  --royal-600: #2c53dc;
+  --royal-700: #2343b5;
+  --ivory-50: #fdfcf8;
+  --ivory-200: #ece8dd;
+
+  /* light theme semantic */
+  --background: var(--ivory);
+  --surface: var(--ivory-50);
+  --surface-2: #f1eee5;
+  --foreground: var(--navy);
+  --muted-foreground: #4a5578;
+  --subtle-foreground: #6b7493;
+  --border: #e2ddd0;
+  --border-strong: #cfc8b6;
+  --primary: var(--royal);
+  --primary-hover: var(--royal-600);
+  --primary-foreground: #ffffff;
+  --accent: var(--lavender);
+  --accent-soft: #e8ecff;
+  --sky-soft: #e6f3fb;
+  --ring: var(--royal);
+  --success: #1f8a62;
+  --success-soft: #dcf2e8;
+  --warning: #a86c0c;
+  --warning-soft: #f8ecd3;
+  --danger: #c23b3b;
+  --danger-soft: #f7dede;
+  --shadow-color: 15 27 61;
+
+  /* motion tokens */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 140ms;
+  --dur-base: 240ms;
+  --dur-slow: 520ms;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root[data-theme="dark"] {
+  --background: var(--navy-900);
+  --surface: var(--navy);
+  --surface-2: var(--navy-800);
+  --foreground: var(--ivory);
+  --muted-foreground: #b7bfd9;
+  --subtle-foreground: #8d97b8;
+  --border: #24345f;
+  --border-strong: #33467a;
+  --primary: var(--royal);
+  --primary-hover: #5a7ff8;
+  --primary-foreground: #ffffff;
+  --accent: var(--lavender);
+  --accent-soft: #1d2a57;
+  --sky-soft: #142650;
+  --ring: var(--lavender);
+  --success: #4cc495;
+  --success-soft: #103a33;
+  --warning: #e6b45a;
+  --warning-soft: #3a2e14;
+  --danger: #f08080;
+  --danger-soft: #3d1c27;
+  --shadow-color: 0 0 0;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme="light"]) {
+    --background: var(--navy-900);
+    --surface: var(--navy);
+    --surface-2: var(--navy-800);
+    --foreground: var(--ivory);
+    --muted-foreground: #b7bfd9;
+    --subtle-foreground: #8d97b8;
+    --border: #24345f;
+    --border-strong: #33467a;
+    --primary-hover: #5a7ff8;
+    --accent-soft: #1d2a57;
+    --sky-soft: #142650;
+    --ring: var(--lavender);
+    --success: #4cc495;
+    --success-soft: #103a33;
+    --warning: #e6b45a;
+    --warning-soft: #3a2e14;
+    --danger: #f08080;
+    --danger-soft: #3d1c27;
+    --shadow-color: 0 0 0;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@theme inline {
+  --color-navy: var(--navy);
+  --color-royal: var(--royal);
+  --color-lavender: var(--lavender);
+  --color-sky: var(--sky);
+  --color-ivory: var(--ivory);
+  --color-navy-900: var(--navy-900);
+  --color-navy-800: var(--navy-800);
+  --color-navy-700: var(--navy-700);
+
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted-foreground);
+  --color-subtle: var(--subtle-foreground);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-sky-soft: var(--sky-soft);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+
+  --font-sans: var(--font-manrope), var(--font-plex-arabic), ui-sans-serif, system-ui, sans-serif;
+  --font-arabic: var(--font-plex-arabic), var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.75rem;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  html[lang="ar"] body {
+    font-family: var(--font-arabic);
+    line-height: 1.7;
+  }
+  ::selection {
+    background: var(--lavender);
+    color: var(--navy);
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  /* numbers/codes stay LTR inside RTL text */
+  .ltr-nums {
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+}
+
+@layer components {
+  .surface-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 1px 2px rgb(var(--shadow-color) / 0.04), 0 8px 24px -12px rgb(var(--shadow-color) / 0.12);
+  }
+  .grain {
+    background-image: radial-gradient(rgb(var(--shadow-color) / 0.06) 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+  .editorial {
+    letter-spacing: -0.035em;
+    line-height: 1.02;
+  }
+  html[lang="ar"] .editorial {
+    letter-spacing: 0;
+    line-height: 1.25;
+  }
+  .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--primary);
+  }
+  html[lang="ar"] .eyebrow {
+    letter-spacing: 0;
+    font-size: 0.85rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
