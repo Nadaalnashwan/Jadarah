@@ -89,30 +89,6 @@ function facadeTexture(opts: { cols: number; rows: number; base: string; line: s
   return t;
 }
 
-function mashrabiyaTexture() {
-  const c = document.createElement("canvas");
-  c.width = c.height = 128;
-  const g = c.getContext("2d")!;
-  g.fillStyle = "#e9dcc6";
-  g.fillRect(0, 0, 128, 128);
-  g.strokeStyle = "rgba(120,88,52,.55)";
-  g.lineWidth = 3;
-  for (let i = -128; i < 256; i += 16) {
-    g.beginPath();
-    g.moveTo(i, 0);
-    g.lineTo(i + 128, 128);
-    g.stroke();
-    g.beginPath();
-    g.moveTo(i + 128, 0);
-    g.lineTo(i, 128);
-    g.stroke();
-  }
-  const t = new THREE.CanvasTexture(c);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
-}
-
 /* ---------------------------------------------------------------- landmark geometry */
 function kingdomCentre(glass: THREE.Material, bridgeMat: THREE.Material) {
   const H = 300;

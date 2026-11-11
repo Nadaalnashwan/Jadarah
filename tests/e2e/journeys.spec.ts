@@ -16,12 +16,13 @@ test("candidate: discover → job detail with explainable match → apply → tr
     await links.first().waitFor();
     await links.nth(i).click();
     await expect(page.getByText("How you match")).toBeVisible();
-    const submit = page.getByRole("button", { name: "Submit application" });
+    const submit = page.getByRole("button", { name: "Apply for this job" });
     if (await submit.isVisible()) {
-      await page.getByLabel("Cover letter").fill("E2E: I would love to show my work through your assessment.");
+      await page.locator("#cover").fill("E2E: I would love to show my work through your assessment.");
       await submit.click();
-      await expect(page).toHaveURL(/\/candidate\/applications\/.+submitted=1/);
-      await expect(page.getByText("Application submitted")).toBeVisible();
+      // Jobs with a practical task open it immediately; others go to the application timeline.
+      await expect(page).toHaveURL(/\/candidate\/(applications\/.+submitted=1|assessments\/.+applied=1)/);
+      await expect(page.getByText(/Application submitted|Application received/)).toBeVisible();
       applied = true;
     }
   }
@@ -33,11 +34,14 @@ test("candidate: discover → job detail with explainable match → apply → tr
 test("company: review applications, see match explanation and the shortlist gate", async ({ page }) => {
   await signIn(page, "recruiter.nawat");
   await expect(page.getByRole("heading", { name: "Recruitment overview" })).toBeVisible();
-  await page.goto("/company/applications?status=submitted");
+  await page.goto("/company/applications?complete=all");
   const first = page.locator("tbody a[href^='/company/applications/']").first();
   await first.click();
   await expect(page.getByText("Evidence match")).toBeVisible();
-  await expect(page.getByText("Shortlist this candidate before scheduling an interview.")).toBeVisible();
+  // Shortlist-before-interview gate: either the one-click shortlist (then schedule) or the lock message.
+  await expect(
+    page.getByText(/Interviews require a shortlist first|Shortlist this candidate before scheduling an interview\./),
+  ).toBeVisible();
   await expect(page.getByText("Internal notes")).toBeVisible();
 });
 

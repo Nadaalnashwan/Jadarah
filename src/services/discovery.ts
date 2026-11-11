@@ -3,6 +3,7 @@ import type { ServerSupabase } from "@/lib/supabase/server";
 import { pick, type Locale } from "@/lib/i18n/config";
 import { recommendCareers, type CategoryDemand } from "@/lib/domain/discovery";
 import { getCandidateSkills } from "@/services/candidate";
+import { LISTED_JOB_FILTER } from "@/lib/domain/listings";
 
 /** Real data only: the candidate's skills/interests and the skills published jobs ask for, per job category. */
 export async function loadDiscovery(supabase: ServerSupabase, candidateId: string, locale: Locale) {
@@ -13,7 +14,8 @@ export async function loadDiscovery(supabase: ServerSupabase, candidateId: strin
     supabase
       .from("jobs")
       .select("id, title_en, title_ar, category_id, job_skills(importance, skill:skills(id, name_en, name_ar))")
-      .eq("status", "published"),
+      .eq("status", "published")
+      .or(LISTED_JOB_FILTER),
     supabase.from("exploration_tasks").select("slug, category_id, title_en, title_ar, minutes").eq("active", true),
     supabase
       .from("exploration_attempts")

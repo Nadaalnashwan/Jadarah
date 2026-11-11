@@ -13,7 +13,7 @@ export default async function TalentPool({
   searchParams: Promise<{ skill?: string; q?: string }>;
 }) {
   const sp = await searchParams;
-  await requireCompanyMember(["company_admin", "recruiter"]);
+  const session = await requireCompanyMember(["company_admin", "recruiter"]);
   const { t, locale } = await getI18n();
   const L = tx(locale);
   const supabase = await createClient();
@@ -21,8 +21,10 @@ export default async function TalentPool({
     supabase
       .from("candidate_profiles")
       .select(
-        "user_id, headline, city, years_experience, experience_level, open_to_work, profile:profiles!candidate_profiles_user_id_fkey(full_name), candidate_skills(level, source, skill:skills(slug, name_en, name_ar))",
+        "user_id, headline, city, years_experience, experience_level, open_to_work, profile:profiles!candidate_profiles_user_id_fkey!inner(full_name, is_demo), candidate_skills(level, source, skill:skills(slug, name_en, name_ar))",
       )
+      // Fictional demo candidates are never shown to real organizations as talent.
+      .eq("profile.is_demo", session.profile.is_demo)
       .eq("visibility", "companies")
       .eq("open_to_work", true)
       .limit(200),

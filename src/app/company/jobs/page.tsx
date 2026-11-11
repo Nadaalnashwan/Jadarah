@@ -18,7 +18,7 @@ export default async function CompanyJobs({ searchParams }: { searchParams: Prom
   const supabase = await createClient();
   let q = supabase
     .from("jobs")
-    .select("id, title_en, title_ar, status, listing_type, city, deadline, published_at, updated_at, applications(count)")
+    .select("id, title_en, title_ar, status, listing_type, created_by, city, deadline, published_at, updated_at, applications(count)")
     .eq("company_id", s.activeMembership.company_id);
   if (sp.status) q = q.eq("status", sp.status as "draft");
   const { data } = await q.order("updated_at", { ascending: false });
@@ -78,7 +78,7 @@ export default async function CompanyJobs({ searchParams }: { searchParams: Prom
                       >
                         {pick(j, "title", locale)}
                       </Link>{" "}
-                      <ListingBadge type={j.listing_type} locale={locale} />
+                      <ListingBadge job={j} locale={locale} />
                       <p className="text-subtle text-xs">{j.city}</p>
                     </td>
                     <td className="p-4">

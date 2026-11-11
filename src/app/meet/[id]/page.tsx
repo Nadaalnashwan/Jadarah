@@ -26,7 +26,7 @@ export default async function MeetPage({ params }: { params: Promise<{ id: strin
   return (
     <div className="bg-background flex min-h-dvh flex-col">
       <header className="flex items-center gap-4 border-b px-4 py-3 sm:px-6">
-        <Logo className="h-8" />
+        <Logo size="sm" />
         <div className="min-w-0 flex-1">
           <p className="truncate font-bold">{locale === "ar" ? v.job_title_ar : v.job_title_en}</p>
           <p className="text-subtle ltr-nums truncate text-xs">

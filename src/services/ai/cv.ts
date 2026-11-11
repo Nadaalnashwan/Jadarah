@@ -1,10 +1,16 @@
 import "server-only";
 import { z } from "zod";
+import type { CvGrounding } from "@/lib/domain/cv-grounding";
 import { parsedCvSchemaShape } from "./cv-schema";
 import { AIUnavailableError, generateJSON } from "./provider";
 
 export const parsedCvSchema = parsedCvSchemaShape;
-export type ParsedCv = z.infer<typeof parsedCvSchema> & { method: "ai" | "rule_based"; provider: string };
+export type ParsedCv = z.infer<typeof parsedCvSchema> & {
+  method: "ai" | "rule_based";
+  provider: string;
+  /** Which extracted items were found in the CV's own text (see lib/domain/cv-grounding). */
+  grounding?: CvGrounding;
+};
 
 const SYSTEM = `You extract structured data from a candidate's CV for a recruitment platform.
 Rules: extract ONLY what the document states. Never invent employers, dates, degrees or skills.

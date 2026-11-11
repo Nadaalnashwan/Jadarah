@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/app/status-badge";
 import { Badge, Card, CardBody, CardHeader, PageHeader } from "@/components/ui/primitives";
 import { requireCompanyMember } from "@/lib/auth/session";
-import { canCreateInterview, manualTargets, type ApplicationStatus } from "@/lib/domain/application-status";
+import { canCreateInterview, employerTargets, type ApplicationStatus } from "@/lib/domain/application-status";
 import { formatDate, formatDateTime, formatNumber, pick, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
@@ -136,8 +136,8 @@ export default async function CompanyApplicationDetail({
     refreshJob: true,
   });
   const interviewAllowed = canCreateInterview({ status, was_shortlisted: app.was_shortlisted });
-  const canShortlist = !interviewAllowed && manualTargets(status).includes("shortlisted");
   const taskPending = app.requires_task && !app.completed_at;
+  const canShortlist = !interviewAllowed && employerTargets(status, taskPending).includes("shortlisted");
   const openInterviews = (interviews ?? []).filter((iv) => iv.status !== "cancelled" && iv.status !== "completed");
 
   return (
@@ -172,8 +172,8 @@ export default async function CompanyApplicationDetail({
       {taskPending && (
         <p className="bg-surface-2 text-muted mb-4 rounded-xl px-4 py-3 text-sm">
           {L(
-            "This candidate applied but hasn't submitted the job's practical task yet. The application is not complete.",
-            "تقدّم هذا المرشح لكنه لم يسلّم المهمة العملية للوظيفة بعد، فالطلب غير مكتمل.",
+            "This candidate applied and received the job's practical task automatically, but hasn't submitted it yet. The application becomes complete — and ready for your evaluation — when the task is submitted.",
+            "تقدّم هذا المرشح واستلم المهمة العملية للوظيفة تلقائيًا، لكنه لم يسلّمها بعد. يكتمل الطلب ويصبح جاهزًا لتقييمك عند تسليم المهمة.",
           )}
         </p>
       )}
@@ -387,7 +387,7 @@ export default async function CompanyApplicationDetail({
               )}
             />
             <CardBody>
-              <StatusForm applicationId={id} targets={manualTargets(status)} />
+              <StatusForm applicationId={id} targets={employerTargets(status, taskPending)} />
             </CardBody>
           </Card>
           <Card id="interviews" className="scroll-mt-24">
@@ -451,7 +451,17 @@ export default async function CompanyApplicationDetail({
             </CardBody>
           </Card>
           <Card>
-            <CardHeader title={L("Assign assessment", "إسناد تقييم")} />
+            <CardHeader
+              title={app.requires_task ? L("Assign an additional assessment", "إسناد تقييم إضافي") : L("Assign assessment", "إسناد تقييم")}
+              description={
+                app.requires_task
+                  ? L(
+                      "The job's practical task was assigned automatically when the candidate applied.",
+                      "أُسندت المهمة العملية للوظيفة تلقائيًا عند التقديم.",
+                    )
+                  : undefined
+              }
+            />
             <CardBody>
               <AssignAssessmentForm
                 applicationId={id}
@@ -459,7 +469,7 @@ export default async function CompanyApplicationDetail({
                   id: a.id,
                   name: pick(a, "title", locale) + (a.company_id ? " ★" : ""),
                 }))}
-                defaultId={app.job?.assessment_id ?? ""}
+                defaultId={app.requires_task ? "" : (app.job?.assessment_id ?? "")}
               />
             </CardBody>
           </Card>

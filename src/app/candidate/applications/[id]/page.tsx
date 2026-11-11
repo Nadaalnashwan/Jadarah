@@ -7,7 +7,7 @@ import { FormMessage, Textarea } from "@/components/ui/form";
 import { Badge, Card, CardBody, CardHeader, PageHeader } from "@/components/ui/primitives";
 import { withdrawApplication } from "@/features/candidate/actions";
 import { requireCandidate } from "@/lib/auth/session";
-import { canWithdraw, PIPELINE_STAGES, type ApplicationStatus } from "@/lib/domain/application-status";
+import { canWithdraw, pipelineFor, type ApplicationStatus } from "@/lib/domain/application-status";
 import { formatDate, formatDateTime, pick, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
@@ -56,7 +56,8 @@ export default async function ApplicationDetail({
       supabase.rpc("get_shared_final_feedback", { p_app: id }),
     ]);
   const status = app.status as ApplicationStatus;
-  const reached = new Set((timeline ?? []).map((h) => h.to_status));
+  const reached = new Set((timeline ?? []).map((h) => h.to_status as ApplicationStatus));
+  const stages = pipelineFor(app.requires_task, reached);
   const terminalNegative = status === "rejected" || status === "withdrawn";
   const messages = (timeline ?? []).filter((h) => h.candidate_message);
 
@@ -113,12 +114,12 @@ export default async function ApplicationDetail({
             <CardHeader title={L("Progress", "مسار الطلب")} />
             <CardBody>
               <ol className="relative flex flex-col gap-0">
-                {PIPELINE_STAGES.map((s, i) => {
+                {stages.map((s, i) => {
                   const done = reached.has(s);
                   const current = s === status;
                   return (
                     <li key={s} className="relative flex gap-4 pb-6 last:pb-0">
-                      {i < PIPELINE_STAGES.length - 1 && (
+                      {i < stages.length - 1 && (
                         <span
                           className={cn(
                             "absolute start-[0.9rem] top-8 bottom-0 w-px",

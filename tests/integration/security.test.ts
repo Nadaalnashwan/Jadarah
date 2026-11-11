@@ -73,7 +73,12 @@ describe.skipIf(!integrationEnabled)("RLS & authorization (live Supabase)", () =
     const admin = await as("platform.admin");
     const { data, error: e2 } = await admin.rpc("admin_platform_stats");
     expect(e2).toBeNull();
-    expect((data as { companies: number }).companies).toBeGreaterThanOrEqual(10);
+    // Platform statistics count real organizations only (demo/fictional companies excluded — proposal 0030).
+    const { count: real } = await admin.from("company_profiles").select("id", { count: "exact", head: true }).eq("is_demo", false);
+    const { count: all } = await admin.from("company_profiles").select("id", { count: "exact", head: true });
+    const companies = (data as { companies: number }).companies;
+    expect([real, all]).toContain(companies); // `all` until proposal 0030 is applied, `real` after
+    expect(companies).toBeGreaterThanOrEqual(0);
   });
 
   it("anonymous users only see public catalogue data", async () => {

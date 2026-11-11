@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils";
  * never redraw, recolour outside the palette, or distort it.
  */
 export const SYMBOL = {
-  viewBox: "2 7 104 115",
+  /** Frames the full geometry (x 4–104, y 14.8–124.6) with an even 3-unit margin; the old 2 7 104 115 cut off the base. */
+  viewBox: "1 11.7 106 116",
   back: "M12,45.5 Q12,41 16.5,38.93 L67.5,15.47 Q72,13.4 72,17.9 L72,68.9 Q72,73.4 67.5,75.47 L16.5,98.93 Q12,101 12,96.5 Z",
   tunnel: "M42,62.02 Q42,59.02 45,57.64 L72,45.22 Q75,43.84 75,46.84 L75,80.84 Q75,83.84 72,85.22 L45,97.64 Q42,99.02 42,96.02 Z",
   middle:
@@ -96,29 +97,50 @@ export function LogoMark({
  * Approved lockup: Arabic wordmark «جَدارة» over the spaced Latin «JADARAH», symbol to the right.
  * The lockup never mirrors with the page direction.
  */
-export function Logo({ className, compact, size = "md" }: { className?: string; compact?: boolean; size?: "md" | "lg" }) {
+export function Logo({
+  className,
+  compact,
+  size = "md",
+}: {
+  className?: string;
+  compact?: boolean;
+  size?: "sm" | "md" | "lg";
+}) {
   const lg = size === "lg";
+  const sm = size === "sm";
   return (
     <span
       dir="ltr"
-      className={cn("text-foreground inline-flex items-center gap-2", className)}
+      className={cn("text-foreground inline-flex shrink-0 items-center", lg ? "gap-4" : "gap-2", className)}
       aria-label="JADARAH | جدارة"
       role="img"
     >
       {!compact && (
         <span className="flex flex-col items-center leading-none" aria-hidden>
-          <span className={cn("font-arabic font-bold tracking-tight", lg ? "text-5xl" : "text-[1.35rem]")}>جَدارة</span>
           <span
             className={cn(
-              "font-sans font-semibold text-current",
-              lg ? "mt-2 text-sm tracking-[0.55em]" : "mt-0.5 text-[0.5rem] tracking-[0.42em]",
+              "font-arabic leading-[1.15] font-bold tracking-tight",
+              lg ? "text-5xl" : sm ? "text-lg" : "text-[1.35rem]",
+            )}
+          >
+            جَدارة
+          </span>
+          <span
+            className={cn(
+              "font-sans leading-none font-semibold text-current",
+              lg
+                ? "mt-1.5 ps-[0.55em] text-sm tracking-[0.55em]"
+                : sm
+                  ? "ps-[0.42em] text-[0.45rem] tracking-[0.42em]"
+                  : "ps-[0.42em] text-[0.5rem] tracking-[0.42em]",
             )}
           >
             JADARAH
           </span>
         </span>
       )}
-      <LogoMark className={lg ? "size-24" : "size-10"} />
+      {/* The symbol keeps its own proportions (viewBox 106 × 116) so it is never squashed or letterboxed. */}
+      <LogoMark className={cn("aspect-[106/116] w-auto", lg ? "h-24" : sm ? "h-8" : "h-10")} />
     </span>
   );
 }

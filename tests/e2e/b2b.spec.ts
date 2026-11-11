@@ -37,7 +37,7 @@ test.describe("B2B organizations", () => {
     await shot(page, "01-directory-ar");
   });
 
-  test("every organization profile renders with simulation opportunities clearly labelled", async ({ page }) => {
+  test("every organization profile renders; imported practice scenarios are never listed as opportunities", async ({ page }) => {
     await setLocale(page, "en");
     for (const slug of ORGS) {
       await page.goto(`/companies/${slug}`);
@@ -45,7 +45,8 @@ test.describe("B2B organizations", () => {
       const text = await page.locator("body").innerText();
       expect(text, slug).not.toMatch(LEGACY);
       expect(text, slug).not.toMatch(/partner|endorse/i);
-      expect(text, slug).toMatch(/Simulation/);
+      // Practice scenarios (imported, no employer author) are not vacancies: never shown or labelled as openings.
+      expect(text, slug).not.toMatch(/Simulation|Practice scenario/);
       await expect(page.locator("main img")).toHaveCount(0);
       if (slug === "elm-company") await shot(page, "02-company-profile-elm");
     }
@@ -79,7 +80,8 @@ test.describe("B2B organizations", () => {
     expect(text).not.toMatch(LEGACY);
     await shot(page, "04-employer-workspace-elm");
     await page.goto("/company/jobs");
-    await expect(page.getByText("Simulation").first()).toBeVisible();
+    // In its own workspace an organization still sees imported practice scenarios, clearly labelled as such.
+    await expect(page.getByText("Practice scenario").first()).toBeVisible();
     await shot(page, "05-employer-opportunities-elm");
   });
 

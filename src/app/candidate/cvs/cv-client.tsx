@@ -19,6 +19,7 @@ import { getBrowserClient } from "@/lib/supabase/client";
 import { useI18n } from "@/lib/i18n/client";
 import { formatDate, tx } from "@/lib/i18n/config";
 import { cn } from "@/lib/utils";
+import { CV_ACCEPT, MAX_CV_BYTES, resolveCvType, safeCvObjectName } from "@/lib/domain/cv-file";
 import {
   deleteCv,
   getDocumentUrl,
@@ -28,12 +29,6 @@ import {
 } from "@/features/candidate/cv-actions";
 import type { ParsedCv } from "@/services/ai/cv";
 import { CvReview } from "@/features/candidate/cv-review";
-
-const ACCEPT = [
-  "application/pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/msword",
-];
 
 export function CvUploader({ userId, onUploaded }: { userId: string; onUploaded?: (documentId: string) => void }) {
   const { locale } = useI18n();
@@ -47,33 +42,48 @@ export function CvUploader({ userId, onUploaded }: { userId: string; onUploaded?
 
   async function upload(file: File) {
     setError(null);
-    if (!ACCEPT.includes(file.type))
-      return setError(L("Only PDF or Word files are accepted.", "يُقبل ملف PDF أو Word فقط."));
-    if (file.size > 10 * 1024 * 1024)
+    // Resolve the type from the extension too: many browsers report "" or a generic type for .docx/.pdf.
+    const type = resolveCvType(file.name, file.type);
+    if (!type) return setError(L("Only PDF or Word (DOCX) files are accepted.", "يُقبل ملف PDF أو Word (DOCX) فقط."));
+    if (file.size === 0) return setError(L("This file is empty.", "هذا الملف فارغ."));
+    if (file.size > MAX_CV_BYTES)
       return setError(L("The file is larger than 10 MB.", "حجم الملف أكبر من 10 ميجابايت."));
     setBusy(true);
-    const safe = file.name.replace(/[^\w.\-]+/g, "_").slice(-80);
-    const path = `${userId}/${crypto.randomUUID()}-${safe}`;
-    const { error: upErr } = await getBrowserClient()
-      .storage.from("candidate-cvs")
-      .upload(path, file, { contentType: file.type, upsert: false });
-    if (upErr) {
+    try {
+      const path = `${userId}/${crypto.randomUUID()}-${safeCvObjectName(file.name, type.kind)}`;
+      const { error: upErr } = await getBrowserClient()
+        .storage.from("candidate-cvs")
+        .upload(path, file, { contentType: type.mime, upsert: false, cacheControl: "0" });
+      if (upErr) {
+        console.error("CV upload failed", upErr);
+        const msg = upErr.message.toLowerCase();
+        return setError(
+          msg.includes("size") || msg.includes("too large")
+            ? L("The file is larger than 10 MB.", "حجم الملف أكبر من 10 ميجابايت.")
+            : msg.includes("mime") || msg.includes("type")
+              ? L("Only PDF or Word (DOCX) files are accepted.", "يُقبل ملف PDF أو Word (DOCX) فقط.")
+              : msg.includes("jwt") || msg.includes("auth") || msg.includes("row-level") || msg.includes("unauthorized")
+                ? L("Your session has expired. Sign in again and retry.", "انتهت جلستك. سجّل الدخول مجددًا ثم أعد المحاولة.")
+                : L("Upload failed. Check your connection and try again.", "فشل الرفع. تحقق من الاتصال وحاول مرة أخرى."),
+        );
+      }
+      const res = await registerCvUpload({
+        path,
+        file_name: file.name.slice(0, 200),
+        mime_type: type.mime,
+        size_bytes: file.size,
+        label: label || undefined,
+      }).catch(() => null);
+      if (!res) return setError(L("Upload failed. Please try again.", "فشل الرفع. حاول مرة أخرى."));
+      if (!res.ok) return setError(res.error);
+      toast.success(L("CV uploaded", "تم رفع السيرة الذاتية"));
+      setLabel("");
+      if (input.current) input.current.value = "";
+      if (onUploaded && res.data) onUploaded(res.data.id);
+      else router.refresh();
+    } finally {
       setBusy(false);
-      return setError(L("Upload failed. Please try again.", "فشل الرفع. حاول مرة أخرى."));
     }
-    const res = await registerCvUpload({
-      path,
-      file_name: file.name.slice(0, 200),
-      mime_type: file.type,
-      size_bytes: file.size,
-      label: label || undefined,
-    });
-    setBusy(false);
-    if (!res.ok) return setError(res.error);
-    toast.success(L("CV uploaded", "تم رفع السيرة الذاتية"));
-    setLabel("");
-    if (onUploaded && res.data) onUploaded(res.data.id);
-    else router.refresh();
   }
 
   return (
@@ -122,7 +132,8 @@ export function CvUploader({ userId, onUploaded }: { userId: string; onUploaded?
       <input
         ref={input}
         type="file"
-        accept={ACCEPT.join(",")}
+        accept={CV_ACCEPT}
+        data-testid="cv-file-input"
         className="sr-only"
         onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])}
       />

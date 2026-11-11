@@ -15,12 +15,15 @@ const body = `<path d="${S.back}" fill="url(#a)" opacity=".92"/><path d="${S.tun
 const symbol = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${S.viewBox}" role="img" aria-label="JADARAH symbol">${defs}${body}</svg>\n`;
 writeFileSync("public/brand/jadarah-symbol.svg", symbol);
 writeFileSync("public/brand/jadarah-symbol-dark.svg", symbol);
-const lockup = (ink) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 120" role="img" aria-label="JADARAH | جدارة">${defs}
-<text x="100" y="66" text-anchor="middle" font-family="'IBM Plex Sans Arabic', sans-serif" font-weight="700" font-size="58" fill="${ink}">جَدارة</text>
-<text x="100" y="98" text-anchor="middle" font-family="Manrope, sans-serif" font-weight="600" font-size="15" letter-spacing="9" fill="${ink}">JADARAH</text>
-<g transform="translate(206 3)">${body}</g></svg>\n`;
+// The symbol is placed through a nested <svg> using its own viewBox, so it is never cropped or distorted.
+const [, , vw, vh] = S.viewBox.split(/\s+/).map(Number);
+const place = (x, y, h) => `<svg x="${x}" y="${y}" width="${+(h * vw / vh).toFixed(2)}" height="${h}" viewBox="${S.viewBox}">${body}</svg>`;
+const lockup = (ink) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="12 0 300 120" role="img" aria-label="JADARAH | جدارة">${defs}
+<text x="110" y="66" text-anchor="middle" font-family="'IBM Plex Sans Arabic', sans-serif" font-weight="700" font-size="58" fill="${ink}">جَدارة</text>
+<text x="110" y="98" text-anchor="middle" font-family="Manrope, sans-serif" font-weight="600" font-size="15" letter-spacing="9" fill="${ink}">JADARAH</text>
+${place(204, 8, 104)}</svg>\n`;
 writeFileSync("public/brand/jadarah-logo-light.svg", lockup("#0D1B3F"));
 writeFileSync("public/brand/jadarah-logo-dark.svg", lockup("#FFFFFF"));
 // App icon (board: navy rounded tile with the symbol)
-writeFileSync("src/app/icon.svg", `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">${defs}<rect width="128" height="128" rx="28" fill="#0D1B3F"/><g transform="translate(9 3) scale(1.04)">${body}</g></svg>\n`);
+writeFileSync("src/app/icon.svg", `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">${defs}<rect width="128" height="128" rx="28" fill="#0D1B3F"/>${place(+(64 - (100 * vw / vh) / 2).toFixed(2), 14, 100)}</svg>\n`);
 console.log("brand assets written");

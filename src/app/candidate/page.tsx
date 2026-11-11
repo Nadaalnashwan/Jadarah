@@ -25,6 +25,7 @@ import {
   toSkillRecords,
 } from "@/services/candidate";
 import { ApplicationsByStatus } from "./overview-client";
+import { LISTED_JOB_FILTER } from "@/lib/domain/listings";
 
 export default async function CandidateOverview() {
   const session = await requireCandidate();
@@ -69,6 +70,7 @@ export default async function CandidateOverview() {
       .from("jobs")
       .select(JOB_LIST_SELECT)
       .eq("status", "published")
+      .or(LISTED_JOB_FILTER)
       .order("published_at", { ascending: false })
       .limit(60),
   ]);

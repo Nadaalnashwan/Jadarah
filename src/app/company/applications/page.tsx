@@ -24,10 +24,12 @@ export default async function CompanyApplications({ searchParams }: { searchPara
   let q = supabase
     .from("applications")
     .select(
-      "id, status, match_score, submitted_at, updated_at, job_id, requires_task, completed_at, job:jobs(title_en, title_ar), candidate:profiles!applications_candidate_id_fkey(full_name)",
+      "id, status, match_score, submitted_at, updated_at, job_id, requires_task, completed_at, job:jobs(title_en, title_ar), candidate:profiles!applications_candidate_id_fkey!inner(full_name, is_demo)",
       { count: "exact" },
     )
-    .eq("company_id", cid);
+    .eq("company_id", cid)
+    // Applications from fictional demo identities are never shown to real organizations.
+    .eq("candidate.is_demo", s.profile.is_demo);
   if (sp.job) q = q.eq("job_id", sp.job);
   if (sp.status) q = q.eq("status", sp.status as ApplicationStatus);
   // Default view: complete applications (task submitted, or no task required). "all" also shows tasks in progress.

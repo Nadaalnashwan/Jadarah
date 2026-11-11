@@ -10,7 +10,7 @@ import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { ensureVideoRoom, removeVideoRoom, syncVideoRoomWindow } from "@/features/interviews/video";
 import { getInterviewRubric } from "@/services/interview-rubric";
-import { APPLICATION_STATUSES } from "@/lib/domain/application-status";
+import { APPLICATION_STATUSES, employerTargets, type ApplicationStatus } from "@/lib/domain/application-status";
 import { sanitizeHex } from "@/lib/brand";
 
 const opt = (max: number) =>
@@ -289,6 +289,22 @@ export async function changeStatus(
   const parsed = statusSchema.safeParse(Object.fromEntries(form));
   if (!parsed.success) return { ok: false, error: localizeError(null, locale) };
   const supabase = await createClient();
+  const { data: app } = await supabase
+    .from("applications")
+    .select("status, requires_task, completed_at")
+    .eq("id", applicationId)
+    .maybeSingle();
+  if (!app) return { ok: false, error: localizeError({ code: "42501" }, locale) };
+  const taskPending = app.requires_task && !app.completed_at;
+  if (!employerTargets(app.status as ApplicationStatus, taskPending).includes(parsed.data.to))
+    return {
+      ok: false,
+      error: taskPending
+        ? locale === "ar"
+          ? "لم يسلّم المرشح المهمة العملية بعد؛ يمكن الرفض أو قرار التعيين فقط."
+          : "The candidate hasn't submitted the practical task yet; only rejection or a Hired decision is possible."
+        : localizeError({ code: "P0001", message: "invalid application status transition" }, locale),
+    };
   const { error } = await supabase.rpc("change_application_status", {
     p_app: applicationId,
     p_to: parsed.data.to,

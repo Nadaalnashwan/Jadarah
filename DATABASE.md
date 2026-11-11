@@ -14,7 +14,7 @@ Supabase project ref: `qqvvlornhvfykusaxaid`. All schema changes are versioned i
 | 0008 | grants_hardening | function EXECUTE hardening |
 | 0009 | showcase_demo | anonymised landing showcase, public contact, guarded `demo_reset()`, default settings |
 | 0010 | table_grants | least-privilege table grants (project grants nothing by default) |
-| 0011 | function_grants | EXECUTE for authenticated; internal helpers revoked |
+| 0011 | function_grants | EXECUTE for authenticated; internal helpers revoked (2026-11-11: the demo-seed revokes are now conditional so a fresh project builds from the migrations alone — no effect on an existing database) |
 | 0012 | fix_submit_assessment | enum cast fix found by live integration tests |
 | 0013 | semantic_embeddings | pgvector: skill/candidate/job embeddings (768d, model-keyed), related_skills, semantic_fit, semantic_job_ranking |
 | 0014 | ai_record_kinds | new AI analysis/generation record kinds |
@@ -31,11 +31,14 @@ Supabase project ref: `qqvvlornhvfykusaxaid`. All schema changes are versioned i
 | 0025 | product_experience | job ↔ practical task lifecycle: `apply_to_job` auto-assigns the job's published task (status `assessment_pending`, `applications.requires_task/task_assignment_id/completed_at`), application complete only when the task is submitted (trigger); `attach_job_task` (same org, task published before job, never replaced once candidates have it — `jobs_enforce_task`); `job_task_preview` (candidate-safe, anon); `start_assessment` blocks closed applications and resumes attempts; task content locked once assigned (`lock_assigned_task_*` triggers); `assessments.job_id/creation_key` (idempotent creation); employer-managed `company_identity` + `update_company_identity` (company admins) + public bucket `company-identity`; `exploration_tasks` / `exploration_attempts` (candidate-private) |
 | 0026 | exploration_tasks | 12 exploratory tasks (one per job category), generated from `scripts/exploration/tasks.ts` |
 | 0027 | public_exploration_preview | anonymous read of active exploratory task titles (learning content; attempts stay private) |
+| 0030 (proposal) | `supabase/proposals/0030_workflow_cv_listings.sql` — **PROPOSED, NOT APPLIED** (needs owner approval; kept outside `migrations/` so `supabase db push` cannot apply it by accident. To apply after approval and a backup: copy it to `supabase/migrations/20261111000030_workflow_cv_listings.sql`, then `npx tsx scripts/import/apply-migration.ts supabase/migrations/20261111000030_workflow_cv_listings.sql` (one transaction, recorded in the ledger) or `supabase db push`) | candidate profile row created at sign-up (+ backfill); `change_application_status` allows only reject/hire while the job's task is outstanding; `jobs.listing_type` gains `employer` (new default; employer-authored rows backfilled), `simulation` kept for imported practice scenarios; `admin_platform_stats` excludes demo/practice records; demo `landing_showcase()` no longer executable by API roles. The application enforces the same rules without it. Verified on a local Supabase (integration + E2E). |
 
 Applying: 0025–0027 were applied to project `qqvvlornhvfykusaxaid` through the Supabase MCP connection on 2026-11-11 (plus a follow-up `product_experience_embed_fix` that drops two FKs so PostgREST embeds stay unambiguous — the repo's 0025 file already reflects the final state). 0001–0019 were applied through the Supabase MCP connection; 0020–0023 with `npx tsx scripts/import/apply-migration.ts <file>` (one transaction, recorded in `supabase_migrations.schema_migrations`). For a fresh project use the Supabase CLI (`supabase db push`) or run the files in order.
 
-## Status machine
-`submitted → under_review → assessment_pending → assessment_completed → shortlisted → interview_scheduled → interview_completed → hired`, with `rejected`/`hired`/`withdrawn` reachable from any open state (see `application_transition_allowed`). `assessment_completed`, `interview_scheduled`, `interview_completed` and `withdrawn` are set only by their workflows.
+## Recruitment workflow and status machine
+Workflow: `apply_to_job` creates the application and, when the job carries a published practical task, assigns it in the same transaction (`submitted → assessment_pending`, `requires_task`, `task_assignment_id`) — no employer approval before the assessment. `submit_assessment` completes the application (`assessment_completed`, `completed_at`) and notifies the employer, who then evaluates the CV + evidence (`under_review`) → `shortlisted` → interview → decision. Jobs without a task are complete at submission (`submitted → under_review`).
+
+Allowed transitions (`application_transition_allowed`) are unchanged; `rejected`/`hired`/`withdrawn` are reachable from any open state. `assessment_completed`, `interview_scheduled`, `interview_completed` and `withdrawn` are set only by their workflows. While a job's task is outstanding the employer may only reject or hire (application layer today; DB as well once proposal 0030 is applied).
 
 ## Mandatory rules (DB-enforced)
 - Interview creation requires `was_shortlisted` and a shortlisted/interview stage (`create_interview` + `interviews_enforce_shortlist`).
@@ -47,6 +50,11 @@ Applying: 0025–0027 were applied to project `qqvvlornhvfykusaxaid` through the
 - Simulation jobs are labelled in every listing; verified jobs need a source URL.
 - Assessment reference assessor content is readable by Super Admin only; recruiters receive rubric structure through `reference_rubrics_for_builder`. Candidate materials are readable only by candidates assigned the assessment; assessor materials and guides never.
 - Users cannot change their own `status`, `account_type`, `email`, `is_demo`; companies cannot change their own approval fields.
+
+## Removing fabricated data
+`scripts/cleanup/remove-fabricated-data.sql` (manual, owner-approved): removes demo identities and fictional companies (with what cascades from them), "Integration Test Org …" leftovers and imported practice listings that no real candidate applied to. Keeps real users, registry organizations, employer-posted jobs, every assessment/template (saved builder drafts included), the reference library, skills, resources and settings. Runs in one transaction, prints what it would remove and **rolls back** unless the last line is changed to `COMMIT`. Verified end to end on a local copy (dry run + commit). Not run against the hosted project.
+
+Until it is run, the application hides that data from real users: public/candidate listings exclude practice scenarios (`LISTED_JOB_FILTER`), the talent pool and application lists exclude demo identities for non-demo viewers, and the landing page no longer reads `landing_showcase()`.
 
 ## Demo seed
 `scripts/demo/*.ts` (typed, fictional data) → `npm run seed:generate` → `supabase/seed/demo_seed.sql` defining `public.seed_demo(p_password)`. Idempotent (deterministic UUIDs, `on conflict do nothing`), refuses when `platform_settings.environment = 'production'`. Current counts: 61 Auth identities, 10 companies (9 approved, 1 pending), 30 jobs, 32 candidates, 15 assessments (75 questions), 51 learning resources, 10 plan templates, 12 personal plans, 82 applications, 28 interviews, 51 assessment submissions.

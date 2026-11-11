@@ -8,6 +8,7 @@ import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import type { Criterion } from "@/lib/domain/discovery";
 import { ExplorationForm } from "./form";
+import { LISTED_JOB_FILTER } from "@/lib/domain/listings";
 
 type Feedback = {
   source: "ai" | "rule_based";
@@ -44,6 +45,7 @@ export default async function ExplorationTaskPage({
       .from("jobs")
       .select("id, title_en, title_ar, job_skills(skill:skills(name_en, name_ar))")
       .eq("status", "published")
+      .or(LISTED_JOB_FILTER)
       .eq("category_id", task.category_id)
       .limit(4),
   ]);

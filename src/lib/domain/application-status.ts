@@ -114,14 +114,42 @@ export function statusTone(status: ApplicationStatus): StatusTone {
   }
 }
 
-/** Ordered milestones used for the candidate-facing progress rail. */
+/**
+ * Recruitment workflow (no employer gate before the assessment):
+ *   apply → application created → the job's attached practical task is assigned in the same transaction
+ *   (assessment_pending) → candidate submits (assessment_completed, application complete) → the employer
+ *   evaluates the CV + assessment evidence (under_review) → shortlist → interview → decision.
+ * Jobs without an attached task are complete at submission and go straight to employer review.
+ */
 export const PIPELINE_STAGES: readonly ApplicationStatus[] = [
   "submitted",
-  "under_review",
   "assessment_pending",
   "assessment_completed",
+  "under_review",
   "shortlisted",
   "interview_scheduled",
   "interview_completed",
   "hired",
 ];
+
+const ASSESSMENT_STAGES: readonly ApplicationStatus[] = ["assessment_pending", "assessment_completed"];
+
+/** Candidate-facing progress rail: assessment steps appear only when the application has (or had) an assessment. */
+export function pipelineFor(requiresTask: boolean, reached: Iterable<ApplicationStatus> = []): ApplicationStatus[] {
+  const seen = new Set(reached);
+  const hasAssessment = requiresTask || ASSESSMENT_STAGES.some((s) => seen.has(s));
+  return PIPELINE_STAGES.filter((s) => hasAssessment || !ASSESSMENT_STAGES.includes(s));
+}
+
+/** Decisions an employer may take while the candidate has not yet submitted the job's practical task. */
+export const TASK_PENDING_TARGETS: readonly ApplicationStatus[] = ["rejected", "hired"];
+
+/**
+ * Targets a recruiter may pick by hand. While the job's practical task is still outstanding the evidence is
+ * incomplete, so review/shortlist are not offered — only rejection or a manual Hired decision
+ * (hiring never requires a shortlist).
+ */
+export function employerTargets(from: ApplicationStatus, taskPending: boolean): ApplicationStatus[] {
+  const targets = manualTargets(from);
+  return taskPending ? targets.filter((s) => TASK_PENDING_TARGETS.includes(s)) : targets;
+}

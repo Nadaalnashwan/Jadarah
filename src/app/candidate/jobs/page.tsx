@@ -10,6 +10,7 @@ import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCandidateSkills, JOB_LIST_SELECT, matchJob, toSkillRecords } from "@/services/candidate";
 import { SaveJobButton } from "./save-button";
+import { LISTED_JOB_FILTER } from "@/lib/domain/listings";
 
 type SP = {
   q?: string;
@@ -32,7 +33,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
   const L = tx(locale);
   const supabase = await createClient();
 
-  let query = supabase.from("jobs").select(JOB_LIST_SELECT).eq("status", "published");
+  let query = supabase.from("jobs").select(JOB_LIST_SELECT).eq("status", "published").or(LISTED_JOB_FILTER);
   if (sp.q)
     query = query.or(
       `title_en.ilike.%${sp.q.replace(/[%,()]/g, "")}%,title_ar.ilike.%${sp.q.replace(/[%,()]/g, "")}%`,
@@ -208,7 +209,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
               </div>
               <p className="text-muted mt-2 flex flex-wrap items-center gap-1 text-xs">
                 <MapPin className="size-3.5" /> {j.city} · {t.workMode[j.work_mode]} ·{" "}
-                {t.employmentType[j.employment_type]} <ListingBadge type={j.listing_type} locale={locale} />
+                {t.employmentType[j.employment_type]} <ListingBadge job={j} locale={locale} />
               </p>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {j.match.requirements.slice(0, 4).map((r) => (

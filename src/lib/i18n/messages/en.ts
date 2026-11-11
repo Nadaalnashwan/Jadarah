@@ -126,8 +126,7 @@ export const en = {
     showcaseTitle: "Two workspaces. One source of truth.",
     showcaseCandidate: "Candidate",
     showcaseCompany: "Company",
-    showcaseLive: "Live from the demo database",
-    showcaseLiveEmpty: "Demo data has not been seeded yet.",
+    showcaseNote: "How the product works. No candidate, company or job data is shown here.",
     aiEyebrow: "Explainable intelligence",
     aiTitle: "AI that shows its work.",
     aiSteps: ["CV", "Extraction", "Skills", "Evidence", "Matching", "Human decision"],
@@ -157,7 +156,7 @@ export const en = {
     footerPrivacy: "Privacy",
     footerTerms: "Terms",
     footerContact: "Contact",
-    footerNote: "Opportunities marked Simulation are not real vacancies. Demo accounts are fictional.",
+    footerNote: "Opportunities are published by the organizations themselves. People decide — AI only assists.",
   },
   auth: {
     signInTitle: "Welcome back",

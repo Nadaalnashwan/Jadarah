@@ -16,6 +16,7 @@ import { getCandidateSkills, matchJob, toSkillRecords } from "@/services/candida
 import { withSemantics } from "@/services/semantic";
 import { ApplyForm } from "./apply-form";
 import { SaveJobButton } from "../save-button";
+import { isPracticeListing } from "@/lib/domain/listings";
 
 export default async function JobDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -59,6 +60,8 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
       .maybeSingle(),
     supabase.rpc("job_task_preview", { p_job: id }),
   ]);
+  // Imported practice scenarios are not vacancies: only reachable for a candidate who already has an application.
+  if (isPracticeListing(job) && !existing) notFound();
   const task = preview as TaskPreview | null;
   const skillRecords = toSkillRecords(skills);
   const match = await withSemantics(supabase, matchJob(job, skillRecords, cp?.years_experience ?? null, locale), {
@@ -144,9 +147,9 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
               <h2 className="mb-2 font-bold">{L("About the organization", "عن الجهة")}</h2>
               {job.company && <CompanyIdentity company={job.company} locale={locale} />}
               {pick(job.company, "description", locale) && <p className="text-muted mt-3 text-sm">{pick(job.company, "description", locale)}</p>}
-              {job.listing_type === "simulation" && (
+              {isPracticeListing(job) && (
                 <p className="text-subtle mt-3 text-xs">
-                  {L("Simulation opportunity for practice and demonstration — not an official vacancy.", "فرصة محاكاة للتدريب والعرض — وليست شاغرًا رسميًا.")}
+                  {L("Practice scenario — not an official vacancy.", "سيناريو تدريبي — وليس شاغرًا رسميًا.")}
                 </p>
               )}
             </section>

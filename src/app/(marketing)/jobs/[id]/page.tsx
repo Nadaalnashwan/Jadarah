@@ -8,6 +8,7 @@ import { getSession, homeFor } from "@/lib/auth/session";
 import { pick, pickArray, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
+import { isPracticeListing } from "@/lib/domain/listings";
 
 export default async function PublicJob({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -21,7 +22,8 @@ export default async function PublicJob({ params }: { params: Promise<{ id: stri
     )
     .eq("id", id)
     .maybeSingle();
-  if (!j) notFound();
+  // Imported practice scenarios are not vacancies and are never presented as opportunities.
+  if (!j || isPracticeListing(j)) notFound();
   const [session, { data: preview }] = await Promise.all([
     getSession(),
     supabase.rpc("job_task_preview", { p_job: id }),
@@ -36,7 +38,7 @@ export default async function PublicJob({ params }: { params: Promise<{ id: stri
       <h1 className="editorial mt-2 text-4xl font-extrabold">{pick(j, "title", locale)}</h1>
       <p className="text-muted mt-3 text-sm">
         {j.city} · {t.workMode[j.work_mode]} · {t.employmentType[j.employment_type]} ·{" "}
-        {t.level[j.experience_level]} <ListingBadge type={j.listing_type} locale={locale} />
+        {t.level[j.experience_level]} <ListingBadge job={j} locale={locale} />
       </p>
       <p className="text-muted mt-8 leading-relaxed">{pick(j, "description", locale)}</p>
       <h2 className="mt-8 font-bold">{L("Responsibilities", "المسؤوليات")}</h2>

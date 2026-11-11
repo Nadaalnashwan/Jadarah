@@ -13,11 +13,11 @@ import { toYearMonth } from "@/lib/domain/cv-dates";
 
 const isPresent = (s: string | null | undefined) => !!s && /present|current|now|حتى الآن|حاليا|حاليًا/i.test(s);
 
-type Exp = { on: boolean; title: string; company: string; start: string; end: string; description: string; raw: string };
-type Edu = { on: boolean; institution: string; degree: string; field: string; end_year: string };
-type Proj = { on: boolean; title: string; description: string };
-type Item = { on: boolean; value: string };
-type Skill = { on: boolean; name: string; evidence: string | null; kind: "explicit" | "inferred" };
+type Exp = { on: boolean; found: boolean; title: string; company: string; start: string; end: string; description: string; raw: string };
+type Edu = { on: boolean; found: boolean; institution: string; degree: string; field: string; end_year: string };
+type Proj = { on: boolean; found: boolean; title: string; description: string };
+type Item = { on: boolean; found: boolean; value: string };
+type Skill = { on: boolean; found: boolean; name: string; evidence: string | null; kind: "explicit" | "inferred" };
 
 /**
  * Editable review of everything extracted from a CV. The candidate edits, removes or approves each item;
@@ -28,14 +28,18 @@ export function CvReview({ documentId, parsed, onDone }: { documentId: string; p
   const L = tx(locale);
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  // Grounding: items whose key fact is not in the CV text start unticked and are flagged (never presented as stated).
+  const g = parsed.grounding;
+  const found = (list: boolean[] | undefined, i: number) => !g?.checked || !!list?.[i];
   const [basics, setBasics] = useState({
     full_name: parsed.full_name ?? "",
     headline: parsed.headline ?? "",
     summary: parsed.summary ?? "",
   });
   const [exp, setExp] = useState<Exp[]>(
-    parsed.experience.map((e) => ({
-      on: true,
+    parsed.experience.map((e, i) => ({
+      on: found(g?.experience, i),
+      found: found(g?.experience, i),
       title: e.title,
       company: e.company,
       start: toYearMonth(e.start),
@@ -45,12 +49,12 @@ export function CvReview({ documentId, parsed, onDone }: { documentId: string; p
     })),
   );
   const [edu, setEdu] = useState<Edu[]>(
-    parsed.education.map((e) => ({ on: true, institution: e.institution, degree: e.degree, field: e.field ?? "", end_year: e.end_year?.match(/\d{4}/)?.[0] ?? "" })),
+    parsed.education.map((e, i) => ({ on: found(g?.education, i), found: found(g?.education, i), institution: e.institution, degree: e.degree, field: e.field ?? "", end_year: e.end_year?.match(/\d{4}/)?.[0] ?? "" })),
   );
-  const [proj, setProj] = useState<Proj[]>(parsed.projects.map((p) => ({ on: true, title: p.title, description: p.description ?? "" })));
-  const [certs, setCerts] = useState<Item[]>(parsed.certifications.map((c) => ({ on: true, value: c })));
-  const [langs, setLangs] = useState<Item[]>(parsed.languages.map((c) => ({ on: true, value: c })));
-  const [skills, setSkills] = useState<Skill[]>(parsed.skills.map((s) => ({ on: s.kind === "explicit", name: s.name, evidence: s.evidence ?? null, kind: s.kind })));
+  const [proj, setProj] = useState<Proj[]>(parsed.projects.map((p, i) => ({ on: found(g?.projects, i), found: found(g?.projects, i), title: p.title, description: p.description ?? "" })));
+  const [certs, setCerts] = useState<Item[]>(parsed.certifications.map((c, i) => ({ on: found(g?.certifications, i), found: found(g?.certifications, i), value: c })));
+  const [langs, setLangs] = useState<Item[]>(parsed.languages.map((c, i) => ({ on: found(g?.languages, i), found: found(g?.languages, i), value: c })));
+  const [skills, setSkills] = useState<Skill[]>(parsed.skills.map((s, i) => ({ on: s.kind === "explicit" && found(g?.skills, i), found: found(g?.skills, i), name: s.name, evidence: s.evidence ?? null, kind: s.kind })));
   const upd = <T,>(set: React.Dispatch<React.SetStateAction<T[]>>, i: number, patch: Partial<T>) =>
     set((arr) => arr.map((x, k) => (k === i ? { ...x, ...patch } : x)));
 
@@ -84,10 +88,16 @@ export function CvReview({ documentId, parsed, onDone }: { documentId: string; p
     </section>
   );
   const row = "flex flex-col gap-2 rounded-xl border p-3";
-  const keep = (on: boolean, toggle: (v: boolean) => void) => (
-    <label className="flex items-center gap-2 text-xs font-semibold">
-      <Checkbox checked={on} onChange={(e) => toggle(e.target.checked)} /> {L("Keep", "اعتماد")}
-    </label>
+  const notFound = (
+    <Badge tone="muted">{L("Not found word-for-word in your CV — check before keeping", "غير موجود حرفيًا في سيرتك — تحقّق قبل الاعتماد")}</Badge>
+  );
+  const keep = (on: boolean, toggle: (v: boolean) => void, isFound = true) => (
+    <span className="flex flex-wrap items-center gap-2">
+      <label className="flex items-center gap-2 text-xs font-semibold">
+        <Checkbox checked={on} onChange={(e) => toggle(e.target.checked)} /> {L("Keep", "اعتماد")}
+      </label>
+      {!isFound && notFound}
+    </span>
   );
 
   return (
@@ -100,6 +110,14 @@ export function CvReview({ documentId, parsed, onDone }: { documentId: string; p
             "استُخرج فقط ما تذكره سيرتك. عدّل أو احذف ما تشاء ثم اعتمد. لا يُضاف شيء قبل الحفظ.",
           )}
         </p>
+        {g && !g.checked && (
+          <p className="bg-warning-soft text-warning w-full rounded-xl px-3 py-2 text-xs font-semibold">
+            {L(
+              "This file has no readable text layer (e.g. a scanned image), so items could not be checked against it. Review each one carefully.",
+              "لا يحتوي هذا الملف على نص قابل للقراءة (مثل صورة ممسوحة)، فلم نتمكن من مطابقة العناصر معه. راجع كل عنصر بعناية.",
+            )}
+          </p>
+        )}
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label={L("Full name", "الاسم الكامل")} htmlFor="cvr-name">
@@ -123,7 +141,7 @@ export function CvReview({ documentId, parsed, onDone }: { documentId: string; p
         exp.map((e, i) => (
           <div key={i} className={row}>
             <div className="flex items-center justify-between gap-2">
-              {keep(e.on, (v) => upd(setExp, i, { on: v }))}
+              {keep(e.on, (v) => upd(setExp, i, { on: v }), e.found)}
               {e.raw && <span className="text-subtle text-[11px]" dir="auto">{L("CV dates", "التواريخ في السيرة")}: {e.raw}</span>}
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
@@ -140,7 +158,7 @@ export function CvReview({ documentId, parsed, onDone }: { documentId: string; p
       {section(L("Education", "التعليم"), edu.length,
         edu.map((e, i) => (
           <div key={i} className={row}>
-            {keep(e.on, (v) => upd(setEdu, i, { on: v }))}
+            {keep(e.on, (v) => upd(setEdu, i, { on: v }), e.found)}
             <div className="grid gap-2 sm:grid-cols-2">
               <Input aria-label={L("Institution", "المؤسسة")} value={e.institution} onChange={(x) => upd(setEdu, i, { institution: x.target.value })} />
               <Input aria-label={L("Degree", "الدرجة")} value={e.degree} onChange={(x) => upd(setEdu, i, { degree: x.target.value })} />
@@ -154,7 +172,7 @@ export function CvReview({ documentId, parsed, onDone }: { documentId: string; p
       {section(L("Projects", "المشاريع"), proj.length,
         proj.map((p, i) => (
           <div key={i} className={row}>
-            {keep(p.on, (v) => upd(setProj, i, { on: v }))}
+            {keep(p.on, (v) => upd(setProj, i, { on: v }), p.found)}
             <Input aria-label={L("Project", "المشروع")} value={p.title} onChange={(x) => upd(setProj, i, { title: x.target.value })} />
             <Textarea aria-label={L("Description", "الوصف")} rows={2} value={p.description} onChange={(x) => upd(setProj, i, { description: x.target.value })} />
           </div>
@@ -171,13 +189,13 @@ export function CvReview({ documentId, parsed, onDone }: { documentId: string; p
             {list.map((c, i) => (
               <div key={i} className="flex items-center gap-2">
                 <Checkbox aria-label={L("Keep", "اعتماد")} checked={c.on} onChange={(e) => upd(set, i, { on: e.target.checked })} />
-                <Input value={c.value} onChange={(e) => upd(set, i, { value: e.target.value })} />
+                <Input value={c.value} onChange={(e) => upd(set, i, { value: e.target.value })} title={c.found ? undefined : L("Not found word-for-word in your CV", "غير موجود حرفيًا في سيرتك")} aria-invalid={!c.found || undefined} />
                 <Button type="button" size="icon" variant="ghost" aria-label={L("Remove", "حذف")} onClick={() => set((a) => a.filter((_, k) => k !== i))}>
                   <Trash2 />
                 </Button>
               </div>
             ))}
-            <Button type="button" size="sm" variant="ghost" className="self-start" onClick={() => set((a) => [...a, { on: true, value: "" }])}>
+            <Button type="button" size="sm" variant="ghost" className="self-start" onClick={() => set((a) => [...a, { on: true, found: true, value: "" }])}>
               <Plus /> {L("Add", "إضافة")}
             </Button>
           </section>
@@ -195,6 +213,7 @@ export function CvReview({ documentId, parsed, onDone }: { documentId: string; p
                   <Badge tone={s.kind === "explicit" ? "info" : "muted"}>
                     {s.kind === "explicit" ? L("Stated in CV", "مذكورة في السيرة") : L("Inferred — not verified", "مستنتجة — غير موثّقة")}
                   </Badge>
+                  {!s.found && s.kind === "explicit" && notFound}
                 </p>
                 {s.evidence && <p className="text-subtle mt-0.5 line-clamp-2 text-xs" dir="auto">“{s.evidence}”</p>}
               </div>

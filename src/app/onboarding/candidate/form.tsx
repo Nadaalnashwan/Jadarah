@@ -189,12 +189,21 @@ export function CandidateOnboardingForm({
           >
             {t.common.back}
           </Button>
+          {/* Distinct keys: React must mount a new element instead of turning the clicked "Next" button into the
+              submit button during the same click (which submitted the form and skipped the Skills step). */}
           {step < 2 ? (
-            <Button type="button" onClick={() => setStep((s) => s + 1)}>
+            <Button
+              key="next"
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                setStep((s) => s + 1);
+              }}
+            >
               {t.common.next}
             </Button>
           ) : (
-            <Button type="submit" loading={pending}>
+            <Button key="finish" type="submit" loading={pending}>
               {L("Finish and open my workspace", "إنهاء وفتح مساحتي")}
             </Button>
           )}

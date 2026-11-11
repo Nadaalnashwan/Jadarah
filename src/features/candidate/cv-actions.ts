@@ -5,31 +5,63 @@ import { requireCandidate } from "@/lib/auth/session";
 import { localizeError, type ActionResult } from "@/lib/errors";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
-import { AIUnavailableError, parseCvRuleBased, parseCvWithAI, type ParsedCv } from "@/services/ai/cv";
-
-const CV_MIME = [
-  "application/pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/msword",
-];
-const MAX = 10 * 1024 * 1024;
+import { MAX_CV_BYTES, resolveCvType, sniffCvBytes } from "@/lib/domain/cv-file";
+import { groundCv, isEmptyExtraction } from "@/lib/domain/cv-grounding";
+import { parseCvRuleBased, parseCvWithAI, type ParsedCv } from "@/services/ai/cv";
 
 const registerSchema = z.object({
   path: z.string().min(10).max(400),
   file_name: z.string().min(1).max(200),
-  mime_type: z.enum(CV_MIME as [string, ...string[]]),
-  size_bytes: z.number().int().positive().max(MAX),
+  mime_type: z.string().max(200),
+  size_bytes: z.number().int().positive().max(MAX_CV_BYTES),
   label: z.string().max(80).optional(),
 });
 
-/** Called after the browser uploaded directly to the private bucket (storage RLS restricts the path to {uid}/...). */
+const cvMsg = (locale: string, en: string, ar: string) => (locale === "ar" ? ar : en);
+
+/**
+ * Called after the browser uploaded directly to the private bucket (storage RLS restricts the path to {uid}/...).
+ * The server re-validates the type from the name AND the stored bytes, makes sure the candidate profile row exists
+ * (new candidates upload their CV before completing onboarding), then records the file as a new version.
+ * The original file is never modified.
+ */
 export async function registerCvUpload(input: z.infer<typeof registerSchema>): Promise<ActionResult<{ id: string }>> {
   const session = await requireCandidate();
   const { locale } = await getI18n();
   const parsed = registerSchema.safeParse(input);
-  if (!parsed.success || !parsed.data.path.startsWith(`${session.userId}/`))
+  if (!parsed.success || !parsed.data.path.startsWith(`${session.userId}/`) || parsed.data.path.includes(".."))
     return { ok: false, error: localizeError(null, locale) };
   const supabase = await createClient();
+  const discard = () => supabase.storage.from("candidate-cvs").remove([parsed.data.path]);
+
+  const type = resolveCvType(parsed.data.file_name, parsed.data.mime_type);
+  if (!type) {
+    await discard();
+    return { ok: false, error: cvMsg(locale, "Only PDF or Word (DOCX) files are accepted.", "يُقبل ملف PDF أو Word (DOCX) فقط.") };
+  }
+  // Verify the stored object really is a PDF/Word file of the stated size (never trust the client).
+  const { data: blob, error: dlErr } = await supabase.storage.from("candidate-cvs").download(parsed.data.path);
+  if (dlErr || !blob)
+    return { ok: false, error: cvMsg(locale, "We couldn't find the uploaded file. Please upload it again.", "تعذّر العثور على الملف المرفوع. ارفعه مرة أخرى.") };
+  const head = new Uint8Array(await blob.slice(0, 1100).arrayBuffer());
+  const sniffed = sniffCvBytes(head);
+  if (sniffed !== type.kind || blob.size > MAX_CV_BYTES || blob.size === 0) {
+    await discard();
+    return {
+      ok: false,
+      error: cvMsg(locale, "This file doesn't look like a valid PDF or Word document.", "لا يبدو هذا الملف مستند PDF أو Word صالحًا."),
+    };
+  }
+
+  // candidate_documents references candidate_profiles: create the (empty) profile row if onboarding hasn't yet.
+  const { error: cpErr } = await supabase
+    .from("candidate_profiles")
+    .upsert({ user_id: session.userId }, { onConflict: "user_id", ignoreDuplicates: true });
+  if (cpErr) {
+    await discard();
+    return { ok: false, error: localizeError(cpErr, locale) };
+  }
+
   const { count } = await supabase
     .from("candidate_documents")
     .select("id", { count: "exact", head: true })
@@ -43,20 +75,29 @@ export async function registerCvUpload(input: z.infer<typeof registerSchema>): P
     .eq("is_primary", true)
     .is("deleted_at", null)
     .maybeSingle();
-  const { data: inserted, error } = await supabase.from("candidate_documents").insert({
+  const row = {
     candidate_id: session.userId,
     kind: "cv",
     bucket: "candidate-cvs",
     storage_path: parsed.data.path,
     file_name: parsed.data.file_name,
-    mime_type: parsed.data.mime_type,
-    size_bytes: parsed.data.size_bytes,
+    mime_type: type.mime,
+    size_bytes: blob.size,
     label: parsed.data.label || null,
     version: (count ?? 0) + 1, // every upload is a new version; nothing is overwritten
     is_primary: !primary,
-  }).select("id").single();
-  if (error) {
-    await supabase.storage.from("candidate-cvs").remove([parsed.data.path]);
+  };
+  let { data: inserted, error } = await supabase.from("candidate_documents").insert(row).select("id").single();
+  if (error?.code === "23505" && row.is_primary) {
+    // Another upload became primary at the same moment: keep this one as a regular version.
+    ({ data: inserted, error } = await supabase
+      .from("candidate_documents")
+      .insert({ ...row, is_primary: false })
+      .select("id")
+      .single());
+  }
+  if (error || !inserted) {
+    await discard();
     return { ok: false, error: localizeError(error, locale) };
   }
   revalidatePath("/candidate", "layout");
@@ -153,6 +194,11 @@ async function extractText(bytes: ArrayBuffer, mime: string): Promise<string> {
   return "";
 }
 
+/**
+ * Extract structured data from a stored CV for the candidate to review. Never throws to the client: when the file
+ * can't be read (scanned PDF without AI, legacy .doc, provider error with no text) it returns a clear message and the
+ * candidate completes the profile manually. The stored original is only read, never changed.
+ */
 export async function parseCv(documentId: string): Promise<ActionResult<{ parsed: ParsedCv }>> {
   const session = await requireCandidate();
   const { locale } = await getI18n();
@@ -162,35 +208,67 @@ export async function parseCv(documentId: string): Promise<ActionResult<{ parsed
     .select("*")
     .eq("id", documentId)
     .eq("candidate_id", session.userId)
-    .single();
+    .is("deleted_at", null)
+    .maybeSingle();
   if (!doc) return { ok: false, error: localizeError({ code: "42501" }, locale) };
-  await supabase.from("candidate_documents").update({ parse_status: "processing" }).eq("id", documentId);
+  const setStatus = (parse_status: string) =>
+    supabase.from("candidate_documents").update({ parse_status }).eq("id", documentId);
+  const unreadable = async (en: string, ar: string): Promise<ActionResult<{ parsed: ParsedCv }>> => {
+    await setStatus("failed");
+    return { ok: false, error: cvMsg(locale, en, ar) };
+  };
+
+  await setStatus("processing");
   const { data: blob, error: dlErr } = await supabase.storage.from(doc.bucket).download(doc.storage_path);
   if (dlErr || !blob) {
-    await supabase.from("candidate_documents").update({ parse_status: "failed" }).eq("id", documentId);
+    await setStatus("failed");
     return { ok: false, error: localizeError(dlErr, locale) };
   }
   const bytes = await blob.arrayBuffer();
   let text = "";
   try {
-    text = await extractText(bytes, doc.mime_type);
-  } catch {
+    text = (await extractText(bytes, doc.mime_type)).replace(/\u0000/g, "").trim();
+  } catch (e) {
+    console.error("[cv] text extraction failed", { documentId, mime: doc.mime_type, error: String(e) });
     text = "";
   }
-  let parsed: ParsedCv;
+  if (doc.mime_type === "application/msword")
+    return unreadable(
+      "Reading legacy .doc files isn't supported. Your file is saved — upload a PDF or DOCX to extract, or complete your profile manually.",
+      "قراءة ملفات ‎.doc‎ القديمة غير مدعومة. حُفظ ملفك — ارفع PDF أو DOCX للاستخراج، أو أكمل ملفك يدويًا.",
+    );
+
+  let parsed: ParsedCv | null = null;
   try {
     parsed = await parseCvWithAI(
       session.userId,
       text,
-      doc.mime_type === "application/pdf" && !text.trim()
+      doc.mime_type === "application/pdf" && text.length < 40
         ? { mimeType: doc.mime_type, base64: Buffer.from(bytes).toString("base64") }
         : undefined,
     );
   } catch (e) {
-    if (!(e instanceof AIUnavailableError)) throw e;
+    // No AI configured, provider down or invalid output: fall back to deterministic matching on the CV text.
+    console.warn("[cv] AI extraction unavailable, using rule-based fallback", { documentId, error: String(e) });
+  }
+  if (!parsed) {
+    if (text.length < 40)
+      return unreadable(
+        "We couldn't read text from this file (it may be a scanned image). Your CV is saved — complete your profile manually.",
+        "تعذّرت قراءة نص من هذا الملف (قد يكون صورة ممسوحة). حُفظت سيرتك — أكمل ملفك يدويًا.",
+      );
     const { data: taxonomy } = await supabase.from("skills").select("slug, name_en, aliases");
     parsed = parseCvRuleBased(text, taxonomy ?? []);
   }
+  // Ground every item in the CV's own text: quotes not in the document are dropped, unmatched items are flagged.
+  const grounded = groundCv(parsed, text);
+  parsed = { ...grounded.parsed, grounding: grounded.grounding };
+  if (isEmptyExtraction(parsed))
+    return unreadable(
+      "We couldn't find profile details in this CV. Your file is saved — complete your profile manually.",
+      "لم نعثر على بيانات للملف في هذه السيرة. حُفظ ملفك — أكمل ملفك يدويًا.",
+    );
+
   await supabase
     .from("candidate_documents")
     .update({ parse_status: "parsed", parsed_data: parsed as never, parsed_at: new Date().toISOString() })
@@ -201,7 +279,7 @@ export async function parseCv(documentId: string): Promise<ActionResult<{ parsed
     subject_type: "candidate_document",
     subject_id: documentId,
     provider: parsed.provider,
-    is_demo: parsed.method === "rule_based",
+    is_demo: false,
     output: { skills: parsed.skills.length, method: parsed.method },
   });
   revalidatePath("/candidate/cvs");

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { brandVars, identityImageUrl, type CompanyIdentityRow } from "@/lib/brand";
+import { listingProvenance } from "@/lib/domain/listings";
 
 /**
  * Organization identity. Two sources, in order:
@@ -153,12 +154,22 @@ export function CompanyIdentity({
   );
 }
 
-/** Concise provenance label: simulation opportunities are never presented as official vacancies. */
-export function ListingBadge({ type, locale }: { type?: string | null; locale: "ar" | "en" }) {
-  if (type !== "simulation") return null;
+/**
+ * Concise provenance label. Verified external vacancies show their source status; imported practice scenarios
+ * (never listed as opportunities) are labelled if they are ever shown; employer-posted jobs need no label.
+ */
+export function ListingBadge({
+  job,
+  locale,
+}: {
+  job: { listing_type?: string | null; created_by?: string | null };
+  locale: "ar" | "en";
+}) {
+  const kind = listingProvenance(job);
+  if (kind === "employer") return null;
   return (
     <span className="border-border text-subtle inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold">
-      {locale === "ar" ? "محاكاة" : "Simulation"}
+      {kind === "verified" ? (locale === "ar" ? "مصدر موثّق" : "Verified source") : locale === "ar" ? "سيناريو تدريبي" : "Practice scenario"}
     </span>
   );
 }

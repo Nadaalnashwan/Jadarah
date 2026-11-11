@@ -4,7 +4,7 @@
 
 JADARAH is a bilingual (Arabic/English) talent-intelligence and recruitment platform. Candidates build evidence-backed profiles, take practical assessments and follow development plans; companies publish jobs, compare candidates requirement by requirement, run structured interviews and decide. AI supports — people decide.
 
-> Demo companies and people are fictional.
+> The product never presents fictional or sample records as platform activity: demo identities, demo companies and imported practice scenarios are hidden from real users (see `scripts/cleanup/remove-fabricated-data.sql` to remove them for good).
 
 ## Stack
 Next.js 16 (App Router, Server Actions, `proxy.ts`) · React 19 · Three.js (landing journey, lazy-loaded) · TypeScript (strict) · Tailwind CSS v4 · Motion · Recharts · Zod · Supabase (Postgres, Auth, Storage, RLS) · Vitest · Playwright · GitHub Actions.
@@ -57,8 +57,8 @@ Requires Node.js 22+ (24 LTS recommended) and npm. Database migrations: see [DAT
 | `npm run dev` / `build` / `start` | Develop / production build / serve |
 | `npm run lint` · `typecheck` · `format` | Quality gates |
 | `npm test` | Unit tests (domain rules) |
-| `npm run test:integration` | Live RLS + recruitment-flow tests against Supabase (needs `DEMO_USER_PASSWORD`) |
-| `npm run test:e2e` | Playwright browser journeys |
+| `npm run test:integration` | RLS + recruitment-flow tests against the Supabase in `.env.local` (needs `DEMO_USER_PASSWORD`); `tests/integration/workflow.test.ts` runs only against a **local** Supabase |
+| `npm run test:e2e` | Playwright browser journeys (`RUN_LOCAL_E2E=1` adds the candidate + employer core journeys against a local Supabase) |
 | `npm run seed:generate` | Regenerate `supabase/seed/demo_seed.sql` from typed demo data |
 | `npm run demo:seed` / `demo:reset -- --yes` | Seed / remove demo data (refuses in production) |
 | `npm run admin:provision` | Idempotently create the first Super Admin |
@@ -70,6 +70,22 @@ Requires Node.js 22+ (24 LTS recommended) and npm. Database migrations: see [DAT
 | `node scripts/brand-assets.mjs` | Regenerate `public/brand/*.svg` and the app icon from the approved symbol geometry |
 | `npx tsx scripts/exploration/generate-sql.ts` | Regenerate migration 0026 from `scripts/exploration/tasks.ts` |
 | `npm run demo:rotate-password -- --yes` | Rotate the shared password of `@jadarah-demo.test` identities only |
+| `psql "$SUPABASE_DB_URL" -f scripts/cleanup/remove-fabricated-data.sql` | Preview (dry run, rolls back) removal of demo/test/practice data; change the last line to `COMMIT` only after review |
+
+## Recruitment workflow
+Candidate applies → the application is created → the job's attached practical task is assigned **in the same transaction** and opens immediately (no employer approval step) → the candidate submits → the application is complete and the employer evaluates the CV and the assessment evidence → shortlist → interview → decision. While the task is outstanding the employer can only reject or hire (hiring never requires a shortlist); interviews always require a shortlist. Jobs without a task are complete at submission.
+
+## Testing against a local Supabase (no production data touched)
+```bash
+npx supabase start                                  # applies supabase/migrations/* to a local stack
+psql postgresql://postgres:postgres@127.0.0.1:54322/postgres -f supabase/seed/demo_seed.sql
+psql postgresql://postgres:postgres@127.0.0.1:54322/postgres -c "select public.seed_demo('<local password>')"
+# .env.local → local URL/keys from `npx supabase status`, SUPABASE_DB_URL, DEMO_USER_PASSWORD=<local password>
+npm test && npm run test:integration
+npm run build && npx next start -p 3100
+RUN_LOCAL_E2E=1 E2E_BASE_URL=http://localhost:3100 npx playwright test
+```
+See [TESTING.md](TESTING.md) for the exact local preparation used for the latest results.
 
 ## Documentation
 [ARCHITECTURE](ARCHITECTURE.md) · [DATABASE](DATABASE.md) · [SECURITY](SECURITY.md) · [TESTING](TESTING.md) · [DEPLOYMENT](DEPLOYMENT.md) · [DEMO_ACCOUNTS](DEMO_ACCOUNTS.md) · [Handoff](docs/handoffs/JADARAH_HANDOFF.md)

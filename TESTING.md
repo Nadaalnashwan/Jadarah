@@ -77,3 +77,33 @@ Test hygiene: `freshJob()` closes its job when the test ends, so test roles neve
 
 Not run here (need the demo password, which is not available in this environment): `npm run test:integration` and the signed-in Playwright journeys (`journeys`, `calendar`, `b2b`, live AI/video). `tests/e2e/calendar.spec.ts` was updated for the new behaviour (scheduling now returns to the application with `?scheduled=<id>`).
 If your Playwright browser version differs, set `PW_CHROMIUM_PATH` to a Chromium executable.
+
+## 2026-11-11 (CV upload, assessment workflow, fabricated data, logo) — executed in a cloud session
+All runs used a **local Supabase stack** (`supabase start`, Postgres 17) built from `supabase/migrations/0001–0027`, i.e. the
+schema the hosted project has today. The hosted project was only read (no writes, no migrations). AI/video keys were removed
+from the test processes (CV extraction ran in its labelled rule-based mode).
+
+Local preparation (after `supabase start`): load `supabase/seed/demo_seed.sql` and `select public.seed_demo('<pw>')`; then
+re-run the two data backfills that the hosted project got because the seed predated them —
+`insert into company_subscriptions (company_id, plan, status, is_demo, payment_status) select id, 'legacy_demo', 'active', true, 'demo' from company_profiles where is_demo and status = 'approved' on conflict do nothing;`
+and `update applications set completed_at = submitted_at where completed_at is null and not requires_task;` — and mirror the
+hosted project's anon grants (`revoke select … from anon` on all public tables, `grant select` on the catalogue tables only).
+
+| Check | Result |
+|---|---|
+| `npx tsc --noEmit` | clean |
+| `npx eslint .` | 0 problems |
+| `npx next build` | passes |
+| `npx vitest run tests/unit` | **68/68** (adds CV type/bytes/grounding 12, workflow + listing provenance 7) |
+| `npx vitest run` (unit + integration, local DB, schema 0001–0027) | **88 passed, 9 failed** — new `workflow.test.ts` 3/3 (CV upload for a brand-new candidate incl. the original FK defect, apply → task assigned with no employer step → no answer keys → submit → employer sees CV + evidence → shortlist; hire without shortlist), `security` 8/8, `recruitment-flow` 3/3, `calendar` 2/2, `final-evaluation` 1/1. The 9 failures need data that only exists on the hosted project: the ten registry organizations (`recruiter.elm` …, ALM-003, saved builder drafts) and the embeddings backfill. |
+| Same with proposal 0030 applied locally | **88 passed, 9 failed** (same 9) |
+| Playwright, production build (`next start -p 3100`), local DB, schema 0001–0027 | **22 passed, 6 failed, 19 skipped** — `core-journeys` 4/4 (sign-up → PDF CV upload → extraction → review → 3-step onboarding; DOCX version; image-only PDF saved with manual path; invalid file refused; apply → task opens immediately → submit → complete; employer sees CV + evidence and shortlists; public board lists only employer jobs; logo proportions), `journeys` 5/5, `calendar` 1/1, `public` 6/6 (desktop + Pixel 7), `api-security` 3/3, `auth-confirm` 2/2. The 6 failures are `b2b.spec` (needs the registry organizations). Skipped: live AI/video/builder/evidence specs (gated) and the real-inbox email spec. |
+| Same E2E subset with proposal 0030 applied locally | **21 passed, 1 skipped** |
+| `scripts/cleanup/remove-fabricated-data.sql` on a local copy | dry run rolls back unchanged; COMMIT run removes demo identities/companies, test organizations and the practice job with demo-only applications; keeps the registry organization, the employer job, the practice job a real candidate applied to, the builder draft (author detached) and all 15 library templates |
+
+Updated specs: `journeys.spec.ts` (current button text; practical-task redirect; shortlist gate wording), `b2b.spec.ts`
+(practice scenarios are no longer listed publicly; labelled “Practice scenario” inside the employer's own workspace),
+`security.test.ts` (platform statistics exclude demo records once proposal 0030 is applied).
+Fixtures: `tests/fixtures/cv-sample.pdf`, `cv-sample.docx`, `cv-no-text.pdf` (synthetic, no personal data).
+Run the core journeys: `RUN_LOCAL_E2E=1 E2E_BASE_URL=http://localhost:3100 npx playwright test tests/e2e/core-journeys.spec.ts --project=desktop`
+(refuses to run unless `.env.local` points at a local Supabase).

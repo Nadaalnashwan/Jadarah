@@ -4,6 +4,7 @@ import { CompanyBanner, CompanyIdentity, identityOf, ListingBadge } from "@/comp
 import type { Messages } from "@/lib/i18n/messages";
 import { pick } from "@/lib/i18n/config";
 import type { createClient } from "@/lib/supabase/server";
+import { LISTED_JOB_FILTER } from "@/lib/domain/listings";
 
 type ServerSupabase = Awaited<ReturnType<typeof createClient>>;
 
@@ -40,7 +41,7 @@ export function verifiedContacts(c: DirectoryCompany, selfPublished: boolean) {
 export async function loadDirectory(supabase: ServerSupabase) {
   const [{ data: companies }, { data: jobs }] = await Promise.all([
     supabase.from("company_profiles").select(COMPANY_SELECT).eq("listed", true).eq("status", "approved").order("name_en"),
-    supabase.from("jobs").select("company_id").eq("status", "published"),
+    supabase.from("jobs").select("company_id").eq("status", "published").or(LISTED_JOB_FILTER),
   ]);
   const count = new Map<string, number>();
   for (const j of jobs ?? []) count.set(j.company_id, (count.get(j.company_id) ?? 0) + 1);
@@ -52,9 +53,10 @@ export async function loadCompany(supabase: ServerSupabase, slug: string) {
   if (!company) return null;
   const { data: jobs } = await supabase
     .from("jobs")
-    .select("id, title_en, title_ar, city, work_mode, experience_level, listing_type")
+    .select("id, title_en, title_ar, city, work_mode, experience_level, listing_type, created_by")
     .eq("company_id", company.id)
     .eq("status", "published")
+    .or(LISTED_JOB_FILTER)
     .order("published_at", { ascending: false });
   return { company, jobs: jobs ?? [] };
 }
@@ -185,7 +187,7 @@ export function CompanyProfile({
                   <p className="font-bold">{pick(j, "title", locale)}</p>
                   <p className="text-muted mt-1 flex flex-wrap items-center gap-1 text-xs">
                     <MapPin className="size-3.5" /> {j.city} · {t.workMode[j.work_mode]} · {t.level[j.experience_level]}{" "}
-                    <ListingBadge type={j.listing_type} locale={locale} />
+                    <ListingBadge job={j} locale={locale} />
                   </p>
                 </Link>
               </li>
