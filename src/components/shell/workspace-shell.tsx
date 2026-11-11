@@ -13,6 +13,7 @@ export async function WorkspaceShell({
   session,
   nav,
   area,
+  contextMark,
   contextLabel,
   notificationsHref,
   banner,
@@ -21,6 +22,8 @@ export async function WorkspaceShell({
   session: SessionContext;
   nav: NavItem[];
   area: string;
+  /** Organization identity mark shown beside the context label (employer workspace). */
+  contextMark?: React.ReactNode;
   contextLabel?: string;
   notificationsHref: string;
   banner?: React.ReactNode;
@@ -47,7 +50,12 @@ export async function WorkspaceShell({
           <p className="text-subtle text-[0.7rem] font-bold tracking-[0.16em] uppercase rtl:tracking-normal">
             {area}
           </p>
-          {contextLabel && <p className="mt-1 truncate text-sm font-semibold">{contextLabel}</p>}
+          {contextLabel && (
+            <div className="mt-2 flex items-center gap-2.5">
+              {contextMark}
+              <p className="min-w-0 truncate text-sm font-semibold">{contextLabel}</p>
+            </div>
+          )}
         </div>
         <WorkspaceNav items={nav} />
         <div className="mt-auto border-t p-4">

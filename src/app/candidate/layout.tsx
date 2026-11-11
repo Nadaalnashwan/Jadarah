@@ -13,6 +13,7 @@ export default async function CandidateLayout({ children }: { children: React.Re
     { href: "/candidate", label: n.overview, icon: "LayoutDashboard", exact: true },
     { href: "/candidate/profile", label: n.profile, icon: "UserRound" },
     { href: "/candidate/cvs", label: n.cvs, icon: "FileText" },
+    { href: "/candidate/companies", label: n.companies, icon: "Building2" },
     { href: "/candidate/jobs", label: n.jobs, icon: "Search" },
     { href: "/candidate/applications", label: n.applications, icon: "Send" },
     { href: "/candidate/interviews", label: n.interviews, icon: "CalendarClock" },

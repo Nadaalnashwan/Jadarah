@@ -22,11 +22,11 @@ export function SiteHeader({ dashboardHref }: { dashboardHref?: string | null })
   }, []);
 
   const links = [
-    { href: "/#product", label: t.nav.product },
+    { href: "/companies", label: t.nav.companies },
+    { href: "/jobs", label: t.nav.opportunities },
     { href: "/how-it-works", label: t.nav.howItWorks },
     { href: "/for-companies", label: t.nav.forCompanies },
     { href: "/for-candidates", label: t.nav.forCandidates },
-    { href: "/about", label: t.nav.about },
   ];
 
   return (

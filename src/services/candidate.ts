@@ -30,7 +30,7 @@ export function toSkillRecords(
 }
 
 export const JOB_LIST_SELECT =
-  "id, title_en, title_ar, city, work_mode, employment_type, experience_level, min_years, salary_min, salary_max, salary_visible, salary_currency, deadline, published_at, status, company:company_profiles(id, name_en, name_ar, slug), category:job_categories(slug, name_en, name_ar), job_skills(importance, min_level, skill:skills(id, slug, name_en, name_ar))";
+  "id, title_en, title_ar, city, work_mode, employment_type, experience_level, min_years, salary_min, salary_max, salary_visible, salary_currency, deadline, published_at, status, listing_type, company:company_profiles(id, name_en, name_ar, slug, sector_en, sector_ar, organization_type, company_brand_profiles(identity_status, usage_permission, logo_source_url, primary_hex)), category:job_categories(slug, name_en, name_ar), job_skills(importance, min_level, skill:skills(id, slug, name_en, name_ar))";
 
 type JobWithSkills = {
   min_years: number;

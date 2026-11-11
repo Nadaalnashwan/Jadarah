@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
+import { CompanyMark } from "@/components/app/company-mark";
 import { WorkspaceShell } from "@/components/shell/workspace-shell";
 import type { NavItem } from "@/components/shell/workspace-nav";
 import { requireCompanyMember } from "@/lib/auth/session";
@@ -83,6 +84,7 @@ export default async function CompanyLayout({ children }: { children: React.Reac
       nav={nav}
       area={t.roles[role]}
       contextLabel={pick(company, "name", locale)}
+      contextMark={company ? <CompanyMark company={company} size="sm" /> : undefined}
       notificationsHref="/company/notifications"
       banner={banner}
     >

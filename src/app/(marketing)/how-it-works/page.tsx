@@ -17,7 +17,7 @@ export default async function HowItWorks() {
       sections={t.landing.stages.map((s) => ({ title: s.title, body: s.body }))}
       cta={[
         { href: "/sign-up?type=candidate", label: t.landing.closingCandidate },
-        { href: "/sign-up?type=company", label: t.landing.closingCompany },
+        { href: "/employer/request-access", label: t.landing.closingCompany },
       ]}
     />
   );

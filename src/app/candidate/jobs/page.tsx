@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Bookmark, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, Input } from "@/components/ui/form";
+import { CompanyIdentity, ListingBadge } from "@/components/app/company-mark";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/primitives";
 import { requireCandidate } from "@/lib/auth/session";
 import { formatDate, formatNumber, pick, tx } from "@/lib/i18n/config";
@@ -193,10 +194,10 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-subtle text-xs font-semibold">{pick(j.company, "name", locale)}</p>
+                  {j.company && <CompanyIdentity company={j.company} locale={locale} size="sm" showSector={false} />}
                   <Link
                     href={`/candidate/jobs/${j.id}`}
-                    className="group-hover:text-primary dark:group-hover:text-lavender mt-1 block text-lg leading-snug font-bold after:absolute after:inset-0"
+                    className="group-hover:text-primary dark:group-hover:text-lavender mt-3 block text-lg leading-snug font-bold after:absolute after:inset-0"
                   >
                     {pick(j, "title", locale)}
                   </Link>
@@ -205,9 +206,9 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
                   <SaveJobButton jobId={j.id} saved={savedSet.has(j.id)} />
                 </div>
               </div>
-              <p className="text-muted mt-2 flex items-center gap-1 text-xs">
+              <p className="text-muted mt-2 flex flex-wrap items-center gap-1 text-xs">
                 <MapPin className="size-3.5" /> {j.city} · {t.workMode[j.work_mode]} ·{" "}
-                {t.employmentType[j.employment_type]}
+                {t.employmentType[j.employment_type]} <ListingBadge type={j.listing_type} locale={locale} />
               </p>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {j.match.requirements.slice(0, 4).map((r) => (

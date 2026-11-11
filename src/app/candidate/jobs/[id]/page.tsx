@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Building2, CalendarDays, MapPin, Wallet } from "lucide-react";
+import { CompanyIdentity, CompanyMark } from "@/components/app/company-mark";
 import { MatchExplanation } from "@/components/app/match-explanation";
 import { StatusBadge } from "@/components/app/status-badge";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,7 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
   const { data: job } = await supabase
     .from("jobs")
     .select(
-      "*, company:company_profiles(id, name_en, name_ar, description_en, description_ar, industry, city, size_range), job_skills(importance, min_level, skill:skills(id, slug, name_en, name_ar)), job_requirements(*), job_application_questions(*), assessment:assessments(title_en, title_ar, duration_minutes)",
+      "*, company:company_profiles(id, slug, name_en, name_ar, sector_en, sector_ar, organization_type, website, description_en, description_ar, company_brand_profiles(identity_status, usage_permission, logo_source_url, primary_hex)), job_skills(importance, min_level, skill:skills(id, slug, name_en, name_ar)), job_requirements(*), job_application_questions(*), assessment:assessments(title_en, title_ar, duration_minutes)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -75,9 +76,11 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
           <div className="bg-navy text-ivory relative p-6 sm:p-8">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sky/90 flex items-center gap-2 text-sm">
-                  <Building2 className="size-4" /> {pick(job.company, "name", locale)}
-                </p>
+                {job.company && (
+                  <Link href={`/candidate/companies/${job.company.slug}`} className="text-sky/90 flex items-center gap-2 text-sm hover:text-white">
+                    <CompanyMark company={job.company} size="sm" className="bg-white/10" /> {pick(job.company, "name", locale)}
+                  </Link>
+                )}
                 <h1 className="editorial mt-2 text-3xl font-extrabold sm:text-4xl">
                   {pick(job, "title", locale)}
                 </h1>
@@ -139,8 +142,14 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
               </p>
             )}
             <section>
-              <h2 className="mb-2 font-bold">{L("About the company", "عن الشركة")}</h2>
-              <p className="text-muted text-sm">{pick(job.company, "description", locale)}</p>
+              <h2 className="mb-2 font-bold">{L("About the organization", "عن الجهة")}</h2>
+              {job.company && <CompanyIdentity company={job.company} locale={locale} />}
+              {pick(job.company, "description", locale) && <p className="text-muted mt-3 text-sm">{pick(job.company, "description", locale)}</p>}
+              {job.listing_type === "simulation" && (
+                <p className="text-subtle mt-3 text-xs">
+                  {L("Simulation opportunity for practice and demonstration — not an official vacancy.", "فرصة محاكاة للتدريب والعرض — وليست شاغرًا رسميًا.")}
+                </p>
+              )}
             </section>
           </CardBody>
         </Card>

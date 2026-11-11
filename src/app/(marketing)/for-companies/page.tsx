@@ -43,7 +43,7 @@ export default async function ForCompanies() {
           ],
         },
       ]}
-      cta={[{ href: "/sign-up?type=company", label: t.landing.closingCompany }]}
+      cta={[{ href: "/employer/request-access", label: t.landing.closingCompany }]}
     />
   );
 }

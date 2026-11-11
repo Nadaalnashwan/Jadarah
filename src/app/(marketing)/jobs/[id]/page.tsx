@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CompanyIdentity, ListingBadge } from "@/components/app/company-mark";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/primitives";
 import { pick, pickArray, tx } from "@/lib/i18n/config";
@@ -14,18 +15,22 @@ export default async function PublicJob({ params }: { params: Promise<{ id: stri
   const { data: j } = await supabase
     .from("jobs")
     .select(
-      "*, company:company_profiles(name_en, name_ar, description_en, description_ar), job_skills(importance, min_level, skill:skills(name_en, name_ar))",
+      "*, company:company_profiles(id, slug, name_en, name_ar, sector_en, sector_ar, organization_type, website, description_en, description_ar, company_brand_profiles(identity_status, usage_permission, logo_source_url, primary_hex)), job_skills(importance, min_level, skill:skills(name_en, name_ar))",
     )
     .eq("id", id)
     .maybeSingle();
   if (!j) notFound();
   return (
     <article className="mx-auto max-w-3xl px-4 pt-32 pb-24 sm:px-6">
-      <p className="text-subtle text-sm font-semibold">{pick(j.company, "name", locale)}</p>
+      {j.company && (
+        <Link href={`/companies/${j.company.slug}`} className="inline-block">
+          <CompanyIdentity company={j.company} locale={locale} />
+        </Link>
+      )}
       <h1 className="editorial mt-2 text-4xl font-extrabold">{pick(j, "title", locale)}</h1>
       <p className="text-muted mt-3 text-sm">
         {j.city} · {t.workMode[j.work_mode]} · {t.employmentType[j.employment_type]} ·{" "}
-        {t.level[j.experience_level]}
+        {t.level[j.experience_level]} <ListingBadge type={j.listing_type} locale={locale} />
       </p>
       <p className="text-muted mt-8 leading-relaxed">{pick(j, "description", locale)}</p>
       <h2 className="mt-8 font-bold">{L("Responsibilities", "المسؤوليات")}</h2>

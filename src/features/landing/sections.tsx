@@ -922,7 +922,7 @@ export function Closing() {
             <Link href="/sign-up?type=candidate">{t.landing.closingCandidate}</Link>
           </Button>
           <Button asChild size="lg" variant="outline">
-            <Link href="/sign-up?type=company">{t.landing.closingCompany}</Link>
+            <Link href="/employer/request-access">{t.landing.closingCompany}</Link>
           </Button>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MapPin } from "lucide-react";
+import { CompanyIdentity, ListingBadge } from "@/components/app/company-mark";
 import { formatDate, pick, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
@@ -12,7 +13,7 @@ export default async function PublicJobs() {
   const { data } = await supabase
     .from("jobs")
     .select(
-      "id, title_en, title_ar, city, work_mode, employment_type, deadline, company:company_profiles(name_en, name_ar)",
+      "id, title_en, title_ar, city, work_mode, employment_type, deadline, listing_type, company:company_profiles(id, slug, name_en, name_ar, sector_en, sector_ar, organization_type, company_brand_profiles(identity_status, usage_permission, logo_source_url, primary_hex))",
     )
     .eq("status", "published")
     .order("published_at", { ascending: false })
@@ -36,11 +37,11 @@ export default async function PublicJobs() {
               href={`/jobs/${j.id}`}
               className="surface-card hover:border-primary/40 block p-5 transition hover:-translate-y-0.5"
             >
-              <p className="text-subtle text-xs font-semibold">{pick(j.company, "name", locale)}</p>
-              <p className="mt-1 text-lg font-bold">{pick(j, "title", locale)}</p>
-              <p className="text-muted mt-2 flex items-center gap-1 text-xs">
+              {j.company && <CompanyIdentity company={j.company} locale={locale} size="sm" showSector={false} />}
+              <p className="mt-3 text-lg font-bold">{pick(j, "title", locale)}</p>
+              <p className="text-muted mt-2 flex flex-wrap items-center gap-1 text-xs">
                 <MapPin className="size-3.5" /> {j.city} · {t.workMode[j.work_mode]} ·{" "}
-                {t.employmentType[j.employment_type]}
+                {t.employmentType[j.employment_type]} <ListingBadge type={j.listing_type} locale={locale} />
               </p>
               {j.deadline && (
                 <p className="text-subtle mt-3 text-xs">
