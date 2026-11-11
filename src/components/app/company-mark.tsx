@@ -8,7 +8,6 @@ import {
   Laptop,
   PartyPopper,
   Waves,
-  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,18 +32,42 @@ export type CompanyLike = {
   company_brand_profiles?: BrandInfo | BrandInfo[];
 };
 
-function sectorIcon(c: CompanyLike): LucideIcon {
+function sectorKey(c: CompanyLike) {
   const s = `${c.sector_en ?? ""} ${c.organization_type ?? ""}`.toLowerCase();
-  if (/artificial|data|\bai\b/.test(s)) return BrainCircuit;
-  if (/telecom/.test(s)) return Antenna;
-  if (/digital|software|technology/.test(s)) return Laptop;
-  if (/entertain|event|culture/.test(s)) return PartyPopper;
-  if (/coastal|marine|tourism|sea/.test(s)) return Waves;
-  if (/petro|manufactur|industrial|chemical/.test(s) && !/financ/.test(s)) return Factory;
-  if (/financ|fund|bank|budget/.test(s)) return Coins;
-  if (/urban|heritage|construction|real estate/.test(s)) return Building2;
-  if (/ministry|authority|regulat|government|trade/.test(s)) return Landmark;
-  return Building2;
+  if (/artificial|data|\bai\b/.test(s)) return "ai";
+  if (/telecom/.test(s)) return "telecom";
+  if (/digital|software|technology/.test(s)) return "digital";
+  if (/entertain|event|culture/.test(s)) return "events";
+  if (/coastal|marine|tourism|sea/.test(s)) return "coastal";
+  if (/petro|manufactur|industrial|chemical/.test(s) && !/financ/.test(s)) return "industry";
+  if (/financ|fund|bank|budget/.test(s)) return "finance";
+  if (/urban|heritage|construction|real estate/.test(s)) return "urban";
+  if (/ministry|authority|regulat|government|trade/.test(s)) return "public";
+  return "other";
+}
+
+/** Generic sector symbol (not an organization logo). */
+function SectorGlyph({ company }: { company: CompanyLike }) {
+  switch (sectorKey(company)) {
+    case "ai":
+      return <BrainCircuit />;
+    case "telecom":
+      return <Antenna />;
+    case "digital":
+      return <Laptop />;
+    case "events":
+      return <PartyPopper />;
+    case "coastal":
+      return <Waves />;
+    case "industry":
+      return <Factory />;
+    case "finance":
+      return <Coins />;
+    case "public":
+      return <Landmark />;
+    default:
+      return <Building2 />;
+  }
 }
 
 export function brandOf(c: CompanyLike): BrandInfo {
@@ -67,7 +90,6 @@ export function CompanyMark({ company, size = "md", className }: { company: Comp
       <img src={b.logo_source_url} alt="" className={cn("bg-white object-contain p-1.5", SIZE[size], className)} />
     );
   }
-  const Icon = sectorIcon(company);
   const accent = brandAuthorised(b) && b?.primary_hex ? b.primary_hex : undefined;
   return (
     <span
@@ -75,7 +97,7 @@ export function CompanyMark({ company, size = "md", className }: { company: Comp
       className={cn("bg-navy text-lavender flex shrink-0 items-center justify-center", SIZE[size], className)}
       style={accent ? { backgroundColor: accent, color: "#fff" } : undefined}
     >
-      <Icon />
+      <SectorGlyph company={company} />
     </span>
   );
 }

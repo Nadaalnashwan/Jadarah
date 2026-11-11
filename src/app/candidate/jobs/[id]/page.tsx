@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Building2, CalendarDays, MapPin, Wallet } from "lucide-react";
+import { CalendarDays, MapPin, Wallet } from "lucide-react";
 import { CompanyIdentity, CompanyMark } from "@/components/app/company-mark";
 import { MatchExplanation } from "@/components/app/match-explanation";
 import { StatusBadge } from "@/components/app/status-badge";
