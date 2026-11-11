@@ -16,7 +16,7 @@ import {
   type AuthState,
 } from "./actions";
 
-function PasswordInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
+export function PasswordInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   const [show, setShow] = useState(false);
   const { locale } = useI18n();
   return (
@@ -49,7 +49,6 @@ export function SignInForm({ next, linkError }: { next?: string; linkError?: str
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="editorial text-4xl font-extrabold">{t.auth.signInTitle}</h1>
-        <p className="text-muted mt-2">{t.auth.signInBody}</p>
       </div>
       {linkError && <FormMessage tone="info">{t.auth.linkInvalid}</FormMessage>}
       <form action={action} className="flex flex-col gap-4" noValidate>
@@ -87,6 +86,10 @@ export function SignInForm({ next, linkError }: { next?: string; linkError?: str
         <Link href="/sign-up" className="text-primary dark:text-lavender font-semibold hover:underline">
           {t.auth.signUp}
         </Link>
+        <span className="mx-2">·</span>
+        <Link href="/employer/request-access" className="text-primary dark:text-lavender font-semibold hover:underline">
+          {t.auth.employerAccess}
+        </Link>
       </p>
     </div>
   );
@@ -107,49 +110,17 @@ export function ResendForm({ email }: { email: string }) {
   );
 }
 
-export function SignUpForm({ initialType }: { initialType: "candidate" | "company" }) {
-  const { t } = useI18n();
-  const [type, setType] = useState(initialType);
+export function SignUpForm() {
+  const { t, locale } = useI18n();
   const [state, action, pending] = useActionState<AuthState, FormData>(signUpAction, null);
   const fe = state?.fieldErrors ?? {};
-  const types = [
-    { key: "candidate" as const, icon: UserRound, title: t.auth.asCandidate, body: t.auth.asCandidateBody },
-    { key: "company" as const, icon: Building2, title: t.auth.asCompany, body: t.auth.asCompanyBody },
-  ];
   return (
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="editorial text-4xl font-extrabold">{t.auth.signUpTitle}</h1>
-        <p className="text-muted mt-2">{t.auth.signUpBody}</p>
-      </div>
-      <div role="radiogroup" aria-label={t.auth.signUpBody} className="grid grid-cols-2 gap-3">
-        {types.map((o) => (
-          <button
-            key={o.key}
-            type="button"
-            role="radio"
-            aria-checked={type === o.key}
-            onClick={() => setType(o.key)}
-            className={cn(
-              "relative flex flex-col gap-2 rounded-2xl border p-4 text-start transition",
-              type === o.key ? "border-primary bg-accent-soft" : "hover:border-border-strong",
-            )}
-          >
-            {type === o.key && (
-              <motion.span
-                layoutId="acct-type"
-                className="ring-primary absolute inset-0 rounded-2xl ring-2"
-                transition={{ type: "spring", stiffness: 400, damping: 32 }}
-              />
-            )}
-            <o.icon className="text-primary dark:text-lavender size-5" aria-hidden />
-            <span className="text-sm font-bold">{o.title}</span>
-            <span className="text-muted text-xs leading-snug">{o.body}</span>
-          </button>
-        ))}
       </div>
       <form action={action} className="flex flex-col gap-4" noValidate>
-        <input type="hidden" name="accountType" value={type} />
+        <input type="hidden" name="accountType" value="candidate" />
         <Field label={t.auth.fullName} htmlFor="fullName" error={fe.fullName} required>
           <Input id="fullName" name="fullName" autoComplete="name" required aria-invalid={!!fe.fullName} />
         </Field>

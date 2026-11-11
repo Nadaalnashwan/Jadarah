@@ -74,6 +74,18 @@ Regression: lint ✓, typecheck ✓, vitest 30/30 ✓, existing Playwright 13 pa
 2. Deploy a Vercel **preview** from `feature/jadarah-greenfield-build` (owner authorizes and logs in to Vercel); add env vars (server keys only, never `NEXT_PUBLIC_`); add the preview URL to Supabase Auth redirect URLs; run the Playwright suite against `E2E_BASE_URL`.
 3. Optional: Daily webhooks (meeting.started/ended) once a public URL exists; shared rate-limit store (Upstash) before horizontal scaling.
 
+## Session 2026-11-11 (B2B + 10 organizations) — IN PROGRESS, read first
+- Source package: `JADARAH_MVP_Master_Package_Clean (1).zip` (78 files; 75/78 hashes match its INVENTORY.csv, 3 are stale self-references). Extract outside the repo; import scripts in `scripts/import/` (dependency-free XLSX reader; PDF text vs image audit).
+- Migrations 0020–0022 applied (via `npx tsx scripts/import/apply-migration.ts <file>` — transactional, recorded in the Supabase migration ledger):
+  - 0020 B2B: subscriptions/payments/brand/aliases/access requests; `company_service_active()` enforced inside `has_company_role` (all employer RLS/RPCs), interview participation and talent pool; credits trigger; `admin_provision_company`; public `create_company` revoked; catalogue `listed` in `can_view_job`; daily expiry cron. No company-count limit.
+  - 0021 fix: companies could never create jobs (INSERT…RETURNING vs id-lookup policy) — same class as 0015.
+  - 0022: `jobs.listing_type` verified|simulation (+source); sector skills/categories.
+- `npx tsx scripts/import/import-organizations.ts <pkg dir>` (idempotent, keyed by ALM-xxx): 10 organizations (listed, accepting requests, approved), provenance, aliases, **demonstration** subscriptions (no price/revenue), 30 demo identities `{admin|recruiter|interviewer}.{mc,gea,elm,dgda,stc,sdaia,sipchem,srsa,mof,sidf}@jadarah-demo.test` (existing demo password), 20 **simulation** jobs. Workbook Jadarat Jobs sheet is empty → no verified vacancies. Brand assets not verified → neutral identity.
+- Fictional demo companies kept intact (history/regression), `listed=false`, legacy demo subscriptions.
+- UI: `/employer/request-access`, `/onboarding/company` (request status), `/workspace-paused`, `/admin/access-requests`, `/admin/subscriptions(/[id])`; sign-up candidate-only.
+- Tests: `tests/integration/b2b.test.ts` 2/2 live.
+- Remaining: company branding/directory UI, Assessment Reference Library import (12 image-only PDFs need visual extraction), reference-grounded Assessment Builder, UI copy pass, E2E + screenshots, final report.
+
 ## Repository
 - Repo: https://github.com/Nadaalnashwan/Jadarah — branch `feature/jadarah-greenfield-build` (only branch on the remote; `main` was never created; do not merge without owner approval).
 - Local clone: `~/Developer/Jadarah`.

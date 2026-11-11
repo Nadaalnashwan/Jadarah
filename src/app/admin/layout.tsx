@@ -10,6 +10,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const nav: NavItem[] = [
     { href: "/admin", label: n.overview, icon: "Gauge", exact: true },
     { href: "/admin/companies", label: n.companies, icon: "Building2" },
+    { href: "/admin/access-requests", label: n.accessRequests, icon: "UserCheck" },
+    { href: "/admin/subscriptions", label: n.subscriptions, icon: "CreditCard" },
     { href: "/admin/users", label: n.users, icon: "Users" },
     { href: "/admin/jobs", label: n.jobs, icon: "Briefcase" },
     { href: "/admin/assessments", label: n.assessments, icon: "ClipboardCheck" },

@@ -193,6 +193,7 @@ export const ar: Messages = {
     passwordsMismatch: "كلمتا المرور غير متطابقتين.",
     weakPassword: "استخدم 10 أحرف على الأقل تتضمن حروفًا وأرقامًا.",
     rateLimited: "محاولات كثيرة. انتظر قليلًا ثم أعد المحاولة.",
+    employerAccess: "دخول جهات العمل",
     suspendedTitle: "الحساب غير متاح",
     suspendedBody: "هذا الحساب معلّق أو معطّل. تواصل مع مسؤول المنصة.",
     confirmedTitle: "تم تأكيد البريد",
@@ -297,6 +298,8 @@ export const ar: Messages = {
     nav: {
       overview: "نظرة عامة",
       companies: "الشركات",
+      accessRequests: "طلبات الانضمام",
+      subscriptions: "الاشتراكات",
       users: "المستخدمون",
       jobs: "الوظائف",
       assessments: "التقييمات",

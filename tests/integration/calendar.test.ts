@@ -133,6 +133,8 @@ describe.skipIf(!integrationEnabled)("internal interview calendar (live Supabase
     const me = await userId(interviewer);
     const { data: m } = await interviewer.from("company_memberships").select("company_id").eq("user_id", me).single();
     const weekday = 6; // Saturday: outside the Sun–Thu preset other tests may have saved
+    // Remove leftovers from an interrupted earlier run of this test (own rows only).
+    await interviewer.from("interviewer_availability").delete().eq("user_id", me).eq("weekday", weekday).gte("start_minute", 1380);
     const ins = await interviewer
       .from("interviewer_availability")
       .insert({ user_id: me, company_id: m!.company_id, weekday, start_minute: 1380, end_minute: 1410 })

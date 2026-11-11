@@ -195,6 +195,7 @@ export const en = {
     passwordsMismatch: "Passwords do not match.",
     weakPassword: "Use at least 10 characters including letters and numbers.",
     rateLimited: "Too many attempts. Please wait a moment and try again.",
+    employerAccess: "Employer access",
     suspendedTitle: "Account unavailable",
     suspendedBody: "This account is suspended or deactivated. Contact the platform administrator.",
     confirmedTitle: "Email confirmed",
@@ -299,6 +300,8 @@ export const en = {
     nav: {
       overview: "Overview",
       companies: "Companies",
+      accessRequests: "Access requests",
+      subscriptions: "Subscriptions",
       users: "Users",
       jobs: "Jobs",
       assessments: "Assessments",

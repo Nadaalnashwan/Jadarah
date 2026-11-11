@@ -22,6 +22,8 @@ export interface SessionContext {
   isCandidate: boolean;
   memberships: Membership[];
   activeMembership: Membership | null;
+  /** Active membership's organization is approved AND has an active, in-date subscription. */
+  serviceActive: boolean;
 }
 
 /** Resolve the signed-in user with roles from the database (never from client claims). Cached per request. */
@@ -44,6 +46,9 @@ export const getSession = cache(async (): Promise<SessionContext | null> => {
 
   const roleList = (roles ?? []).map((r) => r.role as string);
   const ms = (memberships ?? []) as unknown as Membership[];
+  const serviceActive = ms[0]
+    ? Boolean((await supabase.rpc("company_service_active", { p_company: ms[0].company_id })).data)
+    : false;
   return {
     userId: user.id,
     email: user.email ?? profile.email,
@@ -54,6 +59,7 @@ export const getSession = cache(async (): Promise<SessionContext | null> => {
     isCandidate: roleList.includes("candidate"),
     memberships: ms,
     activeMembership: ms[0] ?? null,
+    serviceActive,
   };
 });
 
@@ -79,6 +85,9 @@ export async function requireCompanyMember(
     if (session.profile.account_type === "company") redirect("/onboarding/company");
     redirect(homeFor(session));
   }
+  // Paid employer services need an approved organization with an active subscription
+  // (also enforced in the database for every employer query and RPC).
+  if (!session.serviceActive) redirect("/workspace-paused");
   if (roles && !roles.includes(m.role)) redirect("/company");
   return session as SessionContext & { activeMembership: Membership };
 }
@@ -91,7 +100,7 @@ export async function requireSuperAdmin(): Promise<SessionContext> {
 
 export function homeFor(session: SessionContext): string {
   if (session.isSuperAdmin) return "/admin";
-  if (session.activeMembership) return "/company";
+  if (session.activeMembership) return session.serviceActive ? "/company" : "/workspace-paused";
   if (session.profile.account_type === "company") return "/onboarding/company";
   if (session.isCandidate)
     return session.profile.onboarding_completed ? "/candidate" : "/onboarding/candidate";
