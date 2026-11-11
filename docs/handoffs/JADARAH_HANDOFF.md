@@ -2,6 +2,14 @@
 
 > Keep this file current. A new session must be able to resume from GitHub alone.
 
+## Session 2026-11-11 (cloud) — completion audit, part 1 (read first)
+- **Database:** maknon Project, ref `qqvvlornhvfykusaxaid` (ap-southeast-1, Postgres 17). Owner-confirmed production database for JADARAH. All 27 repo migrations applied (28 ledger rows incl. `product_experience_embed_fix`). **No database mutations were made this session.**
+- **Cloud environment warning:** the Claude Code *Default* environment's `NEXT_PUBLIC_SUPABASE_URL`, `DATABASE_URL`, `DIRECT_URL` point to a different project (`squpszwbrqkflezfltoj`, no JADARAH tables). In cloud sessions, export the maknon public values before running the app (Next.js lets process env override `.env.local`). Not changed, because the Default environment serves other repositories.
+- **Read-only audit:** RLS on all 83 public tables (`interview_reminders` intentionally has no policies); all SECURITY DEFINER functions pin `search_path`; buckets private except `company-identity` (public logos). Advisor: 4 functions executable by anon without need + `rls_auto_enable()` granted to `authenticated` → **proposal 0028** (`docs/proposals/0028-function-execute-hardening.md`, SQL in `supabase/proposals/`, NOT applied, awaiting owner approval). Leaked-password protection is off (dashboard steps in the proposal).
+- **Verified against maknon:** typecheck ✓, production build ✓, `next start` smoke test (public pages 200 with live data, 21 published jobs; protected routes 307 → sign-in).
+- **New local DB harness:** `tests/db/run-local.sh` applies every migration + the fictional demo seed to a throwaway local Postgres 16 (+pgvector; pg_cron stubbed) and runs `tests/db/*.test.sql`. Never touches a remote database.
+- **Missing for full verification:** `DEMO_USER_PASSWORD` (signed-in E2E, live integration), `GEMINI_API_KEY`, OpenAI credits, SMTP/email provider, `DAILY_WEBHOOK_SECRET` + a public URL.
+
 ## Session 2026-11-11 — product experience (read first)
 Branch: `feature/jadarah-product-experience` (from `feature/jadarah-greenfield-build` @ 0fceeed). Migrations **0025–0027 applied** to `qqvvlornhvfykusaxaid`.
 

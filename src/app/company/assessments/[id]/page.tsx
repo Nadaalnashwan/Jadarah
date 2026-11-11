@@ -56,7 +56,13 @@ export default async function AssessmentBuilder({
     .order("assessment_id", { ascending: true, nullsFirst: false })
     .limit(1)
     .maybeSingle();
-  const { data: inUse } = await supabase.rpc("assessment_is_in_use", { p_assessment: a.id });
+  // Manager-scoped check (proposal 0028). Falls back to the legacy helper until that migration is applied.
+  const scoped = await supabase.rpc("assessment_in_use_for_manager" as "assessment_is_in_use", {
+    p_assessment: a.id,
+  });
+  const inUse = scoped.error
+    ? (await supabase.rpc("assessment_is_in_use", { p_assessment: a.id })).data
+    : scoped.data;
   const qs = [...a.assessment_questions].sort((x, y) => x.position - y.position);
   const draft = a.status === "draft";
   const total = qs.reduce((n, q) => n + q.points, 0);
