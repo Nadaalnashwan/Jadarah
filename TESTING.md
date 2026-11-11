@@ -58,3 +58,8 @@ Notes: the app limits sign-in to 10/min per IP; the E2E `signIn` helper waits ou
 
 Evidence screenshots: `EVIDENCE_DIR=$PWD/docs/evidence npx playwright test tests/e2e/b2b.spec.ts --project=desktop` → `docs/evidence/`.
 Test hygiene: `freshJob()` closes its job when the test ends, so test roles never stay in public listings. The access-request E2E uses a throwaway `@jadarah-demo.test` employee and declines the request, so no false membership is created at a real organization (approval is covered by `b2b.test.ts` on a throwaway organization).
+
+## 2026-11-11 (restored on the owner's Mac)
+- vitest **64/64** (adds `tests/integration/saved-assessments.test.ts`: the five saved builder drafts — owner access, rubric editable, CSV download, no cross-company or candidate access, no legacy branding; read-only).
+- Playwright **24 passed, 0 failed** (19 gated specs skipped) against a production build on port 3100: `npx next build && npx next start -p 3100`, then `E2E_BASE_URL=http://localhost:3100 npx playwright test`.
+- Visual evidence: `CAPTURE_EVIDENCE=1 E2E_BASE_URL=… npx playwright test tests/e2e/evidence.spec.ts --project=desktop` → `docs/evidence/11–17-*.png`.

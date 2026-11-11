@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { CompanyIdentity, ListingBadge } from "@/components/app/company-mark";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/primitives";
+import { getSession, homeFor } from "@/lib/auth/session";
 import { pick, pickArray, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
@@ -20,6 +21,7 @@ export default async function PublicJob({ params }: { params: Promise<{ id: stri
     .eq("id", id)
     .maybeSingle();
   if (!j) notFound();
+  const session = await getSession();
   return (
     <article className="mx-auto max-w-3xl px-4 pt-32 pb-24 sm:px-6">
       {j.company && (
@@ -48,14 +50,26 @@ export default async function PublicJob({ params }: { params: Promise<{ id: stri
         ))}
       </div>
       <div className="mt-10 flex gap-3">
-        <Button asChild size="lg">
-          <Link href={`/sign-in?next=/candidate/jobs/${j.id}`}>
-            {L("Sign in to apply", "سجّل الدخول للتقديم")}
-          </Link>
-        </Button>
-        <Button asChild size="lg" variant="outline">
-          <Link href="/sign-up?type=candidate">{t.auth.signUp}</Link>
-        </Button>
+        {session?.isCandidate ? (
+          <Button asChild size="lg">
+            <Link href={`/candidate/jobs/${j.id}`}>{L("Apply", "قدّم الآن")}</Link>
+          </Button>
+        ) : session ? (
+          <Button asChild size="lg" variant="outline">
+            <Link href={homeFor(session)}>{L("Dashboard", "لوحة التحكم")}</Link>
+          </Button>
+        ) : (
+          <>
+            <Button asChild size="lg">
+              <Link href={`/sign-in?next=/candidate/jobs/${j.id}`}>
+                {L("Sign in to apply", "سجّل الدخول للتقديم")}
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link href="/sign-up?type=candidate">{t.auth.signUp}</Link>
+            </Button>
+          </>
+        )}
       </div>
     </article>
   );

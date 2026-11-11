@@ -5,6 +5,17 @@
 ## Project
 AI-assisted, evidence-based talent intelligence & recruitment platform (candidates, companies, Super Admin). Taglines: **أكثر من سيرة ذاتية.** / **Beyond What's Seen.** Brand colours (exact): `#0F1B3D` `#3B66F6` `#A9B8FF` `#CDE7F6` `#F8F6F0`. Fonts: IBM Plex Sans Arabic / Manrope. Original logo: three ascending slabs + "merit diamond" (`src/components/brand/logo.tsx`, `public/brand/*`).
 
+## Session 2026-11-11 (later) — restored on the owner's Mac (read first)
+- Local clone fast-forwarded from `9952120` to `b93c6c4` (no local changes lost). Node v24.22.0 at `/usr/local/bin/node`; `gh` is **not installed** on this Mac (plain `git push` over HTTPS works). `.env.local` present with all keys used by the code (values not printed).
+- Supabase: migrations **0001–0024 all applied** (checked via MCP). Demo password in `.env.local` signs in demo identities (verified, not printed).
+- Site: `npm run dev` → http://localhost:3000 (landing, sign-in, `/companies` with exactly the 10 organizations, all 10 profile pages 200, no MIDAN text).
+- The five saved builder drafts verified **read-only** by `tests/integration/saved-assessments.test.ts` (5/5): draft status, owning organization, tasks + rubric + assessor guide present, rubric editable by the owning recruiter, candidate CSVs download for the owner only; other organizations and candidates see nothing (assessor guide included); no legacy branding.
+- Fixed: public opportunity page showed "Sign in to apply / Create account" to signed-in users → candidates now get **Apply** (→ `/candidate/jobs/[id]`), other roles get **Dashboard**.
+- Test hygiene: E2E sign-in helper waits for the post-sign-in redirect to settle (a following `goto()` was sometimes overridden). New gated `tests/e2e/evidence.spec.ts` (`CAPTURE_EVIDENCE=1`) captures `docs/evidence/11–17-*.png`.
+- Results on this Mac (final code): typecheck ✓ · lint ✓ · production build ✓ · vitest **64/64** (59 + 5 new) · Playwright **24 passed, 0 failed** (19 gated live/evidence specs skipped) against the production build (`next start -p 3100` + `E2E_BASE_URL=http://localhost:3100`, so the dev site on :3000 stays up). Running E2E against `next dev` is flaky (on-demand compilation) — use a production build.
+- **Security (owner action):** the project's **legacy JWT API keys are still enabled**, and the `SUPABASE_SERVICE_ROLE_KEY` in `.env.local` is a legacy `service_role` JWT that is **still valid**. If that is the key seen in the screenshot, it is still active. A legacy JWT cannot be revoked on its own. Plan: Dashboard → Project Settings → API Keys → create a new **secret key** (`sb_secret_…`) → owner pastes it into `.env.local` as `SUPABASE_SERVICE_ROLE_KEY` (scripts only) → **disable legacy API keys** (the web app uses only the publishable key, so the site is unaffected). Not done without approval.
+- Remote note: a `main` branch now exists on GitHub at `42fc037` (older commit; not created in this session). Untouched.
+
 ## Session 2026-11-11 — new Mac (current status, read first)
 **Machine setup (this Mac):** Node v24.22.2 LTS at `~/.local/node`, gh 2.103.3 at `~/.local/bin/gh` (user-local, checksum-verified; not on the default PATH — use `export PATH="$HOME/.local/node/bin:$HOME/.local/bin:$PATH"`). Xcode CLT installed. Git identity is repo-local (Nada Al-Nashwan). Push with `git -c credential.helper='!~/.local/bin/gh auth git-credential' push` (gh logged in as Nadaalnashwan). `.env.local` recreated from the target configuration; secrets entered by the owner.
 
@@ -87,13 +98,13 @@ Regression: lint ✓, typecheck ✓, vitest 30/30 ✓, existing Playwright 13 pa
 - Tests: vitest 59/59 · Playwright 24/24 (+16 live, gated) · live builder 5/5 · typecheck/lint/build clean. See TESTING.md.
 
 ## Repository
-- Repo: https://github.com/Nadaalnashwan/Jadarah — branch `feature/jadarah-greenfield-build` (only branch on the remote; `main` was never created; do not merge without owner approval).
+- Repo: https://github.com/Nadaalnashwan/Jadarah — branch `feature/jadarah-greenfield-build` (a `main` branch exists on the remote at `42fc037`; never merge without owner approval).
 - Local clone: `~/Developer/Jadarah`.
 - Latest verified pushed commit: run `git ls-remote origin refs/heads/feature/jadarah-greenfield-build` (each checkpoint in `git log` is pushed and verified).
 
 ## Supabase
 - Project ref `qqvvlornhvfykusaxaid` (dashboard name "maknon Project"; confirmed by the owner as the new JADARAH project).
-- Migrations 0001–0018 in `supabase/migrations/` — **all applied** (0013–0018 on 2026-11-11 via MCP) (0009 and 0012 were applied by fetching the pinned commit file through the `http` extension; content identical to the repo files).
+- Migrations 0001–0024 in `supabase/migrations/` — **all applied** (verified 2026-11-11) (0009 and 0012 were applied by fetching the pinned commit file through the `http` extension; content identical to the repo files).
 - RLS on every public table; least-privilege grants (this project grants nothing to API roles by default — migrations 0010/0011 add explicit grants; **any new table/function needs explicit grants**).
 - Storage: 6 private buckets with object policies.
 - Demo seed applied: 61 Auth identities, 10 companies (9 approved, Imtidad pending), 30 jobs (24 published), 32 candidates, 15 assessments/75 questions, 51 resources, 10 plan templates, 12 personal plans, 82+ applications, 28+ interviews. `platform_settings.environment = 'demo'`.

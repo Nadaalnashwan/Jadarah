@@ -19,15 +19,20 @@ export async function signInAs(page: Page, email: string, password: string) {
     await page.locator("#email").fill(email);
     await page.locator("#password").fill(password);
     await page.getByRole("button", { name: "Sign in" }).click();
-    await page.waitForURL((u) => !u.pathname.startsWith("/sign-in"), { timeout: 8_000 }).catch(() => undefined);
-    if (!new URL(page.url()).pathname.startsWith("/sign-in")) return;
+    await page
+      .waitForURL((u) => !u.pathname.startsWith("/sign-in"), { timeout: 8_000 })
+      .catch(() => undefined);
+    if (!new URL(page.url()).pathname.startsWith("/sign-in")) {
+      // Let the post-sign-in client redirect finish so a following goto() is not overridden by it.
+      await page.waitForLoadState("networkidle").catch(() => undefined);
+      return;
+    }
     // The app limits sign-in to 10/min per IP (security control). A long suite can hit it from
     // localhost: wait out the window once instead of weakening the limit.
     if (attempt === 0 && (await page.getByText(/too many|rate/i).count())) {
       test.info().setTimeout(test.info().timeout + 70_000);
       await page.waitForTimeout(61_000);
-    }
-    else break;
+    } else break;
   }
   await expect(page).not.toHaveURL(/sign-in/);
 }
