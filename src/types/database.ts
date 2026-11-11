@@ -252,6 +252,39 @@ export type Database = {
           },
         ]
       }
+      interviewer_availability: {
+        Row: {
+          company_id: string
+          created_at: string
+          end_minute: number
+          id: string
+          start_minute: number
+          timezone: string
+          user_id: string
+          weekday: number
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          end_minute: number
+          id?: string
+          start_minute: number
+          timezone?: string
+          user_id: string
+          weekday: number
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          end_minute?: number
+          id?: string
+          start_minute?: number
+          timezone?: string
+          user_id?: string
+          weekday?: number
+        }
+        Relationships: []
+      }
       ai_provider_logs: {
         Row: {
           created_at: string
@@ -2192,6 +2225,8 @@ export type Database = {
       interviews: {
         Row: {
           application_id: string
+          candidate_confirmed_at: string | null
+          ends_at: string
           company_id: string
           created_at: string
           created_by: string | null
@@ -2209,6 +2244,8 @@ export type Database = {
         }
         Insert: {
           application_id: string
+          candidate_confirmed_at?: string | null
+          ends_at?: string
           company_id: string
           created_at?: string
           created_by?: string | null
@@ -2226,6 +2263,8 @@ export type Database = {
         }
         Update: {
           application_id?: string
+          candidate_confirmed_at?: string | null
+          ends_at?: string
           company_id?: string
           created_at?: string
           created_by?: string | null
@@ -3015,6 +3054,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      interviewer_busy: {
+        Args: { p_company: string; p_from: string; p_to: string; p_users: string[] }
+        Returns: { ends_at: string; starts_at: string; user_id: string }[]
+      }
+      confirm_interview_attendance: { Args: { p_interview: string }; Returns: undefined }
       related_skills: {
         Args: { p_have: string[]; p_min?: number; p_model: string; p_required: string[] }
         Returns: { related_skill_id: string; required_skill_id: string; similarity: number }[]
