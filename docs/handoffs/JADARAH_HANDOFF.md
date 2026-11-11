@@ -25,17 +25,30 @@ Note: `gemini-2.5-flash` (old default) is retired for new users.
 - Migration **0013 `semantic_embeddings` applied**: `skill_embeddings`, `candidate_embeddings`, `job_embeddings` (vector(768), model+dims-keyed, RLS), RPCs `related_skills`, `semantic_fit`, `semantic_job_ranking` (security invoker). Types hand-added to `src/types/database.ts`.
 - Backfilled 63 skills / 33 candidates / 30 jobs (`npm run ai:embed-skills`, `npm run ai:embed-profiles`). Measured: unrelated skill pairs median cosine 0.78 (p99 0.88; Java↔JavaScript 0.90) → related-skill threshold **0.92**. Candidate↔job: top-1 = candidate's own role in **28/28**; fit range 0.66–0.87 (median 0.725) → gauge calibrated 0.65–0.88.
 - Match explanation (candidate job page + company application page) shows semantic similarity and related skills as **labelled AI inference, never part of the evidence score**. Embeddings refresh under the user's session when content hash changes.
-- typecheck, lint, build, 18/18 unit tests pass.
+- typecheck, lint, build pass.
 
-**Not yet verified in the browser:** real-AI features end to end (needs `DEMO_USER_PASSWORD` in `.env.local` to sign in as demo users — it was not available on this Mac).
+**Demo password:** the old `DEMO_USER_PASSWORD` was lost. With owner approval, `npm run demo:rotate-password -- --yes` set a new random password on the 61 `@jadarah-demo.test` identities only (no data touched) and wrote it to `.env.local` on this Mac. Ask the owner for it on other machines, or rotate again.
+
+**Verified end to end (2026-11-11, real providers)** — `RUN_LIVE_AI=1 npx playwright test tests/e2e/ai-live.spec.ts`: **5/5 pass**
+| Journey | Result |
+|---|---|
+| Candidate CV upload → AI extraction with evidence | ✓ (Gemini 3.5 ~3 s, or Groq ~5 s when Gemini overloaded) |
+| Candidate assistant | ✓ Groq gpt-oss-120b, ~0.6 s provider / ~2 s UI |
+| Semantic similarity panel on job detail | ✓ labelled AI inference |
+| Company AI job draft | ✓ (Gemini 3.5 ~6 s / Groq ~3.4 s) |
+| Company assistant + interview question suggestions | ✓ Groq ~0.6 s / ~1.4 s |
+Regression: lint ✓, typecheck ✓, vitest 30/30 ✓, existing Playwright 13 passed (1 skipped by design) ✓.
+
+**Bug fixed:** CV upload was broken — `cv-actions.ts` exported a constant from a `"use server"` module (Next 16 rejects it → 500 on every CV page action). Pre-existing; previous E2E never uploaded.
+
+**AI reliability behaviour:** Groq/OpenAI use `json_schema` structured outputs; quota/auth errors are not retried; a process-wide circuit breaker skips overloaded/timed-out models for 3 min and quota/auth failures for 10 min. On 2026-11-11 Google reported both Gemini 3.8 and 3.5 Flash as overloaded intermittently — structured tasks then ran on Groq (visible in badges + `ai_provider_logs`).
 
 **Exact next steps**
-1. Owner: add `DEMO_USER_PASSWORD` to `.env.local`; add OpenAI credits.
-2. Browser-verify: CV upload → Gemini parse; job draft; interview questions; assistant (Groq); semantic match panel. Run `npx vitest run` (integration).
-3. Wire `streamText` into the assistants (route handler + streaming chat UI).
-4. Phase 3: AI Assessment Builder (questions + rubric generation), deep rubric-assisted evaluation, career plan generation.
-5. Phase 4–6: internal calendar (availability, conflict-safe booking via DB exclusion constraint, notifications + reminders via pg_cron), Daily rooms/tokens, Final Candidate Evaluation Report.
-6. Phase 7: Playwright E2E, Vercel preview deploy.
+1. Owner: add OpenAI credits (deep evaluation currently skipped as `openai_quota_exhausted`).
+2. Wire `streamText` into the assistants (route handler + streaming chat UI).
+3. Phase 3: AI Assessment Builder (questions + rubric generation), deep rubric-assisted evaluation, career plan generation.
+4. Phase 4–6: internal calendar (availability, conflict-safe booking via DB exclusion constraint, notifications + reminders via pg_cron), Daily rooms/tokens, Final Candidate Evaluation Report.
+5. Phase 7: Playwright E2E, Vercel preview deploy.
 
 ## Repository
 - Repo: https://github.com/Nadaalnashwan/Jadarah — branch `feature/jadarah-greenfield-build` (only branch on the remote; `main` was never created; do not merge without owner approval).
