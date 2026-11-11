@@ -71,8 +71,9 @@ test("calendar: availability → slot finder scheduling → candidate confirms �
   await slot.click();
   await expect(rc.locator("#iv-at")).not.toHaveValue("");
   await rc.getByRole("button", { name: "Create interview" }).click();
-  await expect(rc).toHaveURL(/\/company\/interviews\/[0-9a-f-]{36}$/, { timeout: 30_000 });
-  const interviewUrl = rc.url();
+  // Scheduling stays in the application context; the confirmation links to the interview.
+  await expect(rc).toHaveURL(/\/company\/applications\/[0-9a-f-]{36}\?scheduled=[0-9a-f-]{36}$/, { timeout: 30_000 });
+  const interviewUrl = new URL(`/company/interviews/${new URL(rc.url()).searchParams.get("scheduled")}`, rc.url()).toString();
 
   // 3) Candidate sees the invitation and confirms attendance.
   const cdCtx = await browser.newContext();

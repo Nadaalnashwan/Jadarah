@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -191,7 +192,53 @@ export function AIQuestions({
   );
 }
 
-export function PublishControls({ id, status }: { id: string; status: "draft" | "published" | "archived" }) {
+/** Shown when the task belongs to a job: where it is attached and the next step back on the job page. */
+export function JobContextBanner({
+  jobId,
+  title,
+  attached,
+  taskPublished,
+  jobPublished,
+}: {
+  jobId: string;
+  title: string;
+  attached: boolean;
+  taskPublished: boolean;
+  jobPublished: boolean;
+}) {
+  const { locale } = useI18n();
+  const L = tx(locale);
+  const next = !attached
+    ? L("Created for this job but not attached to it.", "أُنشئت لهذه الوظيفة لكنها غير مرتبطة بها.")
+    : !taskPublished
+      ? L("Review the task, then publish it. The job stays a draft.", "راجع المهمة ثم انشرها. تبقى الوظيفة مسودة.")
+      : jobPublished
+        ? L("Applicants receive this task right after applying.", "يستلم المتقدمون هذه المهمة فور التقديم.")
+        : L("Task published. Return to the job to review and publish it.", "نُشرت المهمة. عُد إلى الوظيفة لمراجعتها ونشرها.");
+  return (
+    <div className="border-primary/30 bg-accent-soft/40 mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3">
+      <div className="min-w-0 text-sm">
+        <p className="font-semibold">
+          {L("Practical task for", "المهمة العملية لوظيفة")}: {title}
+        </p>
+        <p className="text-muted mt-0.5">{next}</p>
+      </div>
+      <Button asChild size="sm" variant={taskPublished ? "primary" : "outline"}>
+        <Link href={`/company/jobs/${jobId}`}>{L("Back to job", "العودة إلى الوظيفة")}</Link>
+      </Button>
+    </div>
+  );
+}
+
+export function PublishControls({
+  id,
+  status,
+  locked = false,
+}: {
+  id: string;
+  status: "draft" | "published" | "archived";
+  locked?: boolean;
+}) {
   const { locale } = useI18n();
   const L = tx(locale);
   const router = useRouter();
@@ -208,9 +255,11 @@ export function PublishControls({ id, status }: { id: string; status: "draft" | 
     </Button>
   ) : status === "published" ? (
     <>
-      <Button size="sm" variant="outline" disabled={pending} onClick={() => go("draft")}>
-        {L("Back to draft", "إعادة كمسودة")}
-      </Button>
+      {!locked && (
+        <Button size="sm" variant="outline" disabled={pending} onClick={() => go("draft")}>
+          {L("Back to draft", "إعادة كمسودة")}
+        </Button>
+      )}
       <Button size="sm" variant="ghost" disabled={pending} onClick={() => go("archived")}>
         {L("Archive", "أرشفة")}
       </Button>

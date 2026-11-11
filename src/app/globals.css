@@ -1,42 +1,43 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------
-   JADARAH brand tokens — the five official colours:
-   Midnight Navy #0F1B3D · Royal Blue #3B66F6 · Lavender #A9B8FF
-   Sky Blue #CDE7F6 · Warm Ivory #F8F6F0
+   JADARAH brand tokens — from the approved Brand Identity Boards (light & dark).
+   Light board: Navy #0D1B3F · Blue #3B6CFF · Lavender #8A8DFF · Sky #CFE4FF · Ivory #FFF7E8,
+                page #F5F4FC (sampled from the board), white glass cards.
+   Dark board:  Navy surface #18264A on #111B3D · Blue #3B6CFF · Lavender #A9B8FF · Sky #CDE7F6 · Ivory #EEF3FF.
    Everything else is a derived tint/shade or a semantic status colour.
 ------------------------------------------------------------------- */
 :root {
-  --navy: #0f1b3d;
-  --royal: #3b66f6;
-  --lavender: #a9b8ff;
-  --sky: #cde7f6;
-  --ivory: #f8f6f0;
+  --navy: #0d1b3f;
+  --royal: #3b6cff;
+  --lavender: #8a8dff;
+  --sky: #cfe4ff;
+  --ivory: #fff7e8;
 
   /* derived */
-  --navy-900: #0a1330;
-  --navy-800: #15234a;
-  --navy-700: #1e2f5c;
-  --royal-600: #2c53dc;
-  --royal-700: #2343b5;
-  --ivory-50: #fdfcf8;
-  --ivory-200: #ece8dd;
+  --navy-900: #0a1433;
+  --navy-800: #18264a;
+  --navy-700: #22335f;
+  --royal-600: #2f5bea;
+  --royal-700: #2547c4;
+  --ivory-50: #fffcf5;
+  --ivory-200: #f3ead6;
 
-  /* light theme semantic */
-  --background: var(--ivory);
-  --surface: var(--ivory-50);
-  --surface-2: #f1eee5;
+  /* semantic */
+  --background: #f5f4fc;
+  --surface: #ffffff;
+  --surface-2: #efeefb;
   --foreground: var(--navy);
-  --muted-foreground: #4a5578;
-  --subtle-foreground: #6b7493;
-  --border: #e2ddd0;
-  --border-strong: #cfc8b6;
+  --muted-foreground: #4a5378;
+  --subtle-foreground: #6b7299;
+  --border: #e3e1f5;
+  --border-strong: #cbc8ec;
   --primary: var(--royal);
   --primary-hover: var(--royal-600);
   --primary-foreground: #ffffff;
   --accent: var(--lavender);
-  --accent-soft: #e8ecff;
-  --sky-soft: #e6f3fb;
+  --accent-soft: #ecebff;
+  --sky-soft: #e6f0ff;
   --ring: var(--royal);
   --success: #1f8a62;
   --success-soft: #dcf2e8;
@@ -44,9 +45,10 @@
   --warning-soft: #f8ecd3;
   --danger: #c23b3b;
   --danger-soft: #f7dede;
-  --shadow-color: 15 27 61;
+  --shadow-color: 13 27 63;
+  --glow: 0 1px 2px rgb(13 27 63 / 0.04), 0 14px 36px -20px rgb(59 108 255 / 0.28);
 
-  /* motion tokens */
+  /* motion */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --dur-fast: 140ms;
@@ -55,51 +57,66 @@
 }
 
 :root[data-theme="dark"] {
-  --background: var(--navy-900);
-  --surface: var(--navy);
-  --surface-2: var(--navy-800);
-  --foreground: var(--ivory);
-  --muted-foreground: #b7bfd9;
-  --subtle-foreground: #8d97b8;
-  --border: #24345f;
-  --border-strong: #33467a;
-  --primary: var(--royal);
-  --primary-hover: #5a7ff8;
-  --primary-foreground: #ffffff;
-  --accent: var(--lavender);
-  --accent-soft: #1d2a57;
-  --sky-soft: #142650;
-  --ring: var(--lavender);
-  --success: #4cc495;
-  --success-soft: #103a33;
-  --warning: #e6b45a;
-  --warning-soft: #3a2e14;
-  --danger: #f08080;
-  --danger-soft: #3d1c27;
-  --shadow-color: 0 0 0;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --background: var(--navy-900);
-    --surface: var(--navy);
-    --surface-2: var(--navy-800);
-    --foreground: var(--ivory);
-    --muted-foreground: #b7bfd9;
-    --subtle-foreground: #8d97b8;
-    --border: #24345f;
-    --border-strong: #33467a;
-    --primary-hover: #5a7ff8;
-    --accent-soft: #1d2a57;
-    --sky-soft: #142650;
-    --ring: var(--lavender);
+    --navy: #0d1b3f;
+    --royal: #3b6cff;
+    --lavender: #a9b8ff;
+    --sky: #cde7f6;
+    --ivory: #eef3ff;
+    --background: #111b3d;
+    --surface: #18264a;
+    --surface-2: #1f2f5a;
+    --foreground: #eef3ff;
+    --muted-foreground: #b9c2e6;
+    --subtle-foreground: #8e99c4;
+    --border: #2a3a6c;
+    --border-strong: #3a4c85;
+    --primary: #3b6cff;
+    --primary-hover: #5a84ff;
+    --primary-foreground: #ffffff;
+    --accent: #a9b8ff;
+    --accent-soft: #24356a;
+    --sky-soft: #1b2d5e;
+    --ring: #a9b8ff;
     --success: #4cc495;
     --success-soft: #103a33;
     --warning: #e6b45a;
     --warning-soft: #3a2e14;
     --danger: #f08080;
     --danger-soft: #3d1c27;
-    --shadow-color: 0 0 0;
+    --shadow-color: 4 8 28;
+    --glow: 0 0 0 1px rgb(169 184 255 / 0.08), 0 18px 48px -24px rgb(59 108 255 / 0.55);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+      --navy: #0d1b3f;
+      --royal: #3b6cff;
+      --lavender: #a9b8ff;
+      --sky: #cde7f6;
+      --ivory: #eef3ff;
+      --background: #111b3d;
+      --surface: #18264a;
+      --surface-2: #1f2f5a;
+      --foreground: #eef3ff;
+      --muted-foreground: #b9c2e6;
+      --subtle-foreground: #8e99c4;
+      --border: #2a3a6c;
+      --border-strong: #3a4c85;
+      --primary: #3b6cff;
+      --primary-hover: #5a84ff;
+      --primary-foreground: #ffffff;
+      --accent: #a9b8ff;
+      --accent-soft: #24356a;
+      --sky-soft: #1b2d5e;
+      --ring: #a9b8ff;
+      --success: #4cc495;
+      --success-soft: #103a33;
+      --warning: #e6b45a;
+      --warning-soft: #3a2e14;
+      --danger: #f08080;
+      --danger-soft: #3d1c27;
+      --shadow-color: 4 8 28;
+      --glow: 0 0 0 1px rgb(169 184 255 / 0.08), 0 18px 48px -24px rgb(59 108 255 / 0.55);
   }
 }
 
@@ -181,13 +198,23 @@
 }
 
 @layer components {
+  /* Board cards: soft glass panels with a faint lavender edge and blue-tinted depth. */
   .surface-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-xl);
-    box-shadow:
-      0 1px 2px rgb(var(--shadow-color) / 0.04),
-      0 8px 24px -12px rgb(var(--shadow-color) / 0.12);
+    box-shadow: var(--glow);
+  }
+  /* Brand surfaces from the boards */
+  .brand-hero-bg {
+    background:
+      radial-gradient(60% 50% at 20% 0%, rgb(169 184 255 / 0.35), transparent 70%),
+      radial-gradient(50% 40% at 90% 10%, rgb(207 228 255 / 0.6), transparent 70%),
+      var(--background);
+  }
+  .brand-banner {
+    background: linear-gradient(105deg, #0d1b3f 0%, #18264a 45%, #2b3f9a 75%, #6f7cf0 100%);
+    color: #fff;
   }
   .grain {
     background-image: radial-gradient(rgb(var(--shadow-color) / 0.06) 1px, transparent 1px);
@@ -226,4 +253,9 @@
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+@keyframes brand-breathe {
+  0%, 100% { opacity: 1; transform: translateY(0); }
+  50% { opacity: 0.72; transform: translateY(-2px); }
 }

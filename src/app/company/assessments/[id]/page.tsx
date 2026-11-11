@@ -6,7 +6,7 @@ import { requireCompanyMember } from "@/lib/auth/session";
 import { pick, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
-import { AIQuestions, PublishControls, QuestionBuilder, RubricEditor } from "./builder";
+import { AIQuestions, JobContextBanner, PublishControls, QuestionBuilder, RubricEditor } from "./builder";
 import { ApproveButton, MaterialLink, RegenerateButtons, ScenarioEditor, TaskEditor } from "./generated-client";
 import type { GeneratedDraft } from "@/services/ai/assessment-builder";
 
@@ -30,7 +30,11 @@ const REASON_LABELS: Record<string, [string, string]> = {
   "similar task structure": ["similar task structure", "بنية مهام مشابهة"],
 };
 
-export default async function AssessmentBuilder({ params }: { params: Promise<{ id: string }> }) {
+export default async function AssessmentBuilder({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   const s = await requireCompanyMember(["company_admin", "recruiter"]);
   const { t, locale } = await getI18n();
@@ -43,6 +47,16 @@ export default async function AssessmentBuilder({ params }: { params: Promise<{ 
     .eq("company_id", s.activeMembership.company_id)
     .maybeSingle();
   if (!a) notFound();
+  // Job context: the job this task is attached to (or was created for).
+  const { data: linkedJob } = await supabase
+    .from("jobs")
+    .select("id, title_en, title_ar, status, assessment_id")
+    .eq("company_id", s.activeMembership.company_id)
+    .or(`assessment_id.eq.${a.id}${a.job_id ? `,id.eq.${a.job_id}` : ""}`)
+    .order("assessment_id", { ascending: true, nullsFirst: false })
+    .limit(1)
+    .maybeSingle();
+  const { data: inUse } = await supabase.rpc("assessment_is_in_use", { p_assessment: a.id });
   const qs = [...a.assessment_questions].sort((x, y) => x.position - y.position);
   const draft = a.status === "draft";
   const total = qs.reduce((n, q) => n + q.points, 0);
@@ -90,11 +104,28 @@ export default async function AssessmentBuilder({ params }: { params: Promise<{ 
             {gen && draft ? (
               <ApproveButton id={a.id} blocked={failed > 0} />
             ) : (
-              <PublishControls id={a.id} status={a.status as "draft"} />
+              <PublishControls id={a.id} status={a.status as "draft"} locked={!!inUse} />
             )}
           </>
         }
       />
+      {linkedJob && (
+        <JobContextBanner
+          jobId={linkedJob.id}
+          title={pick(linkedJob, "title", locale)}
+          attached={linkedJob.assessment_id === a.id}
+          taskPublished={a.status === "published"}
+          jobPublished={linkedJob.status === "published"}
+        />
+      )}
+      {inUse && (
+        <p className="bg-surface-2 text-muted mb-6 rounded-xl px-4 py-3 text-sm">
+          {L(
+            "Candidates have received this task, so its content is locked and everyone is assessed on the same version. Duplicate it to make changes.",
+            "استلم مرشحون هذه المهمة، لذا أصبح محتواها ثابتًا ليُقيَّم الجميع على النسخة نفسها. أنشئ نسخة منها لإجراء تعديلات.",
+          )}
+        </p>
+      )}
       {gen && out && (
         <div className="mb-6 grid gap-6 xl:grid-cols-[1.4fr_1fr]">
           <Card>

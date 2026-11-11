@@ -63,3 +63,17 @@ Test hygiene: `freshJob()` closes its job when the test ends, so test roles neve
 - vitest **64/64** (adds `tests/integration/saved-assessments.test.ts`: the five saved builder drafts — owner access, rubric editable, CSV download, no cross-company or candidate access, no legacy branding; read-only).
 - Playwright **24 passed, 0 failed** (19 gated specs skipped) against a production build on port 3100: `npx next build && npx next start -p 3100`, then `E2E_BASE_URL=http://localhost:3100 npx playwright test`.
 - Visual evidence: `CAPTURE_EVIDENCE=1 E2E_BASE_URL=… npx playwright test tests/e2e/evidence.spec.ts --project=desktop` → `docs/evidence/11–17-*.png`.
+
+## 2026-11-11 (product experience: job-linked tasks, identity, CV-first, discovery, brand journey)
+| Check | Result |
+|---|---|
+| `npx tsc --noEmit` | clean |
+| `npx eslint .` | clean |
+| `npx vitest run tests/unit` | **49/49** — adds brand colour/contrast + safe identity URLs (5), CV date normalisation (2), career discovery + exploratory feedback (4) |
+| `npx next build` | passes |
+| Playwright `tests/e2e/public.spec.ts` (desktop + Pixel 7, production build) | **6/6** — landing AR/RTL + EN/LTR, journey chapter + skip, no district/directory UI, protected routes, public job board |
+| Database lifecycle (live project, impersonated demo users inside a transaction that is rolled back) | apply → task auto-assigned (`assessment_pending`, incomplete) · duplicate apply rejected (23505) · start twice = same attempt · no answer keys in the attempt payload · submit → application complete · other user cannot start the task (42501) · task cannot be replaced or edited once assigned · anonymous task preview |
+| Company identity RPC (same method) | admin saves · other company / recruiter / direct insert rejected (42501) · invalid colour and foreign storage path rejected (23514) · public read |
+
+Not run here (need the demo password, which is not available in this environment): `npm run test:integration` and the signed-in Playwright journeys (`journeys`, `calendar`, `b2b`, live AI/video). `tests/e2e/calendar.spec.ts` was updated for the new behaviour (scheduling now returns to the application with `?scheduled=<id>`).
+If your Playwright browser version differs, set `PW_CHROMIUM_PATH` to a Chromium executable.

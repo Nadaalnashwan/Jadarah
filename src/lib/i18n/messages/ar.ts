@@ -1,7 +1,7 @@
 import type { Messages } from "./en";
 
 export const ar: Messages = {
-  brand: { name: "جدارة", nameAlt: "JADARAH", tagline: "أكثر من سيرة ذاتية." },
+  brand: { name: "جدارة", nameAlt: "JADARAH", tagline: "من المهارة إلى الفرصة." },
   common: {
     save: "حفظ",
     saving: "جارٍ الحفظ…",
@@ -203,8 +203,8 @@ export const ar: Messages = {
   status: {
     submitted: "تم التقديم",
     under_review: "قيد المراجعة",
-    assessment_pending: "بانتظار التقييم",
-    assessment_completed: "اكتمل التقييم",
+    assessment_pending: "بانتظار المهمة العملية",
+    assessment_completed: "سُلّمت المهمة العملية",
     shortlisted: "القائمة المختصرة",
     interview_scheduled: "تمت جدولة مقابلة",
     interview_completed: "اكتملت المقابلة",

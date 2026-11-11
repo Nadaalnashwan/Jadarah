@@ -11,6 +11,7 @@ type Membership = Database["public"]["Tables"]["company_memberships"]["Row"] & {
     "id" | "name_en" | "name_ar" | "status" | "slug" | "status_reason" | "sector_en" | "sector_ar" | "organization_type"
   > & {
     company_brand_profiles?: { identity_status: string; usage_permission: string; logo_source_url: string | null; primary_hex: string | null } | null;
+    company_identity?: { logo_path: string | null; primary_hex: string | null; secondary_hex: string | null; accent_hex: string | null } | null;
   } | null;
 };
 
@@ -41,7 +42,7 @@ export const getSession = cache(async (): Promise<SessionContext | null> => {
     supabase
       .from("company_memberships")
       .select(
-        "*, company:company_profiles(id, name_en, name_ar, status, slug, status_reason, sector_en, sector_ar, organization_type, company_brand_profiles(identity_status, usage_permission, logo_source_url, primary_hex))",
+        "*, company:company_profiles(id, name_en, name_ar, status, slug, status_reason, sector_en, sector_ar, organization_type, company_brand_profiles(identity_status, usage_permission, logo_source_url, primary_hex), company_identity(logo_path, primary_hex, secondary_hex, accent_hex))",
       )
       .eq("user_id", user.id)
       .eq("status", "active"),

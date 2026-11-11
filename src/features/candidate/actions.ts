@@ -239,8 +239,28 @@ export async function applyToJob(
     p_cover_letter: parsed.data.cover_letter ?? "",
     p_answers: answers,
   });
-  if (error) return { ok: false, error: localizeError(error, locale) };
+  if (error) {
+    // Retry/double submit: the application already exists — continue where the candidate left off.
+    if (error.code === "23505") {
+      const { data: prev } = await supabase
+        .from("applications")
+        .select("id, requires_task, completed_at, task_assignment_id")
+        .eq("job_id", parsed.data.job_id)
+        .maybeSingle();
+      if (prev?.requires_task && !prev.completed_at && prev.task_assignment_id)
+        redirect(`/candidate/assessments/${prev.task_assignment_id}`);
+      if (prev) redirect(`/candidate/applications/${prev.id}`);
+    }
+    return { ok: false, error: localizeError(error, locale) };
+  }
   revalidatePath("/candidate", "layout");
+  // A job with a practical task: go straight to it (no employer approval or manual assignment).
+  const { data: app } = await supabase
+    .from("applications")
+    .select("task_assignment_id")
+    .eq("id", data as string)
+    .maybeSingle();
+  if (app?.task_assignment_id) redirect(`/candidate/assessments/${app.task_assignment_id}?applied=1`);
   redirect(`/candidate/applications/${data}?submitted=1`);
 }
 

@@ -3,6 +3,32 @@ import type { Locale } from "./i18n/config";
 /** Business-rule messages raised by our RPCs, localized. Unknown errors map to a generic message (no internals leak). */
 const KNOWN: [RegExp, string, string][] = [
   [
+    /already been given to candidates/i,
+    "Candidates have already received this practical task, so its content is locked. Duplicate it to make changes.",
+    "استلم مرشحون هذه المهمة العملية، لذا أصبح محتواها ثابتًا. أنشئ نسخة منها لإجراء تعديلات.",
+  ],
+  [
+    /practical task; it cannot be replaced/i,
+    "Candidates have already received this job's practical task, so it can't be replaced.",
+    "استلم مرشحون المهمة العملية لهذه الوظيفة، لذا لا يمكن استبدالها.",
+  ],
+  [
+    /publish the practical task before publishing the job/i,
+    "Publish the practical task before publishing the job.",
+    "انشر المهمة العملية أولًا قبل نشر الوظيفة.",
+  ],
+  [
+    /practical task (is archived|is not available|belongs to another organization|not found)/i,
+    "That practical task can't be attached to this job.",
+    "لا يمكن ربط هذه المهمة العملية بهذه الوظيفة.",
+  ],
+  [/this application is closed/i, "This application is closed.", "هذا الطلب مغلق."],
+  [
+    /assessment credits exhausted/i,
+    "This job can't receive applications right now. Please try again later.",
+    "لا تستقبل هذه الوظيفة طلبات حاليًا. حاول لاحقًا.",
+  ],
+  [
     /shortlisted before an interview/i,
     "The candidate must be shortlisted before an interview can be created.",
     "يجب إضافة المرشح إلى القائمة المختصرة قبل إنشاء مقابلة.",

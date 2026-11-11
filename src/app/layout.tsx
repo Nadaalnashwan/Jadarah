@@ -22,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     metadataBase: new URL(publicEnv.siteUrl),
     title: {
-      default: ar ? "جدارة | أكثر من سيرة ذاتية" : "JADARAH | Beyond What's Seen",
+      default: ar ? "جدارة | من المهارة إلى الفرصة" : "JADARAH | From skill to opportunity",
       template: ar ? "%s · جدارة" : "%s · JADARAH",
     },
     description: ar
@@ -34,8 +34,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F8F6F0" },
-    { media: "(prefers-color-scheme: dark)", color: "#0A1330" },
+    { media: "(prefers-color-scheme: light)", color: "#F5F4FC" },
+    { media: "(prefers-color-scheme: dark)", color: "#111B3D" },
   ],
 };
 

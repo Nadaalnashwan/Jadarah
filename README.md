@@ -1,13 +1,13 @@
 # جدارة · JADARAH
 
-**أكثر من سيرة ذاتية. · Beyond What's Seen.**
+**من المهارة إلى الفرصة. · From skill to opportunity.**
 
 JADARAH is a bilingual (Arabic/English) talent-intelligence and recruitment platform. Candidates build evidence-backed profiles, take practical assessments and follow development plans; companies publish jobs, compare candidates requirement by requirement, run structured interviews and decide. AI supports — people decide.
 
 > Demo companies and people are fictional.
 
 ## Stack
-Next.js 16 (App Router, Server Actions, `proxy.ts`) · React 19 · TypeScript (strict) · Tailwind CSS v4 · Motion · Recharts · Zod · Supabase (Postgres, Auth, Storage, RLS) · Vitest · Playwright · GitHub Actions.
+Next.js 16 (App Router, Server Actions, `proxy.ts`) · React 19 · Three.js (landing journey, lazy-loaded) · TypeScript (strict) · Tailwind CSS v4 · Motion · Recharts · Zod · Supabase (Postgres, Auth, Storage, RLS) · Vitest · Playwright · GitHub Actions.
 
 ## Quick start
 ```bash
@@ -39,6 +39,18 @@ npm run dev                  # http://localhost:3000
 
 Never prefix secrets with `NEXT_PUBLIC_`.
 
+### Windows 11 (PowerShell)
+```powershell
+git clone https://github.com/Nadaalnashwan/Jadarah.git
+cd Jadarah
+git checkout feature/jadarah-product-experience
+npm ci
+Copy-Item .env.example .env.local   # then edit .env.local (see variables above)
+npm run build
+npm run start                       # http://localhost:3000   (or: npm run dev)
+```
+Requires Node.js 22+ (24 LTS recommended) and npm. Database migrations: see [DATABASE.md](DATABASE.md) — on a fresh Supabase project run `supabase db push`, or apply `supabase/migrations/*.sql` in order.
+
 ## Scripts
 | Command | What it does |
 |---|---|
@@ -55,6 +67,8 @@ Never prefix secrets with `NEXT_PUBLIC_`.
 | `npx tsx scripts/import/apply-migration.ts <file>` | Apply one migration in a transaction and record it |
 | `npx tsx scripts/import/import-organizations.ts <package dir>` | Import/reconcile the ten registry organizations (idempotent) |
 | `npx tsx scripts/import/import-references.ts <package dir> [--skip-upload] [--only key]` | Import the assessment reference library (cached, idempotent) |
+| `node scripts/brand-assets.mjs` | Regenerate `public/brand/*.svg` and the app icon from the approved symbol geometry |
+| `npx tsx scripts/exploration/generate-sql.ts` | Regenerate migration 0026 from `scripts/exploration/tasks.ts` |
 | `npm run demo:rotate-password -- --yes` | Rotate the shared password of `@jadarah-demo.test` identities only |
 
 ## Documentation

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Logo } from "@/components/brand/logo";
+import { BrandPattern, BrandWave, Logo } from "@/components/brand/logo";
 import type { Messages } from "@/lib/i18n/messages";
 
 export function SiteFooter({ t, contactEmail }: { t: Messages; contactEmail?: string | null }) {
@@ -24,6 +24,16 @@ export function SiteFooter({ t, contactEmail }: { t: Messages; contactEmail?: st
   ];
   return (
     <footer className="bg-surface border-t">
+      <div className="mx-auto max-w-7xl px-4 pt-10 sm:px-6">
+        <div className="brand-banner relative flex min-h-28 items-center overflow-hidden rounded-[1.75rem] px-8 py-8">
+          <BrandWave className="absolute inset-0 h-full w-full opacity-80 rtl:-scale-x-100" />
+          <p className="relative flex items-center gap-4 text-2xl font-bold sm:text-3xl">
+            <span className="h-px w-12 bg-white/60" aria-hidden />
+            {t.brand.tagline.replace(/\.$/, "")}
+          </p>
+        </div>
+        <BrandPattern className="mt-6 h-12 w-full opacity-60" />
+      </div>
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr]">
         <div>
           <Logo />

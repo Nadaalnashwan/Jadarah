@@ -5,7 +5,7 @@ import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { BuilderForm } from "./builder-form";
 
-export default async function AssessmentBuilderPage({ searchParams }: { searchParams: Promise<{ job?: string }> }) {
+export default async function AssessmentBuilderPage({ searchParams }: { searchParams: Promise<{ job?: string; attach?: string; key?: string }> }) {
   const sp = await searchParams;
   const s = await requireCompanyMember(["company_admin", "recruiter"]);
   const { locale } = await getI18n();
@@ -29,7 +29,12 @@ export default async function AssessmentBuilderPage({ searchParams }: { searchPa
   return (
     <>
       <PageHeader title={L("Assessment Builder", "منشئ التقييمات")} />
-      <BuilderForm jobs={options} initialJob={sp.job} />
+      <BuilderForm
+        jobs={options}
+        initialJob={sp.job}
+        attach={sp.attach === "1" && !!sp.job}
+        creationKey={sp.key && /^[0-9a-f-]{36}$/.test(sp.key) ? sp.key : undefined}
+      />
     </>
   );
 }

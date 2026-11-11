@@ -26,9 +26,9 @@ import { cn } from "@/lib/utils";
 
 /** Brand-derived categorical palette (five official colours + derived shades). */
 export const CHART_COLORS = [
-  "#3B66F6",
+  "#3B6CFF",
   "#A9B8FF",
-  "#0F1B3D",
+  "#0D1B3F",
   "#7DA0FF",
   "#CDE7F6",
   "#2343B5",
@@ -189,8 +189,8 @@ export function TrendArea({ data, name }: { data: { label: string; value: number
         >
           <defs>
             <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#3B66F6" stopOpacity={0.35} />
-              <stop offset="100%" stopColor="#3B66F6" stopOpacity={0} />
+              <stop offset="0%" stopColor="#3B6CFF" stopOpacity={0.35} />
+              <stop offset="100%" stopColor="#3B6CFF" stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid vertical={false} stroke="var(--border)" />
@@ -214,7 +214,7 @@ export function TrendArea({ data, name }: { data: { label: string; value: number
             type="monotone"
             dataKey="value"
             name={name}
-            stroke="#3B66F6"
+            stroke="#3B6CFF"
             strokeWidth={2.5}
             fill="url(#trendFill)"
             animationDuration={900}
@@ -260,7 +260,7 @@ export function Columns({ data, name }: { data: { label: string; value: number }
             animationDuration={800}
           >
             {data.map((_, i) => (
-              <Cell key={i} fill={hover === null || hover === i ? "#3B66F6" : "#A9B8FF"} />
+              <Cell key={i} fill={hover === null || hover === i ? "#3B6CFF" : "#A9B8FF"} />
             ))}
           </Bar>
         </BarChart>
@@ -291,8 +291,8 @@ export function SkillRadar({ data }: { data: { label: string; value: number; tar
           <Radar
             name={locale === "ar" ? "الحالي" : "Current"}
             dataKey="value"
-            stroke="#3B66F6"
-            fill="#3B66F6"
+            stroke="#3B6CFF"
+            fill="#3B6CFF"
             fillOpacity={0.35}
             animationDuration={900}
           />

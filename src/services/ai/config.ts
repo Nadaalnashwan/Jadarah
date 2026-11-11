@@ -72,6 +72,7 @@ const OPERATION_TASK: Record<string, AITask> = {
   assessment_builder: "structured",
   rubric_generation: "structured",
   career_plan: "structured",
+  exploration_feedback: "fast",
   assessment_evaluation: "deep",
   final_evaluation: "deep",
 };

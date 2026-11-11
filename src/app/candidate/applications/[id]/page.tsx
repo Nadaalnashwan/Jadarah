@@ -28,7 +28,7 @@ export default async function ApplicationDetail({
   const { data: app } = await supabase
     .from("applications")
     .select(
-      "id, status, submitted_at, cover_letter, candidate_id, job:jobs(id, title_en, title_ar, company:company_profiles(name_en, name_ar)), cv:candidate_documents(file_name, version)",
+      "id, status, submitted_at, cover_letter, candidate_id, requires_task, completed_at, task_assignment_id, job:jobs(id, title_en, title_ar, company:company_profiles(name_en, name_ar)), cv:candidate_documents(file_name, version)",
     )
     .eq("id", id)
     .eq("candidate_id", session.userId)
@@ -77,10 +77,34 @@ export default async function ApplicationDetail({
           <FormMessage>{sp.error}</FormMessage>
         </div>
       )}
+      {app.requires_task && !app.completed_at && app.task_assignment_id && !terminalNegative && (
+        <div className="border-primary/30 bg-accent-soft/40 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-5 py-4">
+          <div>
+            <p className="font-bold">{L("One step left: the practical task", "خطوة واحدة متبقية: المهمة العملية")}</p>
+            <p className="text-muted text-sm">
+              {L(
+                "Your application is not complete until you submit the job's practical task.",
+                "لا يكتمل طلبك حتى تسلّم المهمة العملية الخاصة بالوظيفة.",
+              )}
+            </p>
+          </div>
+          <Button asChild size="sm">
+            <Link href={`/candidate/assessments/${app.task_assignment_id}`}>
+              {L("Continue the task", "متابعة المهمة")}
+            </Link>
+          </Button>
+        </div>
+      )}
       <PageHeader
         eyebrow={pick(app.job?.company, "name", locale)}
         title={pick(app.job, "title", locale)}
-        description={`${L("Applied", "تاريخ التقديم")} ${formatDate(app.submitted_at, locale)}`}
+        description={`${L("Applied", "تاريخ التقديم")} ${formatDate(app.submitted_at, locale)}${
+          app.requires_task
+            ? app.completed_at
+              ? ` · ${L("Application complete", "الطلب مكتمل")} ${formatDate(app.completed_at, locale)}`
+              : ` · ${L("Awaiting practical task", "بانتظار المهمة العملية")}`
+            : ""
+        }`}
         actions={<StatusBadge status={status} t={t} />}
       />
       <div className="grid gap-6 xl:grid-cols-[1.3fr_1fr]">

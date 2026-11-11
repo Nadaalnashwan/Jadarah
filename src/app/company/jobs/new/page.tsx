@@ -45,7 +45,6 @@ export default async function NewJob() {
           education_level: "",
           openings: 1,
           deadline: "",
-          assessment_id: "",
           questions_en: "",
           questions_ar: "",
           skills: [{ skill_id: "", importance: "required", min_level: 3 }],

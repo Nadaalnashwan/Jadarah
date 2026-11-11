@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CalendarDays, MapPin, Wallet } from "lucide-react";
-import { CompanyIdentity, CompanyMark } from "@/components/app/company-mark";
+import { CompanyBanner, CompanyIdentity, CompanyMark, identityOf } from "@/components/app/company-mark";
+import { TaskPreviewCard, type TaskPreview } from "@/components/app/task-preview";
 import { MatchExplanation } from "@/components/app/match-explanation";
 import { StatusBadge } from "@/components/app/status-badge";
 import { Button } from "@/components/ui/button";
@@ -25,12 +26,12 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
   const { data: job } = await supabase
     .from("jobs")
     .select(
-      "*, company:company_profiles(id, slug, name_en, name_ar, sector_en, sector_ar, organization_type, website, description_en, description_ar, company_brand_profiles(identity_status, usage_permission, logo_source_url, primary_hex)), job_skills(importance, min_level, skill:skills(id, slug, name_en, name_ar)), job_requirements(*), job_application_questions(*), assessment:assessments(title_en, title_ar, duration_minutes)",
+      "*, company:company_profiles(id, slug, name_en, name_ar, sector_en, sector_ar, organization_type, website, description_en, description_ar, company_brand_profiles(identity_status, usage_permission, logo_source_url, primary_hex), company_identity(logo_path, cover_path, tagline_en, tagline_ar, primary_hex, secondary_hex, accent_hex)), job_skills(importance, min_level, skill:skills(id, slug, name_en, name_ar)), job_requirements(*), job_application_questions(*)",
     )
     .eq("id", id)
     .maybeSingle();
   if (!job) notFound();
-  const [skills, { data: cp }, { data: cvs }, { data: existing }, { data: saved }] = await Promise.all([
+  const [skills, { data: cp }, { data: cvs }, { data: existing }, { data: saved }, { data: preview }] = await Promise.all([
     getCandidateSkills(supabase, session.userId),
     supabase
       .from("candidate_profiles")
@@ -46,7 +47,7 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
       .order("is_primary", { ascending: false }),
     supabase
       .from("applications")
-      .select("id, status")
+      .select("id, status, requires_task, completed_at, task_assignment_id")
       .eq("job_id", id)
       .eq("candidate_id", session.userId)
       .maybeSingle(),
@@ -56,7 +57,9 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
       .eq("job_id", id)
       .eq("candidate_id", session.userId)
       .maybeSingle(),
+    supabase.rpc("job_task_preview", { p_job: id }),
   ]);
+  const task = preview as TaskPreview | null;
   const skillRecords = toSkillRecords(skills);
   const match = await withSemantics(supabase, matchJob(job, skillRecords, cp?.years_experience ?? null, locale), {
     candidateId: session.userId,
@@ -72,6 +75,11 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
   return (
     <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
       <div className="flex flex-col gap-6">
+        {job.company && (identityOf(job.company)?.primary_hex || identityOf(job.company)?.cover_path) && (
+          <Link href={`/candidate/companies/${job.company.slug}`} className="block">
+            <CompanyBanner company={job.company} locale={locale} />
+          </Link>
+        )}
         <Card className="overflow-hidden">
           <div className="bg-navy text-ivory relative p-6 sm:p-8">
             <div className="flex items-start justify-between gap-4">
@@ -131,16 +139,7 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
                 ))}
               </ul>
             </section>
-            {job.assessment && (
-              <p className="bg-sky-soft rounded-2xl p-4 text-sm">
-                {L("This role uses a practical assessment:", "تستخدم هذه الوظيفة تقييمًا عمليًا:")}{" "}
-                <strong>{pick(job.assessment, "title", locale)}</strong>
-                <span className="ltr-nums">
-                  {" "}
-                  · {job.assessment.duration_minutes} {t.common.minutes}
-                </span>
-              </p>
-            )}
+            {task && <TaskPreviewCard task={task} locale={locale} />}
             <section>
               <h2 className="mb-2 font-bold">{L("About the organization", "عن الجهة")}</h2>
               {job.company && <CompanyIdentity company={job.company} locale={locale} />}
@@ -170,7 +169,24 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
         <Card>
           <CardHeader title={L("Apply", "التقديم")} />
           <CardBody>
-            {existing ? (
+            {existing && existing.requires_task && !existing.completed_at && existing.task_assignment_id ? (
+              <div className="flex flex-col items-start gap-3">
+                <p className="text-sm font-semibold">
+                  {L("Your application is waiting for the practical task.", "طلبك بانتظار إكمال المهمة العملية.")}
+                </p>
+                <p className="text-muted text-sm">
+                  {L(
+                    "Your application is complete once you submit the task. Saved answers are kept if you leave.",
+                    "يكتمل طلبك عند تسليم المهمة. تُحفظ إجاباتك إذا غادرت.",
+                  )}
+                </p>
+                <Button asChild>
+                  <Link href={`/candidate/assessments/${existing.task_assignment_id}`}>
+                    {L("Continue the practical task", "متابعة المهمة العملية")}
+                  </Link>
+                </Button>
+              </div>
+            ) : existing ? (
               <div className="flex flex-col items-start gap-3">
                 <p className="text-muted text-sm">
                   {L("You applied to this job.", "لقد تقدّمت لهذه الوظيفة.")}
@@ -189,6 +205,7 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
             ) : (
               <ApplyForm
                 jobId={job.id}
+                hasTask={!!task}
                 cvs={(cvs ?? [])
                   .filter((c) => c.label !== "[archived]")
                   .map((c) => ({

@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ensureVideoRoom, removeVideoRoom, syncVideoRoomWindow } from "@/features/interviews/video";
 import { getInterviewRubric } from "@/services/interview-rubric";
 import { APPLICATION_STATUSES } from "@/lib/domain/application-status";
+import { sanitizeHex } from "@/lib/brand";
 
 const opt = (max: number) =>
   z
@@ -137,7 +138,7 @@ export async function saveJob(
   jobId: string | null,
   _: ActionResult<{ id: string }> | null,
   form: FormData,
-): Promise<ActionResult<{ id: string }>> {
+): Promise<ActionResult<{ id: string; next?: "task" }>> {
   const { session, companyId } = await recruiter();
   const { locale } = await getI18n();
   const parsed = jobSchema.safeParse(Object.fromEntries(form));
@@ -187,7 +188,7 @@ export async function saveJob(
     education_level: v.education_level,
     openings: v.openings,
     deadline: v.deadline || null,
-    assessment_id: v.assessment_id || null,
+    // The practical task is managed through attach_job_task (job page → "Practical task"), never by this form.
     ai_assisted: v.ai_assisted ?? false,
   };
   const supabase = await createClient();
@@ -228,7 +229,18 @@ export async function saveJob(
       .from("job_application_questions")
       .insert(qEn.map((q, i) => ({ job_id: id!, question_en: q, question_ar: qAr[i] ?? q, position: i })));
   revalidatePath("/company", "layout");
-  return { ok: true, data: { id: id! }, message: locale === "ar" ? "تم حفظ الوظيفة كمسودة." : "Job saved." };
+  const next = form.get("intent") === "task" ? ("task" as const) : undefined;
+  return {
+    ok: true,
+    data: { id: id!, next },
+    message: jobId
+      ? locale === "ar"
+        ? "تم حفظ التغييرات."
+        : "Changes saved."
+      : locale === "ar"
+        ? "تم حفظ الوظيفة كمسودة."
+        : "Job saved as a draft.",
+  };
 }
 
 export async function setJobStatus(
@@ -381,6 +393,45 @@ export async function shareAssessmentFeedback(
   };
 }
 
+/**
+ * "ترشيح للمقابلة": shortlist through the existing validated transition (shortlist-before-interview rule), so the
+ * interview can then be scheduled in the same application context. Idempotent when already shortlisted.
+ */
+export async function shortlistForInterview(applicationId: string): Promise<ActionResult> {
+  const { companyId } = await recruiter();
+  const { locale } = await getI18n();
+  const supabase = await createClient();
+  const { data: app } = await supabase
+    .from("applications")
+    .select("status, was_shortlisted, requires_task, completed_at")
+    .eq("id", applicationId)
+    .eq("company_id", companyId)
+    .maybeSingle();
+  if (!app) return { ok: false, error: localizeError({ code: "42501" }, locale) };
+  if (app.was_shortlisted && ["shortlisted", "interview_scheduled", "interview_completed"].includes(app.status))
+    return { ok: true };
+  if (app.requires_task && !app.completed_at)
+    return {
+      ok: false,
+      error:
+        locale === "ar"
+          ? "لم يسلّم المرشح المهمة العملية بعد."
+          : "The candidate hasn't submitted the practical task yet.",
+    };
+  const { error } = await supabase.rpc("change_application_status", {
+    p_app: applicationId,
+    p_to: "shortlisted",
+    p_reason: "Shortlisted for interview",
+    p_candidate_message: "",
+  });
+  if (error) return { ok: false, error: localizeError(error, locale) };
+  revalidatePath(`/company/applications/${applicationId}`);
+  return {
+    ok: true,
+    message: locale === "ar" ? "أُضيف المرشح إلى القائمة المختصرة. حدّد موعد المقابلة." : "Shortlisted. Now schedule the interview.",
+  };
+}
+
 // ------------------------------------------------------------------ interviews
 const interviewSchema = z.object({
   title: z.string().trim().min(2).max(140),
@@ -428,7 +479,9 @@ export async function scheduleInterview(
     console.error("daily: room creation failed:", e instanceof Error ? e.message : "unknown"),
   );
   revalidatePath(`/company/applications/${applicationId}`);
-  redirect(`/company/interviews/${data}`);
+  revalidatePath("/company/calendar");
+  // Stay in the application context; the confirmed interview is listed there with a link to its details.
+  redirect(`/company/applications/${applicationId}?scheduled=${data}`);
 }
 
 function zonedToUtc(local: string, timeZone: string): string {
@@ -651,4 +704,57 @@ export async function acceptInvitation(invitationId: string): Promise<void> {
   const { error } = await supabase.rpc("accept_company_invitation", { p_invitation: invitationId });
   if (error) redirect("/invitations?error=1");
   redirect("/company");
+}
+
+// ------------------------------------------------------------------ company identity (employer-managed branding)
+const identitySchema = z.object({
+  logo_path: z.string().max(200).optional().default(""),
+  cover_path: z.string().max(200).optional().default(""),
+  tagline_en: z.string().trim().max(160).optional().default(""),
+  tagline_ar: z.string().trim().max(160).optional().default(""),
+  primary_hex: z.string().optional().default(""),
+  secondary_hex: z.string().optional().default(""),
+  accent_hex: z.string().optional().default(""),
+});
+
+/** Company admins only (re-checked by update_company_identity). Paths must live under the caller's own company. */
+export async function saveCompanyIdentity(_: ActionResult | null, form: FormData): Promise<ActionResult> {
+  const s = await requireCompanyMember(["company_admin"]);
+  const cid = s.activeMembership.company_id;
+  const { locale } = await getI18n();
+  const parsed = identitySchema.safeParse(Object.fromEntries(form));
+  if (!parsed.success) return { ok: false, error: localizeError(null, locale) };
+  const v = parsed.data;
+  const pathOk = (p: string) => p === "" || new RegExp(`^${cid}/[A-Za-z0-9._-]{1,120}$`).test(p);
+  if (!pathOk(v.logo_path) || !pathOk(v.cover_path)) return { ok: false, error: localizeError({ code: "42501" }, locale) };
+  const hex = (h: string) => (h === "" ? "" : sanitizeHex(h));
+  const [p1, p2, p3] = [hex(v.primary_hex), hex(v.secondary_hex), hex(v.accent_hex)];
+  if (p1 === null || p2 === null || p3 === null)
+    return {
+      ok: false,
+      error: locale === "ar" ? "استخدم ألوانًا بصيغة ‎#RRGGBB." : "Use colours in #RRGGBB format.",
+    };
+  const supabase = await createClient();
+  const { data: prev } = await supabase
+    .from("company_identity")
+    .select("logo_path, cover_path")
+    .eq("company_id", cid)
+    .maybeSingle();
+  const { error } = await supabase.rpc("update_company_identity", {
+    p_company: cid,
+    p_logo_path: v.logo_path,
+    p_cover_path: v.cover_path,
+    p_tagline_en: v.tagline_en,
+    p_tagline_ar: v.tagline_ar,
+    p_primary: p1,
+    p_secondary: p2,
+    p_accent: p3,
+  });
+  if (error) return { ok: false, error: localizeError(error, locale) };
+  // Remove replaced images (best effort; the bucket only allows company admins to delete their own files).
+  const stale = [prev?.logo_path, prev?.cover_path].filter((p): p is string => !!p && p !== v.logo_path && p !== v.cover_path);
+  if (stale.length) await supabase.storage.from("company-identity").remove(stale);
+  revalidatePath("/company", "layout");
+  revalidatePath("/companies", "layout");
+  return { ok: true, message: locale === "ar" ? "حُفظت هوية الشركة." : "Company identity saved." };
 }

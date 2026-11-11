@@ -9,7 +9,17 @@ import { tx } from "@/lib/i18n/config";
 
 type JobOption = { id: string; title: string; seniority: string; description: string; responsibilities: string; required: string[]; preferred: string[] };
 
-export function BuilderForm({ jobs, initialJob }: { jobs: JobOption[]; initialJob?: string }) {
+export function BuilderForm({
+  jobs,
+  initialJob,
+  attach = false,
+  creationKey,
+}: {
+  jobs: JobOption[];
+  initialJob?: string;
+  attach?: boolean;
+  creationKey?: string;
+}) {
   const { t, locale } = useI18n();
   const L = tx(locale);
   const [jobId, setJobId] = useState(initialJob && jobs.some((j) => j.id === initialJob) ? initialJob : (jobs[0]?.id ?? ""));
@@ -17,6 +27,18 @@ export function BuilderForm({ jobs, initialJob }: { jobs: JobOption[]; initialJo
   const [state, action, pending] = useActionState(generateFromJob, null);
   return (
     <form action={action} key={jobId} className="surface-card flex max-w-3xl flex-col gap-4 p-6">
+      {attach && jobId === initialJob && (
+        <>
+          <input type="hidden" name="attach" value="1" />
+          {creationKey && <input type="hidden" name="creation_key" value={creationKey} />}
+          <p className="bg-sky-soft text-navy rounded-xl px-3 py-2 text-sm dark:text-sky">
+            {L(
+              "The generated draft will be attached to this job as its practical task. Nothing is published automatically.",
+              "ستُربط المسودة المولّدة بهذه الوظيفة كمهمتها العملية. لا يُنشر شيء تلقائيًا.",
+            )}
+          </p>
+        </>
+      )}
       <Field label={L("Job", "الوظيفة")} htmlFor="b-job" required>
         <Select id="b-job" name="job_id" value={jobId} onChange={(e) => setJobId(e.target.value)} required>
           {jobs.map((j) => (

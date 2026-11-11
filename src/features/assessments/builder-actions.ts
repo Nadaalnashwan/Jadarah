@@ -1,6 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { jobTaskLocked } from "@/features/company/job-task";
 import { z } from "zod";
 import { requireCompanyMember } from "@/lib/auth/session";
 import { localizeError, type ActionResult } from "@/lib/errors";
@@ -59,8 +60,18 @@ export async function generateFromJob(_: ActionResult | null, form: FormData): P
   const L = (en: string, ar: string) => (locale === "ar" ? ar : en);
   const p = inputSchema.safeParse(Object.fromEntries(form));
   if (!p.success) return { ok: false, error: L("Complete the job details.", "أكمل بيانات الوظيفة.") };
-  const { data: job } = await supabase.from("jobs").select("id, category:job_categories(slug)").eq("id", p.data.job_id).eq("company_id", company.id).maybeSingle();
+  const { data: job } = await supabase.from("jobs").select("id, assessment_id, category:job_categories(slug)").eq("id", p.data.job_id).eq("company_id", company.id).maybeSingle();
   if (!job) return { ok: false, error: L("Job not found.", "الوظيفة غير موجودة.") };
+  // Job-linked creation ("Save & create practical task"): idempotent per creation key, attached to the job.
+  const attach = form.get("attach") === "1";
+  const rawKey = String(form.get("creation_key") ?? "");
+  const creationKey = attach && /^[0-9a-f-]{36}$/.test(rawKey) ? rawKey : null;
+  if (creationKey) {
+    const { data: prior } = await supabase.from("assessments").select("id").eq("company_id", company.id).eq("creation_key", creationKey).maybeSingle();
+    if (prior) redirect(`/company/assessments/${prior.id}?job=${job.id}`);
+  }
+  if (attach && job.assessment_id && (await jobTaskLocked(supabase, job.id)))
+    return { ok: false, error: localizeError({ message: "practical task; it cannot be replaced" }, locale) };
   const input: JobInput = {
     ...p.data,
     responsibilities: list(p.data.responsibilities),
@@ -92,6 +103,8 @@ export async function generateFromJob(_: ActionResult | null, form: FormData): P
       status: "draft",
       ai_generated: true,
       created_by: s.userId,
+      job_id: attach ? job.id : null,
+      creation_key: creationKey,
     })
     .select("id")
     .single();
@@ -125,6 +138,11 @@ export async function generateFromJob(_: ActionResult | null, form: FormData): P
     output: { assessment_id: a.id, tasks: d.tasks.length, checks_failed: result.checks.filter((c) => !c.passed).length },
     review_status: "pending_review",
   });
+  if (attach) {
+    const { error: aErr } = await supabase.rpc("attach_job_task", { p_job: job.id, p_assessment: a.id });
+    if (aErr) return { ok: false, error: localizeError(aErr, locale) };
+    redirect(`/company/assessments/${a.id}?job=${job.id}`);
+  }
   redirect(`/company/assessments/${a.id}`);
 }
 

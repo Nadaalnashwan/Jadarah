@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { buttonVariants } from "@/components/ui/button";
 import { CompanyMark } from "@/components/app/company-mark";
 import { MaterialLink } from "@/app/company/assessments/[id]/generated-client";
 import { CheckCircle2, XCircle } from "lucide-react";
@@ -46,8 +48,15 @@ type Result = {
   }[];
 };
 
-export default async function AssessmentPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function AssessmentPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ applied?: string }>;
+}) {
   const { id } = await params;
+  const sp = await searchParams;
   const session = await requireCandidate();
   const { t, locale } = await getI18n();
   const L = tx(locale);
@@ -55,7 +64,7 @@ export default async function AssessmentPage({ params }: { params: Promise<{ id:
   const { data: asg } = await supabase
     .from("assessment_assignments")
     .select(
-      "id, status, due_at, assessment_id, application:applications(company:company_profiles(name_en, name_ar, sector_en, sector_ar, organization_type, company_brand_profiles(identity_status, usage_permission, logo_source_url, primary_hex))), assessment:assessments(title_en, title_ar, description_en, description_ar, duration_minutes, passing_score, learning_outcomes_en, learning_outcomes_ar), assessment_submissions(status)",
+      "id, status, due_at, assessment_id, application:applications(id, requires_task, completed_at, status, job:jobs(title_en, title_ar), company:company_profiles(name_en, name_ar, sector_en, sector_ar, organization_type, company_brand_profiles(identity_status, usage_permission, logo_source_url, primary_hex), company_identity(logo_path, primary_hex, secondary_hex, accent_hex))), assessment:assessments(title_en, title_ar, description_en, description_ar, duration_minutes, passing_score, learning_outcomes_en, learning_outcomes_ar), assessment_submissions(status)",
     )
     .eq("id", id)
     .eq("candidate_id", session.userId)
@@ -69,13 +78,31 @@ export default async function AssessmentPage({ params }: { params: Promise<{ id:
     .eq("assessment_id", asg.assessment_id)
     .eq("audience", "candidate")
     .order("file_name");
-  const company = asg.application?.company;
+  const app = asg.application;
+  const company = app?.company;
+  const jobTask = !!app?.requires_task;
   const brand = company ? (
-    <span className="flex items-center gap-2.5">
-      <CompanyMark company={company} size="sm" className="bg-white/10" />
-      <span className="text-lavender text-sm font-semibold">{locale === "ar" ? company.name_ar : company.name_en}</span>
+    <span className="flex flex-col gap-1">
+      <span className="flex items-center gap-2.5">
+        <CompanyMark company={company} size="sm" className="bg-white/10" />
+        <span className="text-lavender text-sm font-semibold">{locale === "ar" ? company.name_ar : company.name_en}</span>
+      </span>
+      {app?.job && (
+        <span className="text-sky/80 text-xs">
+          {jobTask ? L("Practical task for", "المهمة العملية لوظيفة") : L("For", "لوظيفة")} {pick(app.job, "title", locale)}
+        </span>
+      )}
     </span>
   ) : undefined;
+  const appliedBanner =
+    sp.applied === "1" && jobTask ? (
+      <p className="bg-success-soft text-success mb-4 rounded-xl px-4 py-3 text-sm font-semibold">
+        {L(
+          "Application received. Complete and submit the practical task to finish your application.",
+          "استلمنا طلبك. أكمل المهمة العملية وسلّمها لإتمام طلبك.",
+        )}
+      </p>
+    ) : null;
   const materialList = materials?.length ? (
     <div className="bg-surface-2 rounded-2xl p-4">
       <p className="mb-2 text-sm font-bold">{L("Materials", "المواد")}</p>
@@ -92,6 +119,8 @@ export default async function AssessmentPage({ params }: { params: Promise<{ id:
 
   if (!submitted) {
     return (
+      <>
+      {appliedBanner}
       <AttemptGate
         assignmentId={asg.id}
         started={asg.status === "in_progress"}
@@ -109,6 +138,7 @@ export default async function AssessmentPage({ params }: { params: Promise<{ id:
               : (asg.assessment?.learning_outcomes_en ?? []),
         }}
       />
+      </>
     );
   }
 
@@ -120,9 +150,25 @@ export default async function AssessmentPage({ params }: { params: Promise<{ id:
   return (
     <>
       <PageHeader
-        eyebrow={L("Assessment results", "نتائج التقييم")}
+        eyebrow={jobTask ? L("Practical task submitted", "سُلّمت المهمة العملية") : L("Assessment results", "نتائج التقييم")}
         title={pick(r.assessment, "title", locale)}
       />
+      {jobTask && app && (
+        <div className="bg-success-soft mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl px-5 py-4">
+          <div>
+            <p className="text-success font-bold">{L("Your application is complete.", "اكتمل طلبك.")}</p>
+            <p className="text-muted text-sm">
+              {L(
+                "The company now sees your profile, your CV (if shared) and this submission. People make the decision — you'll be notified of every update.",
+                "ترى الشركة الآن ملفك وسيرتك (إن أرفقتها) وهذا التسليم. القرار بيد أشخاص، وستصلك إشعارات بكل تحديث.",
+              )}
+            </p>
+          </div>
+          <Link href={`/candidate/applications/${app.id}`} className={buttonVariants({ size: "sm" })}>
+            {L("Track application", "تتبّع الطلب")}
+          </Link>
+        </div>
+      )}
       <div className="grid gap-6 xl:grid-cols-[1fr_1.6fr]">
         <div className="flex flex-col gap-6">
           <Card className="overflow-hidden">

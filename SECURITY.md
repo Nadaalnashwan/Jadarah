@@ -41,3 +41,10 @@ Candidate A cannot read B's records; companies are isolated; interviewers see on
 - **Reference library:** assessor content (answer expectations, guidance) is stored in a Super Admin-only table; recruiters retrieve rubric structure only; candidates cannot read references at all. Originals are kept in a private bucket.
 - **Generated assessments:** never auto-published; approval re-runs validation (including assessor-leakage and legacy-branding checks). Assessor guides and assessor files are company-internal; candidates get candidate files through 60 s signed URLs only when assigned. File names containing legacy branding are rejected by the database.
 - Verified live by `tests/integration/assessment-security.test.ts` and `tests/integration/b2b.test.ts`.
+
+## Product experience (0025–0027)
+- **Practical tasks:** assigned by `apply_to_job` in the same transaction (no employer gate); candidates receive the attempt without answer keys/explanations; assessor guides and reference content remain company/Super-Admin only. Once any candidate holds a task, its questions/options/sections/rubric/metadata are locked by triggers (same version for everyone) and the job's task cannot be swapped.
+- **Idempotency:** task creation carries a client `creation_key` (unique per company); `apply_to_job` rejects duplicates and the action resumes the existing task.
+- **Company identity:** writes only through `update_company_identity` (company admin of that company, active subscription); hex colours validated in DB and server; storage paths must start with the company id; company colours are applied only inside a company-scoped wrapper with an automatically readable foreground — never to JADARAH navigation or security indicators.
+- **Directory contacts:** website/email/phone actions are shown only when the organization is `verified_official` or its own admin published them; listing ≠ partnership.
+- **Exploratory tasks:** attempts are owner-only (RLS) and never visible to employers; feedback is learning-only, never a hiring score; AI receives only the task and the response (untrusted-input guard), with a transparent rule-based fallback.

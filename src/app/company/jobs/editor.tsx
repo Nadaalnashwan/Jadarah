@@ -3,7 +3,7 @@ import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
-import { Plus, Sparkles, Trash2 } from "lucide-react";
+import { ClipboardCheck, Plus, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, FormMessage, Input, Select, Textarea } from "@/components/ui/form";
 import { Badge } from "@/components/ui/primitives";
@@ -34,7 +34,6 @@ export interface JobFormValues {
   education_level: string;
   openings: number;
   deadline: string;
-  assessment_id: string;
   questions_en: string;
   questions_ar: string;
   skills: { skill_id: string; importance: "required" | "preferred"; min_level: number }[];
@@ -45,13 +44,13 @@ export function JobEditor({
   initial,
   skills,
   categories,
-  assessments,
+  hasTask = false,
 }: {
   jobId: string | null;
   initial: JobFormValues;
   skills: { id: string; name: string }[];
   categories: { id: string; name: string }[];
-  assessments: { id: string; name: string }[];
+  hasTask?: boolean;
 }) {
   const { t, locale } = useI18n();
   const L = tx(locale);
@@ -61,14 +60,15 @@ export function JobEditor({
     busy: false,
     note: null,
   });
-  const [state, action, pending] = useActionState<ActionResult<{ id: string }> | null, FormData>(
+  const [state, action, pending] = useActionState<ActionResult<{ id: string; next?: "task" }> | null, FormData>(
     saveJob.bind(null, jobId),
     null,
   );
   useEffect(() => {
     if (state?.ok) {
       toast.success(state.message);
-      if (!jobId && state.data?.id) router.replace(`/company/jobs/${state.data.id}`);
+      if (state.data?.next === "task" && state.data.id) router.push(`/company/jobs/${state.data.id}/task`);
+      else if (!jobId && state.data?.id) router.replace(`/company/jobs/${state.data.id}`);
       else router.refresh();
     }
   }, [state, jobId, router]);
@@ -359,21 +359,6 @@ export function JobEditor({
             onChange={(e) => set("education_level", e.target.value)}
           />
         </Field>
-        <Field label={L("Practical assessment", "التقييم العملي")} htmlFor="assessment_id">
-          <Select
-            id="assessment_id"
-            name="assessment_id"
-            value={v.assessment_id}
-            onChange={(e) => set("assessment_id", e.target.value)}
-          >
-            <option value="">—</option>
-            {assessments.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name}
-              </option>
-            ))}
-          </Select>
-        </Field>
         <label className="flex items-center gap-2 text-sm sm:col-span-2">
           <Checkbox
             name="salary_visible"
@@ -497,10 +482,18 @@ export function JobEditor({
         </Field>
       </section>
       {state && !state.ok && <FormMessage>{state.error}</FormMessage>}
-      <div className="flex gap-2">
-        <Button type="submit" size="lg" loading={pending}>
-          {L("Save", "حفظ")}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button type="submit" size="lg" loading={pending} variant={hasTask ? "primary" : "outline"}>
+          {jobId ? L("Save changes", "حفظ التغييرات") : L("Save as draft", "حفظ كمسودة")}
         </Button>
+        {!hasTask && (
+          <Button type="submit" size="lg" name="intent" value="task" loading={pending}>
+            <ClipboardCheck /> {L("Save & create practical task", "حفظ وإنشاء مهمة عملية")}
+          </Button>
+        )}
+        <p className="text-subtle text-xs">
+          {L("Saving never publishes the job.", "الحفظ لا ينشر الوظيفة.")}
+        </p>
       </div>
     </form>
   );

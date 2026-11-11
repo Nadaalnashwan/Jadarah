@@ -11,7 +11,7 @@ import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { CompareSelector } from "./compare-selector";
 
-type SP = { job?: string; status?: string; q?: string; sort?: string; page?: string };
+type SP = { job?: string; status?: string; q?: string; sort?: string; page?: string; complete?: string };
 const PAGE = 20;
 
 export default async function CompanyApplications({ searchParams }: { searchParams: Promise<SP> }) {
@@ -24,12 +24,14 @@ export default async function CompanyApplications({ searchParams }: { searchPara
   let q = supabase
     .from("applications")
     .select(
-      "id, status, match_score, submitted_at, updated_at, job_id, job:jobs(title_en, title_ar), candidate:profiles!applications_candidate_id_fkey(full_name)",
+      "id, status, match_score, submitted_at, updated_at, job_id, requires_task, completed_at, job:jobs(title_en, title_ar), candidate:profiles!applications_candidate_id_fkey(full_name)",
       { count: "exact" },
     )
     .eq("company_id", cid);
   if (sp.job) q = q.eq("job_id", sp.job);
   if (sp.status) q = q.eq("status", sp.status as ApplicationStatus);
+  // Default view: complete applications (task submitted, or no task required). "all" also shows tasks in progress.
+  if (sp.complete !== "all") q = q.not("completed_at", "is", null);
   const order = sp.sort === "recent" ? "submitted_at" : "match_score";
   const page = Math.max(1, Number(sp.page ?? 1));
   const [{ data, count }, { data: jobs }] = await Promise.all([
@@ -50,7 +52,7 @@ export default async function CompanyApplications({ searchParams }: { searchPara
       <PageHeader
         title={t.company.nav.applications}
       />
-      <form className="surface-card mb-4 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-5" role="search">
+      <form className="surface-card mb-4 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-6" role="search">
         <Input
           name="q"
           defaultValue={sp.q}
@@ -72,6 +74,10 @@ export default async function CompanyApplications({ searchParams }: { searchPara
               {t.status[st]}
             </option>
           ))}
+        </Select>
+        <Select name="complete" defaultValue={sp.complete ?? ""} aria-label={L("Completeness", "الاكتمال")}>
+          <option value="">{L("Complete applications", "الطلبات المكتملة")}</option>
+          <option value="all">{L("Include tasks in progress", "تضمين المهام قيد التنفيذ")}</option>
         </Select>
         <Select name="sort" defaultValue={sp.sort ?? ""} aria-label={L("Sort", "الترتيب")}>
           <option value="">{L("Highest match", "الأعلى مطابقة")}</option>
@@ -129,7 +135,12 @@ export default async function CompanyApplications({ searchParams }: { searchPara
                         </span>
                       </td>
                       <td className="p-4">
-                        <StatusBadge status={r.status as ApplicationStatus} t={t} />
+                        <span className="flex flex-wrap items-center gap-1.5">
+                          <StatusBadge status={r.status as ApplicationStatus} t={t} />
+                          {r.requires_task && !r.completed_at && (
+                            <span className="text-subtle text-[11px]">{L("task in progress", "المهمة قيد التنفيذ")}</span>
+                          )}
+                        </span>
                       </td>
                       <td className="text-muted p-4">{formatDate(r.submitted_at, locale)}</td>
                     </tr>

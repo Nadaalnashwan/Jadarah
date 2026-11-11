@@ -13,8 +13,10 @@ import { cn } from "@/lib/utils";
 export function CandidateOnboardingForm({
   defaults,
   skills,
+  existingSkills = 0,
 }: {
-  defaults: { full_name: string; headline: string; city: string; summary: string };
+  defaults: { full_name: string; headline: string; city: string; summary: string; years_experience?: number | null };
+  existingSkills?: number;
   skills: { id: string; name: string; category: string }[];
 }) {
   const { t, locale } = useI18n();
@@ -95,7 +97,7 @@ export function CandidateOnboardingForm({
                   min={0}
                   max={60}
                   step={0.5}
-                  defaultValue={0}
+                  defaultValue={defaults.years_experience ?? 0}
                 />
               </Field>
               <Field label={L("Career level", "المستوى المهني")} htmlFor="experience_level">
@@ -125,6 +127,14 @@ export function CandidateOnboardingForm({
             </Field>
           </div>
           <div className={cn(step !== 2 && "hidden")}>
+            {existingSkills > 0 && (
+              <p className="bg-sky-soft text-navy mb-3 rounded-xl px-3 py-2 text-sm dark:text-sky">
+                {L(
+                  `${existingSkills} skills are already in your profile. Add others only if they are missing.`,
+                  `لديك ${existingSkills} مهارة في ملفك بالفعل. أضف غيرها فقط إن كانت ناقصة.`,
+                )}
+              </p>
+            )}
             <p className="text-muted mb-3 text-sm">
               {L(
                 "Pick up to 15 skills. They start as self-declared — add evidence later through your CV or assessments.",

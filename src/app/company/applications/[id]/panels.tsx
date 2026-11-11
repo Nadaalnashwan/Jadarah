@@ -1,8 +1,8 @@
 "use client";
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { CalendarSearch, FileText, Sparkles } from "lucide-react";
+import { CalendarPlus, CalendarSearch, FileText, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, FormMessage, Input, Select, Textarea } from "@/components/ui/form";
 import {
@@ -12,6 +12,7 @@ import {
   evaluateAnswer,
   scheduleInterview,
   shareAssessmentFeedback,
+  shortlistForInterview,
 } from "@/features/company/actions";
 import { getApplicationCvUrl } from "@/features/company/document-actions";
 import { suggestRubricScores, type RubricSuggestion } from "@/features/assessments/ai-evaluation-actions";
@@ -349,16 +350,54 @@ export function ShareFeedbackForm({
   );
 }
 
+/** Shortlist (validated transition) and open interview scheduling in the same application context. */
+export function ShortlistForInterviewButton({ applicationId, size = "md" }: { applicationId: string; size?: "sm" | "md" }) {
+  const { locale } = useI18n();
+  const L = tx(locale);
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  return (
+    <Button
+      size={size}
+      loading={pending}
+      onClick={() =>
+        start(async () => {
+          const r = await shortlistForInterview(applicationId);
+          if (!r.ok) return void toast.error(r.error);
+          if (r.message) toast.success(r.message);
+          router.replace(`/company/applications/${applicationId}?schedule=1#interviews`);
+          router.refresh();
+        })
+      }
+    >
+      <CalendarPlus /> {L("Shortlist for interview", "ترشيح للمقابلة")}
+    </Button>
+  );
+}
+
+const IV_TYPES: Record<string, [string, string]> = {
+  video: ["Video", "مرئية"],
+  phone: ["Phone", "هاتفية"],
+  onsite: ["On-site", "حضورية"],
+  technical: ["Technical", "تقنية"],
+  behavioral: ["Behavioral", "سلوكية"],
+  panel: ["Panel", "لجنة"],
+};
+
 export function InterviewForm({
   applicationId,
   members,
+  defaultOpen = false,
+  context,
 }: {
   applicationId: string;
   members: { id: string; name: string }[];
+  defaultOpen?: boolean;
+  context?: { candidate: string; job: string };
 }) {
   const { locale } = useI18n();
   const L = tx(locale);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [state, action, pending] = useActionState<ActionResult | null, FormData>(
     scheduleInterview.bind(null, applicationId),
     null,
@@ -386,6 +425,11 @@ export function InterviewForm({
     );
   return (
     <form action={action} className="flex flex-col gap-3 rounded-2xl border p-4">
+      {context && (
+        <p className="bg-surface-2 rounded-xl px-3 py-2 text-xs">
+          <span className="font-semibold">{context.candidate}</span> · {context.job}
+        </p>
+      )}
       <Field label={L("Title", "العنوان")} htmlFor="iv-title" required>
         <Input id="iv-title" name="title" required defaultValue={L("Technical interview", "مقابلة تقنية")} />
       </Field>
@@ -409,9 +453,9 @@ export function InterviewForm({
       <div className="grid grid-cols-2 gap-3">
         <Field label={L("Type", "النوع")} htmlFor="iv-type">
           <Select id="iv-type" name="type" defaultValue="video">
-            {["video", "phone", "onsite", "technical", "behavioral", "panel"].map((x) => (
+            {Object.entries(IV_TYPES).map(([x, lbl]) => (
               <option key={x} value={x}>
-                {x}
+                {L(...lbl)}
               </option>
             ))}
           </Select>

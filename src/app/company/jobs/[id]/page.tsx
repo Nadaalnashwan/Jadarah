@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 import { JobEditor } from "../editor";
 import { loadJobFormOptions } from "../load";
 import { JobStatusActions } from "../status-actions";
+import { JobTaskPanel } from "./task-panel";
 
 export default async function EditJob({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -47,8 +48,16 @@ export default async function EditJob({ params }: { params: Promise<{ id: string
           </>
         }
       />
+      <JobTaskPanel
+        supabase={supabase}
+        jobId={j.id}
+        jobStatus={j.status}
+        assessmentId={j.assessment_id}
+        locale={locale}
+      />
       <JobEditor
         jobId={j.id}
+        hasTask={!!j.assessment_id}
         {...opts}
         initial={{
           title_en: j.title_en,
@@ -71,7 +80,6 @@ export default async function EditJob({ params }: { params: Promise<{ id: string
           education_level: j.education_level ?? "",
           openings: j.openings,
           deadline: j.deadline ?? "",
-          assessment_id: j.assessment_id ?? "",
           questions_en: qs.map((q) => q.question_en).join("\n"),
           questions_ar: qs.map((q) => q.question_ar).join("\n"),
           skills: j.job_skills.map((x) => ({

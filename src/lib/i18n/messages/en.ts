@@ -1,5 +1,5 @@
 export const en = {
-  brand: { name: "JADARAH", nameAlt: "جدارة", tagline: "Beyond What's Seen." },
+  brand: { name: "JADARAH", nameAlt: "جدارة", tagline: "From skill to opportunity." },
   common: {
     save: "Save",
     saving: "Saving…",
@@ -205,8 +205,8 @@ export const en = {
   status: {
     submitted: "Submitted",
     under_review: "Under review",
-    assessment_pending: "Assessment pending",
-    assessment_completed: "Assessment completed",
+    assessment_pending: "Practical task pending",
+    assessment_completed: "Practical task submitted",
     shortlisted: "Shortlisted",
     interview_scheduled: "Interview scheduled",
     interview_completed: "Interview completed",

@@ -25,6 +25,7 @@ import {
   ListChecks,
   Menu,
   Route,
+  Compass,
   ScrollText,
   Search,
   Send,
@@ -37,6 +38,7 @@ import {
 } from "lucide-react";
 
 const ICONS = {
+  Compass,
   BarChart3,
   Bell,
   Bot,

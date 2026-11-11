@@ -182,6 +182,124 @@ export type Database = {
           },
         ]
       }
+      exploration_attempts: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          feedback: Json | null
+          id: string
+          response: string
+          status: string
+          submitted_at: string | null
+          task_id: string
+          updated_at: string
+        }
+        Insert: {
+          candidate_id?: string
+          created_at?: string
+          feedback?: Json | null
+          id?: string
+          response?: string
+          status?: string
+          submitted_at?: string | null
+          task_id: string
+          updated_at?: string
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          feedback?: Json | null
+          id?: string
+          response?: string
+          status?: string
+          submitted_at?: string | null
+          task_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exploration_attempts_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "exploration_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exploration_tasks: {
+        Row: {
+          active: boolean
+          category_id: string
+          created_at: string
+          criteria: Json
+          daily_ar: string[]
+          daily_en: string[]
+          deliverable_ar: string
+          deliverable_en: string
+          id: string
+          minutes: number
+          next_steps_ar: string[]
+          next_steps_en: string[]
+          role_ar: string
+          role_en: string
+          scenario_ar: string
+          scenario_en: string
+          slug: string
+          title_ar: string
+          title_en: string
+        }
+        Insert: {
+          active?: boolean
+          category_id: string
+          created_at?: string
+          criteria?: Json
+          daily_ar?: string[]
+          daily_en?: string[]
+          deliverable_ar: string
+          deliverable_en: string
+          id?: string
+          minutes?: number
+          next_steps_ar?: string[]
+          next_steps_en?: string[]
+          role_ar: string
+          role_en: string
+          scenario_ar: string
+          scenario_en: string
+          slug: string
+          title_ar: string
+          title_en: string
+        }
+        Update: {
+          active?: boolean
+          category_id?: string
+          created_at?: string
+          criteria?: Json
+          daily_ar?: string[]
+          daily_en?: string[]
+          deliverable_ar?: string
+          deliverable_en?: string
+          id?: string
+          minutes?: number
+          next_steps_ar?: string[]
+          next_steps_en?: string[]
+          role_ar?: string
+          role_en?: string
+          scenario_ar?: string
+          scenario_en?: string
+          slug?: string
+          title_ar?: string
+          title_en?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exploration_tasks_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "job_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_embeddings: {
         Row: {
           content_hash: string
@@ -484,6 +602,53 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_identity: {
+        Row: {
+          accent_hex: string | null
+          company_id: string
+          cover_path: string | null
+          logo_path: string | null
+          primary_hex: string | null
+          secondary_hex: string | null
+          tagline_ar: string | null
+          tagline_en: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          accent_hex?: string | null
+          company_id: string
+          cover_path?: string | null
+          logo_path?: string | null
+          primary_hex?: string | null
+          secondary_hex?: string | null
+          tagline_ar?: string | null
+          tagline_en?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          accent_hex?: string | null
+          company_id?: string
+          cover_path?: string | null
+          logo_path?: string | null
+          primary_hex?: string | null
+          secondary_hex?: string | null
+          tagline_ar?: string | null
+          tagline_en?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_identity_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "company_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1219,6 +1384,9 @@ export type Database = {
       }
       applications: {
         Row: {
+          completed_at: string | null
+          requires_task: boolean
+          task_assignment_id: string | null
           candidate_id: string
           company_id: string
           cover_letter: string | null
@@ -1234,6 +1402,9 @@ export type Database = {
           was_shortlisted: boolean
         }
         Insert: {
+          completed_at?: string | null
+          requires_task?: boolean
+          task_assignment_id?: string | null
           candidate_id: string
           company_id: string
           cover_letter?: string | null
@@ -1249,6 +1420,9 @@ export type Database = {
           was_shortlisted?: boolean
         }
         Update: {
+          completed_at?: string | null
+          requires_task?: boolean
+          task_assignment_id?: string | null
           candidate_id?: string
           company_id?: string
           cover_letter?: string | null
@@ -1753,6 +1927,8 @@ export type Database = {
       }
       assessments: {
         Row: {
+          creation_key: string | null
+          job_id: string | null
           ai_generated: boolean
           category: string
           company_id: string | null
@@ -1774,6 +1950,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          creation_key?: string | null
+          job_id?: string | null
           ai_generated?: boolean
           category?: string
           company_id?: string | null
@@ -1795,6 +1973,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          creation_key?: string | null
+          job_id?: string | null
           ai_generated?: boolean
           category?: string
           company_id?: string | null
@@ -3819,6 +3999,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      attach_job_task: {
+        Args: { p_assessment: string | null; p_job: string }
+        Returns: undefined
+      }
+      assessment_is_in_use: {
+        Args: { p_assessment: string }
+        Returns: boolean
+      }
+      job_task_preview: {
+        Args: { p_job: string }
+        Returns: Json
+      }
+      update_company_identity: {
+        Args: {
+          p_accent: string
+          p_company: string
+          p_cover_path: string
+          p_logo_path: string
+          p_primary: string
+          p_secondary: string
+          p_tagline_ar: string
+          p_tagline_en: string
+        }
+        Returns: undefined
+      }
       is_active_recruiter: { Args: Record<PropertyKey, never>; Returns: boolean }
       match_reference_assessments: { Args: { p_embedding: string; p_limit?: number; p_model: string }; Returns: { reference_id: string; similarity: number }[] }
       reference_rubrics_for_builder: { Args: { p_ids: string[] }; Returns: { reference_id: string; rubric: Json }[] }

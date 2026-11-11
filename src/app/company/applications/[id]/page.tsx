@@ -20,11 +20,19 @@ import {
   InterviewForm,
   NoteForm,
   ShareFeedbackForm,
+  ShortlistForInterviewButton,
   StatusForm,
 } from "./panels";
 
-export default async function CompanyApplicationDetail({ params }: { params: Promise<{ id: string }> }) {
+export default async function CompanyApplicationDetail({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ schedule?: string; scheduled?: string }>;
+}) {
   const { id } = await params;
+  const sp = await searchParams;
   const s = await requireCompanyMember(["company_admin", "recruiter"]);
   const { t, locale } = await getI18n();
   const L = tx(locale);
@@ -116,6 +124,9 @@ export default async function CompanyApplicationDetail({ params }: { params: Pro
     refreshJob: true,
   });
   const interviewAllowed = canCreateInterview({ status, was_shortlisted: app.was_shortlisted });
+  const canShortlist = !interviewAllowed && manualTargets(status).includes("shortlisted");
+  const taskPending = app.requires_task && !app.completed_at;
+  const openInterviews = (interviews ?? []).filter((iv) => iv.status !== "cancelled" && iv.status !== "completed");
 
   return (
     <>
@@ -130,10 +141,30 @@ export default async function CompanyApplicationDetail({ params }: { params: Pro
                 <FileBarChart /> {L("Final evaluation report", "تقرير التقييم النهائي")}
               </Link>
             </Button>
+            {canShortlist && !taskPending && <ShortlistForInterviewButton applicationId={id} size="sm" />}
             <StatusBadge status={status} t={t} />
           </>
         }
       />
+      {sp.scheduled && (
+        <p className="bg-success-soft text-success mb-4 rounded-xl px-4 py-3 text-sm font-semibold">
+          {L(
+            "Interview scheduled. The candidate and the interviewers were notified.",
+            "جُدولت المقابلة وأُبلغ المرشح والمُقابِلون.",
+          )}{" "}
+          <Link href={`/company/interviews/${sp.scheduled}`} className="underline">
+            {L("Open interview", "فتح المقابلة")}
+          </Link>
+        </p>
+      )}
+      {taskPending && (
+        <p className="bg-surface-2 text-muted mb-4 rounded-xl px-4 py-3 text-sm">
+          {L(
+            "This candidate applied but hasn't submitted the job's practical task yet. The application is not complete.",
+            "تقدّم هذا المرشح لكنه لم يسلّم المهمة العملية للوظيفة بعد، فالطلب غير مكتمل.",
+          )}
+        </p>
+      )}
       <div className="grid gap-6 xl:grid-cols-[1.25fr_1fr]">
         <div className="flex flex-col gap-6">
           <Card>
@@ -334,7 +365,7 @@ export default async function CompanyApplicationDetail({ params }: { params: Pro
               <StatusForm applicationId={id} targets={manualTargets(status)} />
             </CardBody>
           </Card>
-          <Card>
+          <Card id="interviews" className="scroll-mt-24">
             <CardHeader title={L("Interviews", "المقابلات")} />
             <CardBody className="flex flex-col gap-3">
               {(interviews ?? []).map((iv) => (
@@ -366,11 +397,23 @@ export default async function CompanyApplicationDetail({ params }: { params: Pro
               {interviewAllowed ? (
                 <InterviewForm
                   applicationId={id}
+                  defaultOpen={sp.schedule === "1" && openInterviews.length === 0}
+                  context={{ candidate: app.candidate?.full_name ?? "—", job: pick(app.job, "title", locale) }}
                   members={(members ?? []).map((m) => ({
                     id: m.user_id,
                     name: `${m.profile?.full_name ?? "—"} · ${t.roles[m.role]}`,
                   }))}
                 />
+              ) : canShortlist && !taskPending ? (
+                <div className="flex flex-col items-start gap-2">
+                  <p className="text-muted text-sm">
+                    {L(
+                      "Interviews require a shortlist first. One click does both: shortlist, then schedule here.",
+                      "تتطلب المقابلة إضافة المرشح إلى القائمة المختصرة أولًا. بنقرة واحدة: ترشيح ثم جدولة هنا.",
+                    )}
+                  </p>
+                  <ShortlistForInterviewButton applicationId={id} />
+                </div>
               ) : (
                 <p className="bg-surface-2 text-muted flex items-start gap-2 rounded-xl p-3 text-sm">
                   <Lock className="mt-0.5 size-4 shrink-0" />{" "}

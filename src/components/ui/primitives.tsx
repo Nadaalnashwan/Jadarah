@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { LogoMark } from "@/components/brand/logo";
 import type { StatusTone } from "@/lib/domain/application-status";
 
 export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
@@ -141,12 +142,10 @@ export function EmptyState({
 }) {
   return (
     <div className={cn("flex flex-col items-center px-6 py-14 text-center", className)}>
-      <svg viewBox="0 0 64 48" className="mb-5 h-12 w-16" aria-hidden>
-        <path d="M24 6h30l-8 12H16z" fill="var(--lavender)" opacity=".55" />
-        <path d="M16 20h30l-8 12H8z" fill="var(--royal)" opacity=".35" />
-        <path d="M8 34h30l-8 12H0z" fill="var(--navy)" opacity=".18" />
-        <path d="M56 32l6 6-6 6-6-6z" fill="var(--royal)" />
-      </svg>
+      <span className="relative mb-5 grid size-20 place-items-center">
+        <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgb(169_184_255/0.45),transparent_70%)]" aria-hidden />
+        <LogoMark className="relative size-14 opacity-90" />
+      </span>
       <h3 className="text-base font-bold">{title}</h3>
       {body && <p className="text-muted mt-1 max-w-sm text-sm">{body}</p>}
       {action && <div className="mt-5">{action}</div>}

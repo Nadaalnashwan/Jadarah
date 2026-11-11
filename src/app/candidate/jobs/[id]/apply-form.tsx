@@ -13,8 +13,10 @@ export function ApplyForm({
   jobId,
   cvs,
   questions,
+  hasTask = false,
 }: {
   jobId: string;
+  hasTask?: boolean;
   cvs: { id: string; label: string; primary: boolean }[];
   questions: { id: string; text: string; required: boolean }[];
 }) {
@@ -66,8 +68,16 @@ export function ApplyForm({
         </Field>
       ))}
       {state && !state.ok && <FormMessage>{state.error}</FormMessage>}
+      {hasTask && (
+        <p className="bg-sky-soft text-navy rounded-xl px-3 py-2 text-sm dark:text-sky">
+          {L(
+            "Next: the practical task opens immediately. Your application is complete once you submit it.",
+            "التالي: تُفتح المهمة العملية فورًا، ويكتمل طلبك عند تسليمها.",
+          )}
+        </p>
+      )}
       <Button type="submit" size="lg" loading={pending}>
-        <Send className="rtl:-scale-x-100" /> {L("Submit application", "إرسال الطلب")}
+        <Send className="rtl:-scale-x-100" /> {L("Apply for this job", "تقديم على الوظيفة")}
       </Button>
       <p className="text-subtle text-xs">
         {L(

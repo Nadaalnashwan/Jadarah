@@ -10,11 +10,13 @@ import {
   Waves,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { brandVars, identityImageUrl, type CompanyIdentityRow } from "@/lib/brand";
 
 /**
- * Organization identity. An official logo/colour is shown ONLY when its identity is verified and
- * usage is granted (company_brand_profiles). Otherwise a neutral JADARAH tile with a generic
- * SECTOR symbol is used — never an imitation of an organization's logo.
+ * Organization identity. Two sources, in order:
+ *  1. company_identity — managed by the organization's own admin inside JADARAH (logo, cover, colours);
+ *  2. company_brand_profiles — registry branding shown ONLY when verified and usage is granted.
+ * Otherwise a neutral JADARAH tile with a generic SECTOR symbol is used — never an imitation of a logo.
  */
 export type BrandInfo = {
   identity_status?: string | null;
@@ -30,7 +32,18 @@ export type CompanyLike = {
   sector_ar?: string | null;
   organization_type?: string | null;
   company_brand_profiles?: BrandInfo | BrandInfo[];
+  company_identity?: CompanyIdentityRow | CompanyIdentityRow[];
 };
+
+export function identityOf(c: CompanyLike | null | undefined): CompanyIdentityRow {
+  const v = c?.company_identity;
+  return Array.isArray(v) ? (v[0] ?? null) : (v ?? null);
+}
+
+/** Scoped CSS variables for this company's colours (JADARAH fallback). Apply on a wrapper element only. */
+export function companyScopeStyle(c: CompanyLike | null | undefined): React.CSSProperties {
+  return brandVars(identityOf(c)) as React.CSSProperties;
+}
 
 function sectorKey(c: CompanyLike) {
   const s = `${c.sector_en ?? ""} ${c.organization_type ?? ""}`.toLowerCase();
@@ -83,6 +96,14 @@ export function brandAuthorised(b: BrandInfo) {
 const SIZE = { sm: "size-9 rounded-xl [&_svg]:size-4", md: "size-12 rounded-2xl [&_svg]:size-5", lg: "size-16 rounded-2xl [&_svg]:size-7" };
 
 export function CompanyMark({ company, size = "md", className }: { company: CompanyLike; size?: keyof typeof SIZE; className?: string }) {
+  const own = identityOf(company);
+  const ownLogo = identityImageUrl(own?.logo_path);
+  if (ownLogo) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- logo published by the organization's own admin
+      <img src={ownLogo} alt="" className={cn("shrink-0 bg-white object-contain p-1", SIZE[size], className)} />
+    );
+  }
   const b = brandOf(company);
   if (brandAuthorised(b) && b?.logo_source_url) {
     return (
@@ -90,7 +111,7 @@ export function CompanyMark({ company, size = "md", className }: { company: Comp
       <img src={b.logo_source_url} alt="" className={cn("bg-white object-contain p-1.5", SIZE[size], className)} />
     );
   }
-  const accent = brandAuthorised(b) && b?.primary_hex ? b.primary_hex : undefined;
+  const accent = own?.primary_hex ?? (brandAuthorised(b) && b?.primary_hex ? b.primary_hex : undefined);
   return (
     <span
       aria-hidden
@@ -143,4 +164,47 @@ export function ListingBadge({ type, locale }: { type?: string | null; locale: "
 }
 
 export const COMPANY_IDENTITY_SELECT =
-  "id, slug, name_en, name_ar, sector_en, sector_ar, organization_type, company_brand_profiles(identity_status, usage_permission, logo_source_url, primary_hex)";
+  "id, slug, name_en, name_ar, sector_en, sector_ar, organization_type, company_brand_profiles(identity_status, usage_permission, logo_source_url, primary_hex), company_identity(logo_path, cover_path, tagline_en, tagline_ar, primary_hex, secondary_hex, accent_hex)";
+
+/** Company-branded header band: cover image or the company's colours, logo, name and tagline. */
+export function CompanyBanner({
+  company,
+  locale,
+  children,
+  className,
+}: {
+  company: CompanyLike;
+  locale: "ar" | "en";
+  children?: React.ReactNode;
+  className?: string;
+}) {
+  const id = identityOf(company);
+  const cover = identityImageUrl(id?.cover_path);
+  const tagline = locale === "ar" ? id?.tagline_ar : id?.tagline_en;
+  return (
+    <div
+      style={companyScopeStyle(company)}
+      className={cn("relative overflow-hidden rounded-2xl text-[var(--brand-fg)]", className)}
+    >
+      <div
+        className="absolute inset-0 bg-[var(--brand)]"
+        style={
+          cover
+            ? { backgroundImage: `linear-gradient(to top, var(--brand) 10%, transparent 120%), url(${cover})`, backgroundSize: "cover", backgroundPosition: "center" }
+            : { backgroundImage: "linear-gradient(120deg, var(--brand) 55%, var(--brand-2) 140%)" }
+        }
+        aria-hidden
+      />
+      <div className="relative flex flex-wrap items-end justify-between gap-4 p-5 sm:p-6">
+        <span className="flex min-w-0 items-center gap-3">
+          <CompanyMark company={company} size="md" className="ring-2 ring-white/40" />
+          <span className="min-w-0">
+            <span className="block truncate text-lg font-bold">{locale === "ar" ? company.name_ar : company.name_en}</span>
+            {tagline && <span className="block truncate text-sm opacity-85">{tagline}</span>}
+          </span>
+        </span>
+        {children}
+      </div>
+    </div>
+  );
+}

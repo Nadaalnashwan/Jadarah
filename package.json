@@ -42,6 +42,7 @@
     "server-only": "^0.0.1",
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.7.0",
+    "three": "^0.180.0",
     "unpdf": "^2.1.0",
     "zod": "^4.6.7"
   },
@@ -52,6 +53,7 @@
     "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "^0.180.0",
     "@vitest/coverage-v8": "^5.1.0",
     "dotenv": "^18.0.10",
     "eslint": "^9",
