@@ -71,7 +71,15 @@ const toks = (s: string) => new Set(s.toLowerCase().split(/[^\p{L}\p{N}+#]+/u).f
 export async function retrieveReferences(supabase: ServerSupabase, job: JobInput, company: CompanyContext) {
   const cfg = embeddingConfig();
   const query = [`Role: ${job.title}`, `Seniority: ${job.seniority}`, `Sector: ${company.sector_en ?? ""}`, `Skills: ${[...job.required_skills, ...job.preferred_skills].join(", ")}`, job.description].join("\n");
-  const [vec] = await embedTexts([query], "SEMANTIC_SIMILARITY");
+  // Retrieval is an enhancement: if embeddings are unavailable (quota, overload, network), generation
+  // still runs without reference examples instead of failing before any generation model is tried.
+  let vec: number[];
+  try {
+    [vec] = await embedTexts([query], "SEMANTIC_SIMILARITY");
+  } catch (e) {
+    console.warn(`[ai] builder retrieval skipped: ${e instanceof Error ? e.message.slice(0, 80) : "embedding_failed"}`);
+    return [];
+  }
   const { data: matches } = await supabase.rpc("match_reference_assessments", { p_embedding: toPgVector(vec), p_model: cfg.model, p_limit: 10 });
   const ids = (matches ?? []).map((m) => m.reference_id);
   if (!ids.length) return [];

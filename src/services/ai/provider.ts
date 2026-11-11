@@ -230,13 +230,23 @@ const COOLDOWN_MS: [RegExp, number][] = [
   [/_(quota_exhausted|auth_\d+)$/, 10 * 60_000],
   [/_(overloaded|timeout)$/, 3 * 60_000],
 ];
+/**
+ * Cooldowns are keyed by provider + model + a fingerprint of the API key in use, so replacing a key
+ * (e.g. a new Gemini key with fresh quota) takes effect immediately instead of inheriting the old
+ * key's "quota exhausted" cooldown. The fingerprint is a short hash and never leaves the process.
+ */
+const KEY_ENV: Record<ProviderName, string> = { gemini: "GEMINI_API_KEY", groq: "GROQ_API_KEY", openai: "OPENAI_API_KEY" };
+function cooldownKey(p: ProviderConfig) {
+  const fp = createHash("sha256").update(process.env[KEY_ENV[p.name]] ?? "").digest("hex").slice(0, 12);
+  return `${p.name}:${p.model}:${fp}`;
+}
 function noteFailure(p: ProviderConfig, code: string) {
   const ms = COOLDOWN_MS.find(([re]) => re.test(code))?.[1];
-  if (ms) cooldown.set(`${p.name}:${p.model}`, Date.now() + ms);
+  if (ms) cooldown.set(cooldownKey(p), Date.now() + ms);
 }
 function available(chain: ProviderConfig[]) {
   const now = Date.now();
-  const live = chain.filter((p) => (cooldown.get(`${p.name}:${p.model}`) ?? 0) < now);
+  const live = chain.filter((p) => (cooldown.get(cooldownKey(p)) ?? 0) < now);
   return live.length ? live : chain;
 }
 

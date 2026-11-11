@@ -5,6 +5,13 @@
 ## Project
 AI-assisted, evidence-based talent intelligence & recruitment platform (candidates, companies, Super Admin). Taglines: **أكثر من سيرة ذاتية.** / **Beyond What's Seen.** Brand colours (exact): `#0F1B3D` `#3B66F6` `#A9B8FF` `#CDE7F6` `#F8F6F0`. Fonts: IBM Plex Sans Arabic / Manrope. Original logo: three ascending slabs + "merit diamond" (`src/components/brand/logo.tsx`, `public/brand/*`).
 
+## 2026-11-11 — Assessment Builder "Generation is unavailable" after a Gemini key change (fixed)
+- **Cause (from `ai_provider_logs`):** `gemini-3.5-flash-lite` returned 503 overloaded (after 65 s). The router then **skipped `gemini-3.8-flash`, `gemini-3.5-flash` and OpenAI without calling them**, because a 10-minute in-memory "quota exhausted" cooldown from the *previous* key was keyed only by provider+model and survived the `.env.local` reload. Only Groq was left: its output was cut off at 3,072 tokens (`schema_mismatch`), and the retry hit its 8k tokens/min limit (`groq_rate_limited`) → `AIUnavailableError`.
+- **Fixes:** cooldowns are keyed by provider + model + a short hash of the API key, so a new key takes effect immediately (`src/services/ai/provider.ts`). Builder retrieval (Gemini embeddings) failing no longer aborts the action — generation runs without references (`retrieveReferences`).
+- **New key, probed with one tiny request each (2026-11-11 08:5x +03):** `gemini-3.5-flash-lite` 200 · `gemini-3.8-flash` 200 · `gemini-3.5-flash` 200 · `gemini-embedding-2` 200 (768 dims). Free-tier daily limits still apply.
+- **Verified:** one builder generation through the UI (fictional regression company Nawat, so nothing added to the 10 organizations) → draft `4e2ae323-e77e-4a0e-ad6c-36e4a89213be`, `gemini-3.5-flash-lite`, 7.4 s, 11/11 checks, unpublished. It used 0 references, by design: the generic test job did not pass the relevance filter (score ≥ 0.38 or same role). The five saved drafts were not touched.
+- Routing in effect: `AI_STRICT_ROUTING` unset (fallback on). Builder chain: 3.5-flash-lite → 3.8-flash → 3.5-flash → OpenAI (no credits) → Groq (8k TPM; too small for full assessments).
+
 ## Session 2026-11-11 (later) — restored on the owner's Mac (read first)
 - Local clone fast-forwarded from `9952120` to `b93c6c4` (no local changes lost). Node v24.22.0 at `/usr/local/bin/node`; `gh` is **not installed** on this Mac (plain `git push` over HTTPS works). `.env.local` present with all keys used by the code (values not printed).
 - Supabase: migrations **0001–0024 all applied** (checked via MCP). Demo password in `.env.local` signs in demo identities (verified, not printed).
