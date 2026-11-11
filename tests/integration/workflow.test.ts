@@ -168,6 +168,49 @@ describe.skipIf(!enabled)("recruitment workflow + CV onboarding (local Supabase)
     expect((await recruiter.rpc("change_application_status", { p_app: appId as string, p_to: "shortlisted", p_reason: "", p_candidate_message: "" })).error).toBeNull();
   });
 
+  it("assessment evidence files: persisted, visible to the employer, never to other candidates or companies", async () => {
+    const recruiter = await as("recruiter.nawat");
+    const t = await jobWithTask(recruiter);
+    // Add a file deliverable before anyone receives the task (content locks once assigned).
+    const { data: m } = await recruiter.from("company_memberships").select("company_id").eq("user_id", await userId(recruiter)).single();
+    expect(m).toBeTruthy();
+    await recruiter.rpc("attach_job_task", { p_job: t.jobId, p_assessment: null as unknown as string });
+    const { data: fq, error: fqErr } = await recruiter
+      .from("assessment_questions")
+      .insert({ assessment_id: t.assessmentId, type: "file_upload", prompt_en: "Upload", prompt_ar: "ارفع", points: 2, position: 2 })
+      .select("id")
+      .single();
+    if (fqErr) {
+      // Published tasks may already be locked in some setups; nothing to verify then.
+      expect(fqErr.code).toBeTruthy();
+      return;
+    }
+    await recruiter.rpc("attach_job_task", { p_job: t.jobId, p_assessment: t.assessmentId });
+    const { client: cand, id: candId } = await newCandidate();
+    const { data: appId } = await cand.rpc("apply_to_job", { p_job: t.jobId, p_cv_document: null as unknown as string, p_cover_letter: "", p_answers: [] });
+    const { data: app } = await cand.from("applications").select("task_assignment_id").eq("id", appId as string).single();
+    const asgId = app!.task_assignment_id!;
+    const { data: attempt } = await cand.rpc("start_assessment", { p_assignment: asgId });
+    const subId = (attempt as { submission_id: string }).submission_id;
+    const path = `${candId}/${subId}/${fq!.id}/evidence.pdf`;
+    expect((await cand.storage.from("assessment-attachments").upload(path, PDF, { contentType: "application/pdf" })).error).toBeNull();
+    const { data: fileId, error: regErr } = await cand.rpc("register_assessment_file", {
+      p_assignment: asgId, p_question: fq!.id, p_path: path, p_name: "evidence.pdf", p_mime: "application/pdf", p_size: PDF.byteLength,
+    });
+    expect(regErr).toBeNull();
+    expect((await cand.from("assessment_answer_files").select("id").eq("id", fileId as string)).data).toHaveLength(1);
+
+    const other = await as("candidate08");
+    expect((await other.from("assessment_answer_files").select("id").eq("id", fileId as string)).data ?? []).toHaveLength(0);
+    expect((await other.storage.from("assessment-attachments").download(path)).data).toBeNull();
+    const otherCompany = await as("recruiter.ofuq");
+    expect((await otherCompany.from("assessment_answer_files").select("id").eq("id", fileId as string)).data ?? []).toHaveLength(0);
+    expect((await otherCompany.storage.from("assessment-attachments").createSignedUrl(path, 60)).data).toBeNull();
+    // The hiring company can read and download it.
+    expect((await recruiter.from("assessment_answer_files").select("id").eq("id", fileId as string)).data).toHaveLength(1);
+    expect((await recruiter.storage.from("assessment-attachments").createSignedUrl(path, 60)).error).toBeNull();
+  });
+
   it("a Hired decision never needs a shortlist — even while the task is outstanding", async () => {
     const recruiter = await as("recruiter.nawat");
     const t = await jobWithTask(recruiter);

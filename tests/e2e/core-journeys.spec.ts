@@ -73,6 +73,10 @@ test.describe("core journeys (local Supabase)", () => {
         `insert into public.assessment_questions (assessment_id, type, prompt_en, prompt_ar, points, position) values ($1, 'long_answer', 'Describe how you would validate a dashboard metric.', 'صف كيف تتحقق من مؤشر في لوحة بيانات.', 3, 1)`,
         [a.id],
       );
+      await db.query(
+        `insert into public.assessment_questions (assessment_id, type, prompt_en, prompt_ar, points, position) values ($1, 'file_upload', 'Upload your analysis (PDF).', 'ارفع تحليلك (PDF).', 3, 2)`,
+        [a.id],
+      );
       await db.query(`update public.assessments set status = 'published' where id = $1`, [a.id]);
       const { rows: [j] } = await db.query(
         `insert into public.jobs (company_id, title_en, title_ar, description_en, description_ar, city, status, min_years, created_by, assessment_id)
@@ -120,9 +124,9 @@ test.describe("core journeys (local Supabase)", () => {
     await page.waitForURL(/cv=done/, { timeout: 30_000 });
     await expect(page.getByText("Your approved CV information is in your profile")).toBeVisible();
     // Three steps; "Next" must never submit the form (regression: it used to skip the Skills step).
-    await page.getByRole("button", { name: "Next" }).click();
+    await page.getByRole("button", { name: "Next", exact: true }).click();
     await expect(page.locator('li:has([aria-current="step"])')).toContainText("Experience");
-    await page.getByRole("button", { name: "Next" }).click();
+    await page.getByRole("button", { name: "Next", exact: true }).click();
     await expect(page.locator('li:has([aria-current="step"])')).toContainText("Skills");
     await expect(page).toHaveURL(/\/onboarding\/candidate/);
     const finish = page.getByRole("button", { name: "Finish and open my workspace" });
@@ -162,9 +166,23 @@ test.describe("core journeys (local Supabase)", () => {
     await shot(page, "04-task-opens-immediately");
     await page.getByRole("button", { name: "Begin assessment" }).click();
     await page.getByRole("radio", { name: /HAVING/ }).click();
-    await page.getByRole("button", { name: /Next|التالي/ }).last().click();
+    await page.getByRole("button", { name: "Next", exact: true }).click();
     await page.getByLabel("Your answer").fill("Cross-check against the source table and a manual sample.");
     await page.waitForTimeout(1500); // autosave debounce
+    // File deliverable: a real upload to private storage, registered against this attempt.
+    await page.getByRole("button", { name: "Next", exact: true }).click();
+    await expect(page.getByText("Upload your analysis (PDF).")).toBeVisible();
+    await page.locator('input[type="file"][id^="file-"]').setInputFiles(path.join(fixtures, "cv-sample.pdf"));
+    const attached = page.getByRole("list", { name: "Attached files" });
+    await expect(attached.getByText("cv-sample.pdf")).toBeVisible({ timeout: 30_000 });
+    await expect(attached.getByRole("button", { name: "Download cv-sample.pdf" })).toBeVisible();
+    await shot(page, "04b-assessment-file-uploaded");
+    // Persisted, not just displayed: survives a reload.
+    await page.reload();
+    await page.getByRole("button", { name: /Resume|Begin assessment/ }).click();
+    await page.getByRole("button", { name: "3", exact: true }).click().catch(() => undefined);
+    await expect(page.getByRole("list", { name: "Attached files" }).getByText("cv-sample.pdf")).toBeVisible({ timeout: 30_000 });
+    page.once("dialog", (d) => d.accept());
     await page.getByRole("button", { name: "Submit assessment" }).click();
     await expect(page.getByText("Your application is complete.")).toBeVisible({ timeout: 30_000 });
     await shot(page, "05-application-complete");
@@ -185,10 +203,18 @@ test.describe("core journeys (local Supabase)", () => {
     await expect(page.getByText(candidate.name)).toBeVisible();
     await page.getByText(candidate.name).first().click();
     await page.waitForURL(/\/company\/applications\/[0-9a-f-]+/);
-    await expect(page.getByRole("button", { name: /cv-sample\.(pdf|docx)/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^cv-sample\.(pdf|docx) \(v\d+\)$/ })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Data analysis practical task" })).toBeVisible();
     await expect(page.getByText("Cross-check against the source table and a manual sample.")).toBeVisible();
     await expect(page.getByText("hasn't submitted the job's practical task yet")).toHaveCount(0);
+    // Uploaded evidence: the employer downloads the real file through a short-lived signed URL.
+    const fileBtn = page.getByRole("button", { name: "Download cv-sample.pdf" });
+    await expect(fileBtn).toBeVisible();
+    const [download] = await Promise.all([page.waitForEvent("download"), fileBtn.click()]);
+    const saved = await download.path();
+    const { readFileSync, statSync } = await import("node:fs");
+    expect(statSync(saved!).size).toBe(statSync(path.join(fixtures, "cv-sample.pdf")).size);
+    expect(readFileSync(saved!).subarray(0, 5).toString()).toBe("%PDF-");
     await shot(page, "07-employer-evidence");
     const choices = await page.locator("select#to option").allInnerTexts();
     expect(choices.join("|")).toMatch(/Shortlisted/);

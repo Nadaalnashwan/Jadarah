@@ -132,7 +132,7 @@ export default async function ApplicationDetail({
                         className={cn(
                           "relative z-10 flex size-7 shrink-0 items-center justify-center rounded-full border-2 text-xs",
                           done
-                            ? "border-primary bg-primary text-white"
+                            ? "border-primary bg-primary text-primary-foreground"
                             : "border-border-strong bg-surface text-subtle",
                           current && "ring-primary/20 ring-4",
                         )}

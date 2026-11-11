@@ -2,8 +2,16 @@ import { cn } from "@/lib/utils";
 import { LogoMark } from "@/components/brand/logo";
 import type { StatusTone } from "@/lib/domain/application-status";
 
-export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("surface-card", className)} {...props} />;
+/** Tonal surfaces carry meaning: blue = opportunity/primary metric, sage = done/positive, peach = needs action,
+ * mist = growth/skills, sand = neutral context, teal = secondary insight, lilac = rare decorative accent. */
+export type CardTone = "blue" | "mist" | "sand" | "peach" | "sage" | "teal" | "lilac";
+
+export function Card({
+  className,
+  tone,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement> & { tone?: CardTone }) {
+  return <div className={cn("surface-card", className)} data-tone={tone} {...props} />;
 }
 
 export function CardHeader({
@@ -34,11 +42,11 @@ export function CardBody({ className, ...props }: React.HTMLAttributes<HTMLDivEl
 
 const toneClasses: Record<StatusTone | "accent", string> = {
   neutral: "bg-surface-2 text-foreground",
-  info: "bg-sky-soft text-navy dark:text-sky",
-  progress: "bg-accent-soft text-royal-700 text-primary dark:text-lavender",
+  info: "bg-info-soft text-info",
+  progress: "bg-tone-blue text-primary-ink",
   positive: "bg-success-soft text-success",
   negative: "bg-danger-soft text-danger",
-  muted: "bg-surface-2 text-subtle",
+  muted: "bg-surface-2 text-muted",
   accent: "bg-primary text-primary-foreground",
 };
 
@@ -78,7 +86,7 @@ export function Avatar({ name, className }: { name: string; className?: string }
     <span
       aria-hidden
       className={cn(
-        "from-lavender to-sky text-navy inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold",
+        "from-sky to-peach text-[#172f49] inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold",
         className,
       )}
     >
@@ -99,7 +107,7 @@ export function Progress({ value, className, label }: { value: number; className
       className={cn("bg-surface-2 h-2 w-full overflow-hidden rounded-full", className)}
     >
       <div
-        className="from-royal to-lavender h-full rounded-full bg-gradient-to-r transition-[width] duration-700 ease-[cubic-bezier(.22,1,.36,1)] rtl:bg-gradient-to-l"
+        className="from-royal to-teal h-full rounded-full bg-gradient-to-r transition-[width] duration-700 ease-[cubic-bezier(.22,1,.36,1)] rtl:bg-gradient-to-l"
         style={{ width: `${v}%` }}
       />
     </div>
@@ -150,6 +158,34 @@ export function EmptyState({
       {body && <p className="text-muted mt-1 max-w-sm text-sm">{body}</p>}
       {action && <div className="mt-5">{action}</div>}
     </div>
+  );
+}
+
+/** KPI tile: value with label, optional hint; tone colours the tile by meaning. */
+export function KpiCard({
+  label,
+  value,
+  hint,
+  tone,
+  icon,
+  className,
+}: {
+  label: string;
+  value: React.ReactNode;
+  hint?: React.ReactNode;
+  tone?: CardTone;
+  icon?: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <Card tone={tone} className={cn("flex flex-col gap-1 p-4 sm:p-5", className)}>
+      <span className="tone-ink flex items-center gap-1.5 text-xs font-semibold">
+        {icon}
+        {label}
+      </span>
+      <span className="ltr-nums text-2xl font-extrabold tracking-tight sm:text-3xl">{value}</span>
+      {hint && <span className="text-subtle text-xs">{hint}</span>}
+    </Card>
   );
 }
 

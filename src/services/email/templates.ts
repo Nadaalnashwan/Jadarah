@@ -10,10 +10,10 @@ export interface RenderedEmail {
   text: string;
 }
 
-const NAVY = "#0D1B3F";
-const BLUE = "#3B6CFF";
-const IVORY = "#FFF7E8";
-const PAGE = "#F5F4FC";
+const NAVY = "#172F49";
+const BLUE = "#3B66F6";
+const IVORY = "#E9DCD2";
+const PAGE = "#D4E4EF";
 
 export function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -52,7 +52,7 @@ function htmlBlock(b: Block): string {
       ? `<p style="margin:18px 0 6px"><a href="${escapeHtml(b.cta.url)}" style="display:inline-block;background:${BLUE};color:#ffffff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:12px">${escapeHtml(b.cta.label)}</a></p>`
       : ""
   }
-  ${b.footnote ? `<p style="margin:14px 0 0;font-size:12px;color:#5b6483;line-height:1.6">${escapeHtml(b.footnote)}</p>` : ""}
+  ${b.footnote ? `<p style="margin:14px 0 0;font-size:12px;color:#235F76;line-height:1.6">${escapeHtml(b.footnote)}</p>` : ""}
 </div>`;
 }
 
@@ -64,12 +64,12 @@ function layout(first: Block, second: Block): { html: string; text: string } {
   const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><meta name="color-scheme" content="light"></head>
 <body style="margin:0;background:${PAGE};padding:24px 12px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:18px;overflow:hidden;border:1px solid #e3e5f2">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:18px;overflow:hidden;border:1px solid #C1D9EA">
 <tr><td style="background:${NAVY};padding:18px 28px;color:${IVORY};font-family:Manrope,Arial,sans-serif;font-weight:800;letter-spacing:.08em">جَدارة · JADARAH</td></tr>
 <tr><td>${htmlBlock(first)}</td></tr>
-<tr><td style="padding:0 28px"><hr style="border:none;border-top:1px solid #e3e5f2;margin:0"></td></tr>
+<tr><td style="padding:0 28px"><hr style="border:none;border-top:1px solid #C1D9EA;margin:0"></td></tr>
 <tr><td>${htmlBlock(second)}</td></tr>
-<tr><td style="background:${PAGE};padding:14px 28px;font-family:Arial,sans-serif;font-size:11px;color:#5b6483;text-align:center">من المهارة إلى الفرصة. · From skill to opportunity.</td></tr>
+<tr><td style="background:${PAGE};padding:14px 28px;font-family:Arial,sans-serif;font-size:11px;color:#235F76;text-align:center">من المهارة إلى الفرصة. · From skill to opportunity.</td></tr>
 </table></td></tr></table></body></html>`;
   const text = `${textBlock(first)}\n\n— — —\n\n${textBlock(second)}\n\nJADARAH | جدارة`;
   return { html, text };

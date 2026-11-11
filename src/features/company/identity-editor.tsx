@@ -86,7 +86,7 @@ export function IdentityEditor({
           <input
             type="color"
             aria-label={label}
-            value={sanitizeHex(v[k]) ?? "#0D1B3F"}
+            value={sanitizeHex(v[k]) ?? "#172F49"}
             onChange={(e) => set(k, e.target.value.toUpperCase())}
             className="size-10 shrink-0 cursor-pointer rounded-lg border bg-transparent p-0.5"
           />
@@ -187,7 +187,7 @@ export function IdentityEditor({
                 <span className="rounded-full bg-[var(--brand)] px-3 py-1 text-xs font-semibold text-[var(--brand-fg)]">
                   {L("Apply for this job", "تقديم على الوظيفة")}
                 </span>
-                <span className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-xs font-semibold text-[#0D1B3F]">
+                <span className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-xs font-semibold text-[#172F49]">
                   {L("Practical task", "مهمة عملية")}
                 </span>
                 <span className="size-2.5 rounded-full bg-[var(--brand-accent)]" aria-hidden />

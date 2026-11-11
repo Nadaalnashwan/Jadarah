@@ -23,7 +23,7 @@ export type BusyBlock = { startUtc: string; endUtc: string; label?: string };
 type View = "month" | "week" | "day";
 
 const STATUS_STYLE: Record<CalendarEvent["status"], string> = {
-  scheduled: "bg-primary text-white border-primary",
+  scheduled: "bg-primary text-primary-foreground border-primary",
   completed: "bg-sky-soft text-navy border-sky dark:text-sky",
   cancelled: "bg-surface-2 text-subtle border-border line-through",
 };

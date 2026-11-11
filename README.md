@@ -63,6 +63,7 @@ Requires Node.js 22+ (24 LTS recommended) and npm. Database migrations: see [DAT
 | `npm run demo:seed` / `demo:reset -- --yes` | Seed / remove demo data (refuses in production) |
 | `npm run admin:provision` | Idempotently create the first Super Admin |
 | `npm run ai:verify` | Verify AI/Daily keys, exact model IDs, real requests, latency |
+| `npm run eval:offline` | Offline evaluation (no AI calls): rule-based CV skill extraction vs a labelled benchmark → `src/data/evaluation/results.json` |
 | `npm run ai:embed-skills` / `ai:embed-profiles` | Backfill pgvector embeddings (idempotent, content-hashed) |
 | `npx tsx scripts/import/apply-migration.ts <file>` | Apply one migration in a transaction and record it |
 | `npx tsx scripts/import/import-organizations.ts <package dir>` | Import/reconcile the ten registry organizations (idempotent) |
@@ -88,4 +89,4 @@ RUN_LOCAL_E2E=1 E2E_BASE_URL=http://localhost:3100 npx playwright test
 See [TESTING.md](TESTING.md) for the exact local preparation used for the latest results.
 
 ## Documentation
-[ARCHITECTURE](ARCHITECTURE.md) · [DATABASE](DATABASE.md) · [SECURITY](SECURITY.md) · [TESTING](TESTING.md) · [DEPLOYMENT](DEPLOYMENT.md) · [DEMO_ACCOUNTS](DEMO_ACCOUNTS.md) · [Handoff](docs/handoffs/JADARAH_HANDOFF.md)
+[ARCHITECTURE](ARCHITECTURE.md) · [DATABASE](DATABASE.md) · [SECURITY](SECURITY.md) · [TESTING](TESTING.md) · [DEPLOYMENT](DEPLOYMENT.md) · [DEMO_ACCOUNTS](DEMO_ACCOUNTS.md) · [MONITORING](docs/MONITORING.md) · [BRAND COLORS](docs/BRAND_COLORS.md) · [NAVIGATION](docs/NAVIGATION.md) · [Handoff](docs/handoffs/JADARAH_HANDOFF.md)

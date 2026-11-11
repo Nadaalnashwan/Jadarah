@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GroupTabs } from "@/components/shell/group-tabs";
 import { StatusBadge } from "@/components/app/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, EmptyState, PageHeader } from "@/components/ui/primitives";
@@ -23,6 +24,7 @@ export default async function ApplicationsPage() {
   const apps = data ?? [];
   return (
     <>
+      <GroupTabs group="candidate-applications" />
       <PageHeader
         eyebrow={t.candidate.nav.applications}
         title={L("Your applications", "طلباتك")}

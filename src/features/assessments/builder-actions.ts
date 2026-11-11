@@ -18,6 +18,7 @@ import {
   type GeneratedDraft,
   type JobInput,
   type RetrievedRef,
+  type RetrievalMeta,
 } from "@/services/ai/assessment-builder";
 
 const LEVEL_DIFFICULTY: Record<string, "beginner" | "intermediate" | "advanced"> = {
@@ -80,13 +81,22 @@ export async function generateFromJob(_: ActionResult | null, form: FormData): P
   };
   let refs: RetrievedRef[] = [];
   let result: Awaited<ReturnType<typeof buildAssessment>>;
+  const meta: RetrievalMeta = {};
+  const started = Date.now();
   try {
-    refs = await retrieveReferences(supabase, input, company);
+    refs = await retrieveReferences(supabase, input, company, meta);
     result = await buildAssessment({ userId: s.userId, company, job: input, references: refs });
   } catch (e) {
+    // Monitoring event (no prompt, no job text): a failed generation attempt.
+    await recordBuilderEvent(supabase, s.userId, company.id, "failed", {
+      error: e instanceof AIUnavailableError ? "ai_unavailable" : "error",
+      duration_ms: Date.now() - started,
+      retrieval: meta.retrieval ?? "failed",
+    });
     if (e instanceof AIUnavailableError) return { ok: false, error: L("Generation is unavailable right now. Try again shortly.", "التوليد غير متاح الآن. حاول بعد قليل.") };
     throw e;
   }
+  const durationMs = Date.now() - started;
   const d = result.draft;
   const { data: a, error } = await supabase
     .from("assessments")
@@ -135,7 +145,19 @@ export async function generateFromJob(_: ActionResult | null, form: FormData): P
     provider: result.provider,
     model: result.model,
     input_summary: input.title,
-    output: { assessment_id: a.id, tasks: d.tasks.length, checks_failed: result.checks.filter((c) => !c.passed).length },
+    output: {
+      event: "generated",
+      assessment_id: a.id,
+      tasks: d.tasks.length,
+      checks_total: result.checks.length,
+      checks_failed: result.checks.filter((c) => !c.passed).length,
+      failed_checks: result.checks.filter((c) => !c.passed).map((c) => c.check),
+      duration_ms: durationMs,
+      retrieval: meta.retrieval ?? "failed",
+      references: refs.length,
+      repair_attempted: result.repair.attempted,
+      repair_accepted: result.repair.accepted,
+    },
     review_status: "pending_review",
   });
   if (attach) {
@@ -144,6 +166,34 @@ export async function generateFromJob(_: ActionResult | null, form: FormData): P
     redirect(`/company/assessments/${a.id}?job=${job.id}`);
   }
   redirect(`/company/assessments/${a.id}`);
+}
+
+/**
+ * Assessment Builder monitoring event in ai_generation_records (kind "assessment", review not required).
+ * Carries counts and identifiers only — never prompts, job text, candidate data or generated content.
+ */
+async function recordBuilderEvent(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  companyId: string,
+  event: "failed" | "section_regenerated" | "human_edit" | "approved",
+  data: Record<string, unknown>,
+  provider = "jadarah",
+  model: string | null = null,
+) {
+  try {
+    await supabase.from("ai_generation_records").insert({
+      user_id: userId,
+      company_id: companyId,
+      kind: "assessment",
+      provider,
+      model,
+      output: { event, ...data },
+      review_status: "not_required",
+    });
+  } catch {
+    // Monitoring must never break the builder.
+  }
 }
 
 async function loadGeneration(assessmentId: string) {
@@ -185,6 +235,7 @@ export async function regenerateSection(assessmentId: string, section: "scenario
     const checks = runValidation(res.data, job, refs);
     await applyDraft(supabase, assessmentId, company.id, res.data);
     await supabase.from("assessment_generations").update({ output: res.data, validation: checks, provider: res.provider, model: res.model }).eq("id", g.id);
+    await recordBuilderEvent(supabase, s.userId, company.id, "section_regenerated", { assessment_id: assessmentId, section, checks_failed: checks.filter((c) => !c.passed).length }, res.provider, res.model);
   } catch (e) {
     if (e instanceof AIUnavailableError) return { ok: false, error: L("Generation is unavailable right now.", "التوليد غير متاح الآن.") };
     return { ok: false, error: localizeError(e as { message?: string }, locale) };
@@ -211,7 +262,7 @@ const scenarioEdit = z.object({
 
 /** Human edits to the draft (scenario or one task). Re-applied and re-validated. */
 export async function editDraft(assessmentId: string, part: string, _: ActionResult | null, form: FormData): Promise<ActionResult> {
-  const { supabase, company, locale, g } = await loadGeneration(assessmentId);
+  const { s, supabase, company, locale, g } = await loadGeneration(assessmentId);
   const L = (en: string, ar: string) => (locale === "ar" ? ar : en);
   if (!g || g.status !== "draft") return { ok: false, error: L("Only drafts can be edited.", "يمكن تعديل المسودات فقط.") };
   const d = structuredClone(g.output as unknown as GeneratedDraft);
@@ -238,6 +289,7 @@ export async function editDraft(assessmentId: string, part: string, _: ActionRes
     return { ok: false, error: localizeError(e as { message?: string }, locale) };
   }
   await supabase.from("assessment_generations").update({ output: d, validation: checks }).eq("id", g.id);
+  await recordBuilderEvent(supabase, s.userId, company.id, "human_edit", { assessment_id: assessmentId, part, checks_failed: checks.filter((c) => !c.passed).length });
   revalidatePath(`/company/assessments/${assessmentId}`);
   return { ok: true, message: L("Saved and re-validated.", "حُفظ وأُعيد التحقق.") };
 }
@@ -272,6 +324,7 @@ export async function approveAndPublish(assessmentId: string): Promise<ActionRes
   const { error } = await supabase.from("assessments").update({ status: "published", reviewed_by: s.userId }).eq("id", assessmentId).eq("status", "draft");
   if (error) return { ok: false, error: localizeError(error, locale) };
   await supabase.from("assessment_generations").update({ status: "approved", approved_by: s.userId, approved_at: new Date().toISOString() }).eq("id", g.id);
+  await recordBuilderEvent(supabase, s.userId, company.id, "approved", { assessment_id: assessmentId });
   revalidatePath(`/company/assessments/${assessmentId}`);
   return { ok: true, message: L("Approved and published.", "اعتُمد ونُشر.") };
 }

@@ -42,7 +42,7 @@ export function CandidateOnboardingForm({
             <span
               className={cn(
                 "flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold transition",
-                i <= step ? "bg-primary text-white" : "bg-surface-2 text-subtle",
+                i <= step ? "bg-primary text-primary-foreground" : "bg-surface-2 text-subtle",
               )}
               aria-current={i === step ? "step" : undefined}
             >
@@ -161,7 +161,7 @@ export function CandidateOnboardingForm({
                     }
                     className={cn(
                       "rounded-full border px-3 py-1.5 text-sm font-semibold transition",
-                      on ? "border-primary bg-primary text-white" : "hover:border-primary/50",
+                      on ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/50",
                     )}
                   >
                     {s.name}

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import {
+  Activity,
   BarChart3,
   Bell,
   Bot,
@@ -39,6 +40,7 @@ import {
 } from "lucide-react";
 
 const ICONS = {
+  Activity,
   Compass,
   BarChart3,
   Bell,
@@ -79,10 +81,14 @@ export interface NavItem {
   icon: IconName;
   exact?: boolean;
   badge?: number;
+  /** Other routes grouped under this item (shown as tabs on those pages); the item stays active there. */
+  also?: string[];
 }
 
 function isActive(pathname: string, item: NavItem) {
-  return item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(item.href + "/");
+  const under = (href: string) => pathname === href || pathname.startsWith(href + "/");
+  if (item.exact) return pathname === item.href;
+  return under(item.href) || (item.also ?? []).some(under);
 }
 
 function Items({
@@ -108,13 +114,13 @@ function Items({
               aria-current={active ? "page" : undefined}
               className={cn(
                 "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors",
-                active ? "text-foreground" : "text-muted hover:bg-surface-2 hover:text-foreground",
+                active ? "text-foreground" : "text-muted hover:bg-surface hover:text-foreground",
               )}
             >
               {active && (
                 <motion.span
                   layoutId={`nav-active-${layoutKey}`}
-                  className="bg-accent-soft absolute inset-0 -z-0 rounded-xl"
+                  className="bg-tone-blue absolute inset-0 -z-0 rounded-xl"
                   transition={{ type: "spring", stiffness: 420, damping: 34 }}
                 />
               )}
@@ -124,7 +130,7 @@ function Items({
               <Icon className={cn("relative size-4", active && "text-primary dark:text-lavender")} />
               <span className="relative flex-1">{item.label}</span>
               {item.badge ? (
-                <span className="ltr-nums bg-primary relative rounded-full px-1.5 text-[0.65rem] font-bold text-white">
+                <span className="ltr-nums bg-primary text-primary-foreground relative rounded-full px-1.5 text-[0.65rem] font-bold">
                   {item.badge}
                 </span>
               ) : null}
@@ -141,6 +147,18 @@ export function WorkspaceNav({ items, mobile }: { items: NavItem[]; mobile?: boo
   const pathname = usePathname();
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setOpen(false), [pathname]);
+  // Drawer: Escape closes it and the page behind does not scroll while it is open.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
 
   if (!mobile) {
     return (
@@ -171,7 +189,7 @@ export function WorkspaceNav({ items, mobile }: { items: NavItem[]; mobile?: boo
             />
             <motion.nav
               aria-label="Workspace"
-              className="bg-surface fixed inset-y-0 start-0 z-50 flex w-72 flex-col py-4 shadow-2xl"
+              className="bg-sidebar fixed inset-y-0 start-0 z-50 flex w-[min(18rem,85vw)] flex-col py-4 shadow-2xl"
               initial={{ x: "var(--drawer-from)" }}
               animate={{ x: 0 }}
               exit={{ x: "var(--drawer-from)" }}
@@ -184,13 +202,16 @@ export function WorkspaceNav({ items, mobile }: { items: NavItem[]; mobile?: boo
               <div className="mb-3 flex justify-end px-3">
                 <button
                   onClick={() => setOpen(false)}
-                  className="hover:bg-surface-2 flex size-9 items-center justify-center rounded-full"
+                  className="hover:bg-surface-2 flex size-10 items-center justify-center rounded-full"
                   aria-label="Close"
+                  autoFocus
                 >
                   <X className="size-5" />
                 </button>
               </div>
-              <Items items={items} onNavigate={() => setOpen(false)} layoutKey="mobile" />
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-6">
+                <Items items={items} onNavigate={() => setOpen(false)} layoutKey="mobile" />
+              </div>
             </motion.nav>
           </>
         )}

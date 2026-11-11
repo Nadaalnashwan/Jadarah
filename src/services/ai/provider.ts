@@ -1,5 +1,5 @@
 import "server-only";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { rateLimitUser } from "@/lib/rate-limit";
@@ -226,6 +226,7 @@ function taskOf(input: CallInput): AITask {
 const g = globalThis as typeof globalThis & {
   __jadarahAiCooldown?: Map<string, number>;
   __jadarahAiCache?: Map<string, { at: number; value: unknown }>;
+  __jadarahAiLog?: { traceColumns: boolean; failures: number; lastFailureAt: number };
 };
 const cooldown = (g.__jadarahAiCooldown ??= new Map<string, number>());
 const COOLDOWN_MS: [RegExp, number][] = [
@@ -279,6 +280,27 @@ function available(chain: ProviderConfig[]) {
 }
 
 // ---------- logging ----------
+/** Correlates the attempts of ONE logical AI operation (retries, repair pass, fallback models). */
+type Trace = { request_id: string; attempt: number };
+function newTrace(): Trace {
+  return { request_id: randomUUID(), attempt: 0 };
+}
+/** Next attempt of the operation; `fallback` = served by a model other than the first in the route. */
+function step(trace: Trace, chainIndex: number) {
+  trace.attempt += 1;
+  return { request_id: trace.request_id, attempt: trace.attempt, is_fallback: chainIndex > 0 };
+}
+
+const logState = (g.__jadarahAiLog ??= { traceColumns: true, failures: 0, lastFailureAt: 0 } as {
+  traceColumns: boolean;
+  failures: number;
+  lastFailureAt: number;
+});
+/** Monitoring self-check: failed telemetry writes in this server process (shown as an operational alert). */
+export function telemetryWriteFailures() {
+  return { failures: logState.failures, lastFailureAt: logState.lastFailureAt || null };
+}
+
 async function logCall(row: {
   provider: ProviderName;
   model: string;
@@ -289,17 +311,34 @@ async function logCall(row: {
   output_tokens?: number | null;
   success: boolean;
   error_code?: string | null;
+  request_id?: string;
+  attempt?: number;
+  is_fallback?: boolean;
 }) {
+  const { request_id, attempt, is_fallback, ...base } = row;
+  const record = {
+    ...base,
+    input_tokens: row.input_tokens ?? null,
+    output_tokens: row.output_tokens ?? null,
+    error_code: row.error_code ?? null,
+  };
   try {
     const supabase = await createClient();
-    await supabase.from("ai_provider_logs").insert({
-      ...row,
-      input_tokens: row.input_tokens ?? null,
-      output_tokens: row.output_tokens ?? null,
-      error_code: row.error_code ?? null,
-    });
+    if (logState.traceColumns && request_id) {
+      const { error } = await supabase
+        .from("ai_provider_logs")
+        .insert({ ...record, request_id, attempt, is_fallback } as never);
+      if (!error) return;
+      // Database without the correlation columns (proposal 0031 not applied): keep logging without them.
+      if (error.code === "PGRST204" || /column/i.test(error.message)) logState.traceColumns = false;
+      else throw error;
+    }
+    const { error } = await supabase.from("ai_provider_logs").insert(record);
+    if (error) throw error;
   } catch {
-    // Logging must never break the user-facing request.
+    // Logging must never break the user-facing request; the failure itself is counted for monitoring.
+    logState.failures += 1;
+    logState.lastFailureAt = Date.now();
   }
 }
 
@@ -353,7 +392,8 @@ export async function generateJSON<T extends z.ZodTypeAny>(
 
   const deadline = Date.now() + Math.max(AI_TIMEOUT_MS, input.timeoutMs ?? 0) * 3;
   let lastError = "unknown";
-  for (const p of chain) {
+  const trace = newTrace();
+  for (const [chainIndex, p] of chain.entries()) {
     if (input.cacheable) {
       const hit = cache.get(cacheKey(input, p.model));
       if (hit && Date.now() - hit.at < CACHE_TTL)
@@ -380,6 +420,7 @@ export async function generateJSON<T extends z.ZodTypeAny>(
           output_tokens: out.outTok,
           success: parsed.success,
           error_code: parsed.success ? null : "schema_mismatch",
+          ...step(trace, chainIndex),
         });
         if (parsed.success) {
           if (input.cacheable) {
@@ -402,6 +443,7 @@ export async function generateJSON<T extends z.ZodTypeAny>(
           latency_ms: Date.now() - started,
           success: false,
           error_code: err.code,
+          ...step(trace, chainIndex),
         });
         noteFailure(p, err.code);
         if (!err.retryable) break;
@@ -492,7 +534,8 @@ export async function streamText(input: CallInput): Promise<StreamResult> {
   if (!(await rateLimitUser("ai", input.userId, 20, 60_000))) throw new AIUnavailableError("rate_limited");
 
   let lastError = "unknown";
-  for (const p of chain) {
+  const trace = newTrace();
+  for (const [chainIndex, p] of chain.entries()) {
     const started = Date.now();
     let res: Response;
     try {
@@ -510,6 +553,7 @@ export async function streamText(input: CallInput): Promise<StreamResult> {
         latency_ms: Date.now() - started,
         success: false,
         error_code: err.code,
+        ...step(trace, chainIndex),
       });
       continue;
     }
@@ -562,6 +606,7 @@ export async function streamText(input: CallInput): Promise<StreamResult> {
           output_tokens: outTok,
           success: ok && firstTokenMs !== null,
           error_code: ok ? (firstTokenMs === null ? "empty_stream" : null) : "stream_interrupted",
+          ...step(trace, chainIndex),
         });
       }
     }

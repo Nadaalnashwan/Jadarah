@@ -1,52 +1,110 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------
-   JADARAH brand tokens — from the approved Brand Identity Boards (light & dark).
-   Light board: Navy #0D1B3F · Blue #3B6CFF · Lavender #8A8DFF · Sky #CFE4FF · Ivory #FFF7E8,
-                page #F5F4FC (sampled from the board), white glass cards.
-   Dark board:  Navy surface #18264A on #111B3D · Blue #3B6CFF · Lavender #A9B8FF · Sky #CDE7F6 · Ivory #EEF3FF.
-   Everything else is a derived tint/shade or a semantic status colour.
+   JADARAH design tokens — approved brand palette ONLY (2026-11, final).
+   Every value is an approved brand colour or a tonal variation of one (same hue, different lightness, or a blend of
+   two approved colours). Generated and contrast-checked (WCAG AA for every text role) — see docs/BRAND_COLORS.md.
+   LIGHT  Deep Navy #172F49 · Professional Blue #3B66F6 · Sky #A9CBE5 · Mist #D4E4EF · Petrol #20566A · Teal #4D9996
+          Warm Sand #DCC8B5 · Soft Beige #E9DCD2 · Muted Peach #E8BFAE · Soft Sage #D5E5DA · Muted Lavender #B6A8CA
+   DARK   Deep Midnight #101E31 · Dark Navy #172C43 · Petrol Surface #204355 · Blue Accent #4B83C5 · Soft Sky #91B9D8
+          Teal #5DA7A0 · Warm Sand #CBB29C · Muted Lavender #9585AD
+   One semantic token set, two themes; pages and components use these tokens only. Lavender is a rare accent.
 ------------------------------------------------------------------- */
 :root {
-  --navy: #0d1b3f;
-  --royal: #3b6cff;
-  --lavender: #8a8dff;
-  --sky: #cfe4ff;
-  --ivory: #fff7e8;
+  /* ---- semantic: backgrounds & surfaces ---- */
+  --background: #ceccc7;
+  --background-2: #c4dae9;
+  --page-gradient: linear-gradient(135deg, #c4dae9 0%, #ceccc7 52%, #deccba 100%);
+  --sidebar: #cddfec;
+  --surface: #E9DCD2;
+  --surface-glass: #E9DCD2;
+  --surface-elevated: #e2dfdc;
+  --surface-2: #e2d1c2;
+  --input: #e5ded8;
+  --tone-blue: #c1d9ea;
+  --tone-mist: #D4E4EF;
+  --tone-sand: #DCC8B5;
+  --tone-peach: #E8BFAE;
+  --tone-sage: #D5E5DA;
+  --tone-teal: #b7d4cb;
+  --tone-lilac: #d2c5ce;
 
-  /* derived */
-  --navy-900: #0a1433;
-  --navy-800: #18264a;
-  --navy-700: #22335f;
-  --royal-600: #2f5bea;
-  --royal-700: #2547c4;
-  --ivory-50: #fffcf5;
-  --ivory-200: #f3ead6;
+  /* ---- semantic: text ---- */
+  --foreground: #172F49;
+  --muted-foreground: #344e68; /* secondary text */
+  --subtle-foreground: #20566a; /* muted text */
+  --tone-blue-ink: #25409d;
+  --tone-mist-ink: #1c4c5e;
+  --tone-sand-ink: #593f26;
+  --tone-peach-ink: #6b3924;
+  --tone-sage-ink: #264b49;
+  --tone-teal-ink: #264b49;
+  --tone-lilac-ink: #4a3c5d;
 
-  /* semantic */
-  --background: #f5f4fc;
-  --surface: #ffffff;
-  --surface-2: #efeefb;
-  --foreground: var(--navy);
-  --muted-foreground: #4a5378;
-  --subtle-foreground: #6b7299;
-  --border: #e3e1f5;
-  --border-strong: #cbc8ec;
-  --primary: var(--royal);
-  --primary-hover: var(--royal-600);
+  /* ---- semantic: lines ---- */
+  --border: #9cb6c9;
+  --border-strong: #7698b2;
+
+  /* ---- semantic: actions ---- */
+  --primary: #3B66F6; /* buttons, fills, focus */
+  --primary-hover: #355cd7;
   --primary-foreground: #ffffff;
-  --accent: var(--lavender);
-  --accent-soft: #ecebff;
-  --sky-soft: #e6f0ff;
-  --ring: var(--royal);
-  --success: #1f8a62;
-  --success-soft: #dcf2e8;
-  --warning: #a86c0c;
-  --warning-soft: #f8ecd3;
-  --danger: #c23b3b;
-  --danger-soft: #f7dede;
-  --shadow-color: 13 27 63;
-  --glow: 0 1px 2px rgb(13 27 63 / 0.04), 0 14px 36px -20px rgb(59 108 255 / 0.28);
+  --primary-ink: #2744a5; /* blue text/links on light surfaces (AA) */
+  --accent: #4D9996; /* secondary accent fills */
+  --accent-ink: #2e5c5a;
+  --accent-soft: #c1d9ea;
+  --sky-soft: #c1d9ea;
+  --ring: #3B66F6;
+
+  /* ---- semantic: status ---- */
+  --success: #2b5553;
+  --success-soft: #D5E5DA;
+  --warning: #644426;
+  --warning-soft: #DCC8B5;
+  --danger: #824126;
+  --danger-soft: #E8BFAE;
+  --info: #2744a5;
+  --info-soft: #c1d9ea;
+
+  /* ---- brand aliases (legacy class names) ---- */
+  --navy: #172F49;
+  --royal: #3B66F6;
+  --petrol: #20566A;
+  --teal: #4D9996;
+  --sky: #A9CBE5;
+  --mist: #D4E4EF;
+  --sand: #DCC8B5;
+  --beige: #E9DCD2;
+  --peach: #E8BFAE;
+  --sage: #D5E5DA;
+  --lilac: #7a619e;
+  --lavender: #A9CBE5; /* light accent text on navy panels; links use --primary-ink */
+  --ivory: #D4E4EF;
+  --navy-900: #0f1e2f;
+  --navy-800: #172F49;
+  --navy-700: #214369;
+  --royal-600: #355cd7;
+  --royal-700: #2744a5;
+  --ivory-50: #dee0e0;
+  --ivory-200: #DCC8B5;
+
+  /* ---- depth ---- */
+  --shadow-color: 23 47 73;
+  --glow: 0 1px 2px rgb(23 47 73 / 0.08), 0 10px 28px -16px rgb(23 47 73 / 0.35);
+
+  /* ---- charts (series 1–8: blue first, lavender last) ---- */
+  --chart-1: #3B66F6;
+  --chart-2: #4D9996;
+  --chart-3: #cb724d;
+  --chart-4: #20566A;
+  --chart-5: #4088bf;
+  --chart-6: #9b724b;
+  --chart-7: #172F49;
+  --chart-8: #8770a9;
+  --chart-success: #4D9996;
+  --chart-failure: #c66239;
+  --chart-grid: rgb(23 47 73 / 0.16);
+  --chart-axis: #1a3d55;
 
   /* motion */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -57,66 +115,164 @@
 }
 
 :root[data-theme="dark"] {
-    --navy: #0d1b3f;
-    --royal: #3b6cff;
-    --lavender: #a9b8ff;
-    --sky: #cde7f6;
-    --ivory: #eef3ff;
-    --background: #111b3d;
-    --surface: #18264a;
-    --surface-2: #1f2f5a;
-    --foreground: #eef3ff;
-    --muted-foreground: #b9c2e6;
-    --subtle-foreground: #8e99c4;
-    --border: #2a3a6c;
-    --border-strong: #3a4c85;
-    --primary: #3b6cff;
-    --primary-hover: #5a84ff;
-    --primary-foreground: #ffffff;
-    --accent: #a9b8ff;
-    --accent-soft: #24356a;
-    --sky-soft: #1b2d5e;
-    --ring: #a9b8ff;
-    --success: #4cc495;
-    --success-soft: #103a33;
-    --warning: #e6b45a;
-    --warning-soft: #3a2e14;
-    --danger: #f08080;
-    --danger-soft: #3d1c27;
-    --shadow-color: 4 8 28;
-    --glow: 0 0 0 1px rgb(169 184 255 / 0.08), 0 18px 48px -24px rgb(59 108 255 / 0.55);
+  --background: #172C43;
+  --background-2: #101E31;
+  --page-gradient: linear-gradient(150deg, #101E31 0%, #172C43 55%, #1a3449 100%);
+  --sidebar: #101E31;
+  --surface: #204355;
+  --surface-glass: #204355;
+  --surface-elevated: #2e5165;
+  --surface-2: #375b6f;
+  --input: #1b364b;
+  --tone-blue: #2e537e;
+  --tone-mist: #305467;
+  --tone-sand: #544436;
+  --tone-peach: #533b32;
+  --tone-sage: #344b3b;
+  --tone-teal: #2b5450;
+  --tone-lilac: #3d344b;
+  --foreground: #eaf2f7;
+  --muted-foreground: #b6d1e5;
+  --subtle-foreground: #b2cee4;
+  --tone-blue-ink: #accae1;
+  --tone-mist-ink: #b2cee4;
+  --tone-sand-ink: #dac7b7;
+  --tone-peach-ink: #E8BFAE;
+  --tone-sage-ink: #D5E5DA;
+  --tone-teal-ink: #a4cccf;
+  --tone-lilac-ink: #b4b4ce;
+  --border: #44697f;
+  --border-strong: #537890;
+  --primary: #6496cc;
+  --primary-hover: #6e9ece;
+  --primary-foreground: #101E31;
+  --primary-ink: #b2cee4;
+  --accent: #5DA7A0;
+  --accent-ink: #b0d2d7;
+  --accent-soft: #2e537e;
+  --sky-soft: #2e537e;
+  --ring: #6496cc;
+  --success: #b0d2d7;
+  --success-soft: #2b5450;
+  --warning: #CBB29C;
+  --warning-soft: #544436;
+  --danger: #E8BFAE;
+  --danger-soft: #533b32;
+  --info: #b2cee4;
+  --info-soft: #2e537e;
+  --navy: #223f60;
+  --royal: #6496cc;
+  --petrol: #204355;
+  --teal: #5DA7A0;
+  --sky: #91B9D8;
+  --mist: #2e537e;
+  --sand: #CBB29C;
+  --beige: #544436;
+  --peach: #E8BFAE;
+  --sage: #9fc6ab;
+  --lilac: #9585AD;
+  --lavender: #b2cee4;
+  --ivory: #eaf2f7;
+  --navy-900: #101E31;
+  --navy-800: #172C43;
+  --navy-700: #204355;
+  --royal-600: #6e9ece;
+  --royal-700: #b2cee4;
+  --shadow-color: 6 12 19;
+  --glow: 0 1px 0 rgb(145 185 216 / 0.06) inset, 0 12px 30px -18px rgb(5 9 15 / 0.7);
+  --chart-1: #6496cc;
+  --chart-2: #5DA7A0;
+  --chart-3: #d89579;
+  --chart-4: #91B9D8;
+  --chart-5: #CBB29C;
+  --chart-6: #86b695;
+  --chart-7: #648aa4;
+  --chart-8: #9585AD;
+  --chart-success: #7bb6b4;
+  --chart-failure: #d38869;
+  --chart-grid: rgb(145 185 216 / 0.18);
+  --chart-axis: #b2cee4;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-      --navy: #0d1b3f;
-      --royal: #3b6cff;
-      --lavender: #a9b8ff;
-      --sky: #cde7f6;
-      --ivory: #eef3ff;
-      --background: #111b3d;
-      --surface: #18264a;
-      --surface-2: #1f2f5a;
-      --foreground: #eef3ff;
-      --muted-foreground: #b9c2e6;
-      --subtle-foreground: #8e99c4;
-      --border: #2a3a6c;
-      --border-strong: #3a4c85;
-      --primary: #3b6cff;
-      --primary-hover: #5a84ff;
-      --primary-foreground: #ffffff;
-      --accent: #a9b8ff;
-      --accent-soft: #24356a;
-      --sky-soft: #1b2d5e;
-      --ring: #a9b8ff;
-      --success: #4cc495;
-      --success-soft: #103a33;
-      --warning: #e6b45a;
-      --warning-soft: #3a2e14;
-      --danger: #f08080;
-      --danger-soft: #3d1c27;
-      --shadow-color: 4 8 28;
-      --glow: 0 0 0 1px rgb(169 184 255 / 0.08), 0 18px 48px -24px rgb(59 108 255 / 0.55);
+    --background: #172C43;
+    --background-2: #101E31;
+    --page-gradient: linear-gradient(150deg, #101E31 0%, #172C43 55%, #1a3449 100%);
+    --sidebar: #101E31;
+    --surface: #204355;
+    --surface-glass: #204355;
+    --surface-elevated: #2e5165;
+    --surface-2: #375b6f;
+    --input: #1b364b;
+    --tone-blue: #2e537e;
+    --tone-mist: #305467;
+    --tone-sand: #544436;
+    --tone-peach: #533b32;
+    --tone-sage: #344b3b;
+    --tone-teal: #2b5450;
+    --tone-lilac: #3d344b;
+    --foreground: #eaf2f7;
+    --muted-foreground: #b6d1e5;
+    --subtle-foreground: #b2cee4;
+    --tone-blue-ink: #accae1;
+    --tone-mist-ink: #b2cee4;
+    --tone-sand-ink: #dac7b7;
+    --tone-peach-ink: #E8BFAE;
+    --tone-sage-ink: #D5E5DA;
+    --tone-teal-ink: #a4cccf;
+    --tone-lilac-ink: #b4b4ce;
+    --border: #44697f;
+    --border-strong: #537890;
+    --primary: #6496cc;
+    --primary-hover: #6e9ece;
+    --primary-foreground: #101E31;
+    --primary-ink: #b2cee4;
+    --accent: #5DA7A0;
+    --accent-ink: #b0d2d7;
+    --accent-soft: #2e537e;
+    --sky-soft: #2e537e;
+    --ring: #6496cc;
+    --success: #b0d2d7;
+    --success-soft: #2b5450;
+    --warning: #CBB29C;
+    --warning-soft: #544436;
+    --danger: #E8BFAE;
+    --danger-soft: #533b32;
+    --info: #b2cee4;
+    --info-soft: #2e537e;
+    --navy: #223f60;
+    --royal: #6496cc;
+    --petrol: #204355;
+    --teal: #5DA7A0;
+    --sky: #91B9D8;
+    --mist: #2e537e;
+    --sand: #CBB29C;
+    --beige: #544436;
+    --peach: #E8BFAE;
+    --sage: #9fc6ab;
+    --lilac: #9585AD;
+    --lavender: #b2cee4;
+    --ivory: #eaf2f7;
+    --navy-900: #101E31;
+    --navy-800: #172C43;
+    --navy-700: #204355;
+    --royal-600: #6e9ece;
+    --royal-700: #b2cee4;
+    --shadow-color: 6 12 19;
+    --glow: 0 1px 0 rgb(145 185 216 / 0.06) inset, 0 12px 30px -18px rgb(5 9 15 / 0.7);
+    --chart-1: #6496cc;
+    --chart-2: #5DA7A0;
+    --chart-3: #d89579;
+    --chart-4: #91B9D8;
+    --chart-5: #CBB29C;
+    --chart-6: #86b695;
+    --chart-7: #648aa4;
+    --chart-8: #9585AD;
+    --chart-success: #7bb6b4;
+    --chart-failure: #d38869;
+    --chart-grid: rgb(145 185 216 / 0.18);
+    --chart-axis: #b2cee4;
   }
 }
 
@@ -129,6 +285,30 @@
   --color-navy-900: var(--navy-900);
   --color-navy-800: var(--navy-800);
   --color-navy-700: var(--navy-700);
+  --color-petrol: var(--petrol);
+  --color-teal: var(--teal);
+  --color-mist: var(--mist);
+  --color-sand: var(--sand);
+  --color-beige: var(--beige);
+  --color-peach: var(--peach);
+  --color-sage: var(--sage);
+  --color-lilac: var(--lilac);
+  --color-tone-blue: var(--tone-blue);
+  --color-tone-mist: var(--tone-mist);
+  --color-tone-sand: var(--tone-sand);
+  --color-tone-peach: var(--tone-peach);
+  --color-tone-sage: var(--tone-sage);
+  --color-tone-teal: var(--tone-teal);
+  --color-tone-lilac: var(--tone-lilac);
+  --color-sidebar: var(--sidebar);
+  --color-surface-glass: var(--surface-glass);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-background-2: var(--background-2);
+  --color-input: var(--input);
+  --color-primary-ink: var(--primary-ink);
+  --color-accent-ink: var(--accent-ink);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
 
   --color-background: var(--background);
   --color-surface: var(--surface);
@@ -172,7 +352,9 @@
     scroll-behavior: smooth;
   }
   body {
-    background: var(--background);
+    background: var(--page-gradient);
+    background-color: var(--background);
+    background-attachment: fixed;
     color: var(--foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
@@ -182,8 +364,11 @@
     line-height: 1.7;
   }
   ::selection {
-    background: var(--lavender);
-    color: var(--navy);
+    background: var(--tone-mist);
+    color: var(--foreground);
+  }
+  h1, h2, h3 {
+    color: var(--foreground);
   }
   :focus-visible {
     outline: 2px solid var(--ring);
@@ -198,22 +383,29 @@
 }
 
 @layer components {
-  /* Board cards: soft glass panels with a faint lavender edge and blue-tinted depth. */
+  /* Cards: opaque themed surface, visible border and soft depth — distinct from the page background. */
   .surface-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-xl);
     box-shadow: var(--glow);
   }
-  /* Brand surfaces from the boards */
+  /* Tonal cards: colour carries meaning (opportunity = blue, done = sage, action = peach, growth = mist…). */
+  .surface-card[data-tone] { border-color: color-mix(in srgb, var(--tone-ink) 22%, var(--border)); }
+  .surface-card[data-tone="blue"] { background: var(--tone-blue); --tone-ink: var(--tone-blue-ink); }
+  .surface-card[data-tone="mist"] { background: var(--tone-mist); --tone-ink: var(--tone-mist-ink); }
+  .surface-card[data-tone="sand"] { background: var(--tone-sand); --tone-ink: var(--tone-sand-ink); }
+  .surface-card[data-tone="peach"] { background: var(--tone-peach); --tone-ink: var(--tone-peach-ink); }
+  .surface-card[data-tone="sage"] { background: var(--tone-sage); --tone-ink: var(--tone-sage-ink); }
+  .surface-card[data-tone="teal"] { background: var(--tone-teal); --tone-ink: var(--tone-teal-ink); }
+  .surface-card[data-tone="lilac"] { background: var(--tone-lilac); --tone-ink: var(--tone-lilac-ink); }
+  .tone-ink { color: var(--tone-ink, var(--primary)); }
+  /* Brand surfaces */
   .brand-hero-bg {
-    background:
-      radial-gradient(60% 50% at 20% 0%, rgb(169 184 255 / 0.35), transparent 70%),
-      radial-gradient(50% 40% at 90% 10%, rgb(207 228 255 / 0.6), transparent 70%),
-      var(--background);
+    background: transparent;
   }
   .brand-banner {
-    background: linear-gradient(105deg, #0d1b3f 0%, #18264a 45%, #2b3f9a 75%, #6f7cf0 100%);
+    background: linear-gradient(110deg, #172f49 0%, #20566a 45%, #3b66f6 78%, #4d9996 100%);
     color: #fff;
   }
   .grain {
@@ -258,4 +450,24 @@
 @keyframes brand-breathe {
   0%, 100% { opacity: 1; transform: translateY(0); }
   50% { opacity: 0.72; transform: translateY(-2px); }
+}
+
+/* Blue text uses the AA "ink" shade of the brand blue; fills (buttons, bars) keep --primary. */
+.text-primary,
+.hover\:text-primary:hover,
+.group:hover .group-hover\:text-primary {
+  color: var(--primary-ink);
+}
+
+
+
+/* Landing film: the current scene's progress segment fills over the scene length (duration set inline). */
+.jd-progress-fill {
+  animation-name: jd-progress;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+@keyframes jd-progress {
+  from { width: 0; }
+  to { width: 100%; }
 }

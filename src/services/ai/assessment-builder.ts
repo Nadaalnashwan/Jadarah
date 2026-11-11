@@ -68,7 +68,10 @@ const toks = (s: string) => new Set(s.toLowerCase().split(/[^\p{L}\p{N}+#]+/u).f
  * Semantic retrieval + relevance re-ranking (embedding similarity is not enough): skill overlap and
  * sector fit are scored explicitly; unrelated sectors are kept only when the role is a close match.
  */
-export async function retrieveReferences(supabase: ServerSupabase, job: JobInput, company: CompanyContext) {
+/** Retrieval outcome for monitoring: "failed" = embeddings unavailable; "none" = no candidate references matched. */
+export type RetrievalMeta = { retrieval?: "ok" | "none" | "failed" };
+
+export async function retrieveReferences(supabase: ServerSupabase, job: JobInput, company: CompanyContext, meta: RetrievalMeta = {}) {
   const cfg = embeddingConfig();
   const query = [`Role: ${job.title}`, `Seniority: ${job.seniority}`, `Sector: ${company.sector_en ?? ""}`, `Skills: ${[...job.required_skills, ...job.preferred_skills].join(", ")}`, job.description].join("\n");
   // Retrieval is an enhancement: if embeddings are unavailable (quota, overload, network), generation
@@ -78,11 +81,16 @@ export async function retrieveReferences(supabase: ServerSupabase, job: JobInput
     [vec] = await embedTexts([query], "SEMANTIC_SIMILARITY");
   } catch (e) {
     console.warn(`[ai] builder retrieval skipped: ${e instanceof Error ? e.message.slice(0, 80) : "embedding_failed"}`);
+    meta.retrieval = "failed";
     return [];
   }
+  meta.retrieval = "ok";
   const { data: matches } = await supabase.rpc("match_reference_assessments", { p_embedding: toPgVector(vec), p_model: cfg.model, p_limit: 10 });
   const ids = (matches ?? []).map((m) => m.reference_id);
-  if (!ids.length) return [];
+  if (!ids.length) {
+    meta.retrieval = "none";
+    return [];
+  }
   const [{ data: refs }, { data: rubrics }] = await Promise.all([
     supabase.from("reference_assessments").select("*").in("id", ids),
     supabase.rpc("reference_rubrics_for_builder", { p_ids: ids }),
@@ -290,17 +298,20 @@ export async function buildAssessment(opts: { userId: string; company: CompanyCo
   let res = await generateAssessmentDraft(opts);
   let checks = runValidation(res.data, opts.job, opts.references);
   const failed = checks.filter((c) => !c.passed);
+  const repair = { attempted: false, accepted: false, initial_failed: failed.length };
   if (failed.length) {
+    repair.attempted = true;
     const repaired = await generateAssessmentDraft({ ...opts, repairOf: { draft: res.data, issues: failed.map((c) => `${c.check}: ${c.detail}`) } }).catch(() => null);
     if (repaired) {
       const rc = runValidation(repaired.data, opts.job, opts.references);
       if (rc.filter((c) => !c.passed).length <= failed.length) {
         res = repaired;
         checks = rc;
+        repair.accepted = true;
       }
     }
   }
-  return { draft: res.data, checks, provider: res.provider, model: res.model };
+  return { draft: res.data, checks, provider: res.provider, model: res.model, repair };
 }
 
 // ---------------------------------------------------------------- persistence

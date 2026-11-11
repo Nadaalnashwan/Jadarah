@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { CalendarClock } from "lucide-react";
 import { BarList, Columns, Donut, TrendArea } from "@/components/app/charts";
-import { Card, CardBody, CardHeader, EmptyState, PageHeader, Stat } from "@/components/ui/primitives";
+import { Card, CardBody, CardHeader, EmptyState, KpiCard, PageHeader } from "@/components/ui/primitives";
 import { requireCompanyMember } from "@/lib/auth/session";
 import { APPLICATION_STATUSES } from "@/lib/domain/application-status";
 import { formatDateTime, formatNumber, pick, tx } from "@/lib/i18n/config";
@@ -66,7 +65,20 @@ export default async function CompanyOverview() {
     );
   }
   const { data, error } = await supabase.rpc("company_dashboard_stats", { p_company: cid });
-  if (error) redirect("/company/verification");
+  if (error || !data) {
+    // Never hide the workspace behind an unrelated page: say what failed and keep navigation available.
+    console.error("[company] dashboard stats failed", { company: cid, code: error?.code });
+    return (
+      <>
+        <PageHeader eyebrow={pick(s.activeMembership.company, "name", locale)} title={L("Recruitment overview", "نظرة على التوظيف")} />
+        <EmptyState
+          title={L("Statistics are temporarily unavailable", "الإحصاءات غير متاحة مؤقتًا")}
+          body={L("Your jobs and applications are still available from the menu. Reload to try again.", "وظائفك وطلباتك متاحة من القائمة. أعد تحميل الصفحة للمحاولة مجددًا.")}
+          action={<Link href="/company/jobs" className="text-primary text-sm font-semibold">{L("Open jobs", "فتح الوظائف")}</Link>}
+        />
+      </>
+    );
+  }
   const st = data as unknown as Stats;
   const funnelLabels: Record<keyof Stats["funnel"], string> = {
     applied: L("Applied", "تقدّموا"),
@@ -77,6 +89,7 @@ export default async function CompanyOverview() {
     hired: t.status.hired,
   };
   const totalApps = st.funnel.applied;
+  const totalJobs = Object.values(st.jobs_by_status ?? {}).reduce((a, b) => a + b, 0);
 
   return (
     <>
@@ -84,34 +97,34 @@ export default async function CompanyOverview() {
         eyebrow={pick(s.activeMembership.company, "name", locale)}
         title={L("Recruitment overview", "نظرة على التوظيف")}
       />
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card className="p-5">
-          <Stat
-            label={L("Published jobs", "وظائف منشورة")}
-            value={formatNumber(st.jobs_by_status.published ?? 0, locale)}
-            hint={`${formatNumber(st.jobs_by_status.draft ?? 0, locale)} ${t.jobStatus.draft}`}
-          />
-        </Card>
-        <Card className="p-5">
-          <Stat label={L("Applications", "الطلبات")} value={formatNumber(totalApps, locale)} />
-        </Card>
-        <Card className="p-5">
-          <Stat
-            label={L("Upcoming interviews", "مقابلات قادمة")}
-            value={formatNumber(st.upcoming_interviews, locale)}
-          />
-        </Card>
-        <Card className="p-5">
-          <Stat
-            label={L("Answers awaiting review", "إجابات بانتظار المراجعة")}
-            value={formatNumber(st.pending_reviews, locale)}
-            hint={
-              st.avg_assessment_score !== null
-                ? `${L("Avg. score", "متوسط الدرجة")} ${formatNumber(st.avg_assessment_score, locale)}%`
-                : undefined
-            }
-          />
-        </Card>
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        <KpiCard
+          tone="blue"
+          label={L("Jobs", "الوظائف")}
+          value={formatNumber(totalJobs, locale)}
+          hint={`${formatNumber(st.jobs_by_status.published ?? 0, locale)} ${t.jobStatus.published} · ${formatNumber(st.jobs_by_status.draft ?? 0, locale)} ${t.jobStatus.draft}`}
+        />
+        <KpiCard
+          tone="mist"
+          label={L("Applications", "الطلبات")}
+          value={formatNumber(totalApps, locale)}
+          hint={`${formatNumber(st.applications_by_status.under_review ?? 0, locale)} ${t.status.under_review}`}
+        />
+        <KpiCard
+          tone="peach"
+          label={L("Answers awaiting review", "إجابات بانتظار المراجعة")}
+          value={formatNumber(st.pending_reviews, locale)}
+          hint={
+            st.avg_assessment_score !== null
+              ? `${L("Avg. score", "متوسط الدرجة")} ${formatNumber(st.avg_assessment_score, locale)}%`
+              : undefined
+          }
+        />
+        <KpiCard
+          tone="teal"
+          label={L("Upcoming interviews", "مقابلات قادمة")}
+          value={formatNumber(st.upcoming_interviews, locale)}
+        />
       </div>
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
         <Card>

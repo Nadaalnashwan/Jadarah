@@ -308,7 +308,7 @@ export const ar: Messages = {
       assessments: "التقييمات",
       resources: "مصادر التعلّم",
       reports: "التقارير",
-      ai: "استخدام الذكاء الاصطناعي",
+      ai: "المراقبة والتقييم",
       audit: "سجل التدقيق",
       settings: "إعدادات المنصة",
       demo: "البيئة التجريبية",

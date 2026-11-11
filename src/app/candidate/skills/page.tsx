@@ -1,4 +1,5 @@
 import { Card, CardBody, CardHeader, PageHeader } from "@/components/ui/primitives";
+import { GroupTabs } from "@/components/shell/group-tabs";
 import { requireCandidate } from "@/lib/auth/session";
 import { pick, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
@@ -26,23 +27,19 @@ export default async function SkillsPage() {
   ]);
   return (
     <>
+      <GroupTabs group="candidate-profile" />
       <PageHeader
         eyebrow={t.candidate.nav.skills}
-        title={L("Your skill intelligence", "ذكاء مهاراتك")}
+        title={L("My skills", "مهاراتي")}
         description={L(
-          "Each skill shows where its evidence comes from. Assessments and reviewed CV extraction carry more weight than self-declarations.",
-          "تُظهر كل مهارة مصدر دليلها. التقييمات واستخراج السيرة المراجَع أثقل وزنًا من التصريح الذاتي.",
+          "Grouped by evidence: demonstrated skills count most, CV and self-declared skills are claims until shown.",
+          "مجمّعة حسب الدليل: المهارات المُثبتة هي الأقوى، ومهارات السيرة والتصريح الذاتي ادعاءات حتى تُثبت.",
         )}
       />
-      <Card>
-        <CardHeader
-          title={L("Skill map", "خريطة المهارات")}
-          description={
-            goal
-              ? `${L("Compared with your target:", "مقارنةً بهدفك:")} ${pick(goal, "title", locale)}`
-              : undefined
-          }
-        />
+      <Card tone="mist">
+        {goal && (
+          <CardHeader title={`${L("Target role:", "الدور المستهدف:")} ${pick(goal, "title", locale)}`} />
+        )}
         <CardBody>
           <SkillsExplorer
             skills={skills

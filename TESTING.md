@@ -107,3 +107,39 @@ Updated specs: `journeys.spec.ts` (current button text; practical-task redirect;
 Fixtures: `tests/fixtures/cv-sample.pdf`, `cv-sample.docx`, `cv-no-text.pdf` (synthetic, no personal data).
 Run the core journeys: `RUN_LOCAL_E2E=1 E2E_BASE_URL=http://localhost:3100 npx playwright test tests/e2e/core-journeys.spec.ts --project=desktop`
 (refuses to run unless `.env.local` points at a local Supabase).
+
+## 2026-11-11 (redesign, monitoring & evaluation) — executed in a cloud session, local Supabase only
+Local stack: repository migrations 0001–0029 + proposal 0031 (local only), demo seed, the backfills above. For realistic
+monitoring checks the local `ai_provider_logs` was loaded with a copy of production's 160 AI attempt rows **with user ids
+removed** (read-only query on production), and Assessment Builder **metadata** of production's 8 generations was mirrored
+as clearly named local fixtures ("Local fixture draft N", 22 "Local fixture reference" rows). No production writes.
+
+| Check | Result |
+|---|---|
+| `npx tsc --noEmit` | clean |
+| `npx eslint .` | 0 problems |
+| `npx next build` | passes (`/admin/monitoring` dynamic) |
+| `npx vitest run tests/unit` | **79/79** (adds `monitoring.test.ts` 11: percentiles, summaries, error categories, zero-filled buckets, exact + heuristic fallback correlation, alert thresholds/minimum samples, Riyadh periods, URL building) |
+| `npx vitest run tests/integration` | **22 passed, 8 failed** — the 8 need hosted-only data (registry organizations `recruiter.elm` …/ALM-003, saved builder drafts, embeddings); same group as the previous run |
+| Playwright full suite (dev server, local DB) | 16 passed, 8 failed, 23 skipped → after updating `public.spec.ts` for the new hero: `public` **6/6**; remaining failures are the 6 `b2b.spec` tests (registry organizations). Skipped = live AI/video/builder/evidence and inbox specs (gated, to avoid AI credits) |
+| `RUN_LOCAL_E2E=1` `core-journeys.spec.ts` | **4/4** — CV-first onboarding, apply → task → **file evidence upload → persists after reload → submit**, employer downloads the identical bytes, public board |
+| Monitoring figures vs direct SQL (24 h) | attempts 160, failed 89, p50 3,061 ms, p95 15,017 ms, tokens 98,973 / 131,447 (95 rows reporting) — identical; Builder: 8 drafts, 8/8 all checks, 19 references over 7 drafts, 1 approved/published — identical to production |
+| Authorization | candidate → `/admin/monitoring`, `/admin/ai`, `/company/analytics` redirected to `/candidate`; employer → admin pages redirected to `/company`; `/company/analytics` shows only that company (14 vs 87 platform applications); `raise_monitoring_alert` / `monitoring_assessment_generations` refuse non–Super Admins |
+| Visual | light + dark, AR + EN screenshots of landing, candidate dashboard/skills/career, assessment upload, employer dashboard, CV review, Super Admin overview and every monitoring tab; no horizontal overflow, no console errors |
+
+Offline evaluation: `npm run eval:offline` (no AI calls) → `src/data/evaluation/results.json`.
+
+## 2026-11-11 (final landing film, strict brand palette, navigation restructure) — local Supabase, production build
+| Check | Result |
+|---|---|
+| `npx tsc --noEmit` · `npx eslint .` | clean · 0 problems |
+| `npx next build` | passes |
+| `npx vitest run tests/unit` | **79/79** (`brand.test.ts` updated: approved navy/blue fallbacks; readable text on Professional Blue is now 4.75:1) |
+| Playwright on `next start` (port 3100): `public` | **8/8** desktop + mobile — new film test: exact AR/EN copy, autoplay with a filling progress bar, scene changes without interaction, pause holds, play resumes, CTAs → `/sign-up` and `/employer/request-access`, skip focuses `#after-city`; reduced-motion test: no autoplay, manual "Next" |
+| `journeys` · `calendar` · `api-security` | 5/5 · 1/1 · 3/3 (unchanged flows after the navigation restructure) |
+| `RUN_LOCAL_E2E=1` `core-journeys` | **4/4** |
+| Navigation sweep (script) | every candidate/employer route 200 in AR + EN; tabs + active states correct; no bell; notifications/talent routes redirect |
+| Data | candidate skill rows of existing users 217 before/after; notification rows untouched |
+
+Note: in `next dev` the Next.js dev badge overlaps the film's play button at 1280×720 / Pixel 7 — run the film E2E against a
+production build (as above). The film test allows extra time because WebGL renders in software in headless Chromium.

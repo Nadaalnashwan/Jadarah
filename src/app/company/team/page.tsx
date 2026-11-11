@@ -1,4 +1,5 @@
 import { Card, CardBody, CardHeader, PageHeader } from "@/components/ui/primitives";
+import { GroupTabs } from "@/components/shell/group-tabs";
 import { requireCompanyMember } from "@/lib/auth/session";
 import { formatDate, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
@@ -33,6 +34,7 @@ export default async function TeamPage() {
   const deliveryBy = new Map((delivery ?? []).map((d) => [d.invitation_id, d]));
   return (
     <>
+      <GroupTabs group="company-organization" />
       <PageHeader
         title={t.company.nav.team}
         description={L(

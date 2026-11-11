@@ -25,22 +25,26 @@ export async function WorkspaceShell({
   /** Organization identity mark shown beside the context label (employer workspace). */
   contextMark?: React.ReactNode;
   contextLabel?: string;
-  notificationsHref: string;
+  /** Omit to hide the notification bell (candidate and employer workspaces do not show one). */
+  notificationsHref?: string;
   banner?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const { t } = await getI18n();
-  const supabase = await createClient();
-  const { count } = await supabase
-    .from("notifications")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", session.userId)
-    .is("read_at", null);
-  const unread = count ?? 0;
+  let unread = 0;
+  if (notificationsHref) {
+    const supabase = await createClient();
+    const { count } = await supabase
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", session.userId)
+      .is("read_at", null);
+    unread = count ?? 0;
+  }
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[17rem_1fr]">
-      <aside className="bg-surface sticky top-0 hidden h-dvh flex-col border-e lg:flex">
+      <aside className="bg-sidebar border-border sticky top-0 hidden h-dvh flex-col border-e lg:flex">
         <div className="flex h-20 items-center px-6">
           <Link href="/" aria-label="JADARAH home">
             <Logo />
@@ -80,7 +84,7 @@ export async function WorkspaceShell({
       </aside>
 
       <div className="flex min-w-0 flex-col">
-        <header className="bg-background/85 sticky top-0 z-40 flex h-16 items-center justify-between gap-3 border-b px-4 backdrop-blur-xl sm:px-6">
+        <header className="bg-background/95 sticky top-0 z-40 flex h-16 items-center justify-between gap-3 border-b px-4 backdrop-blur-xl sm:px-6">
           <div className="flex items-center gap-2 lg:hidden">
             <WorkspaceNav items={nav} mobile />
             <Link href="/" aria-label="JADARAH home">
@@ -93,18 +97,20 @@ export async function WorkspaceShell({
           <div className="flex items-center gap-1">
             <LanguageSwitcher />
             <ThemeToggle />
-            <Link
-              href={notificationsHref}
-              className="hover:bg-surface-2 relative flex size-9 items-center justify-center rounded-full"
-              aria-label={`${t.common.notifications}${unread ? ` (${unread})` : ""}`}
-            >
-              <Bell className="size-4" />
-              {unread > 0 && (
-                <span className="ltr-nums bg-primary absolute -end-0.5 -top-0.5 flex min-w-4 items-center justify-center rounded-full px-1 text-[0.6rem] font-bold text-white">
-                  {unread > 99 ? "99+" : unread}
-                </span>
-              )}
-            </Link>
+            {notificationsHref && (
+              <Link
+                href={notificationsHref}
+                className="hover:bg-surface-2 relative flex size-9 items-center justify-center rounded-full"
+                aria-label={`${t.common.notifications}${unread ? ` (${unread})` : ""}`}
+              >
+                <Bell className="size-4" />
+                {unread > 0 && (
+                  <span className="ltr-nums bg-primary text-primary-foreground absolute -end-0.5 -top-0.5 flex min-w-4 items-center justify-center rounded-full px-1 text-[0.6rem] font-bold">
+                    {unread > 99 ? "99+" : unread}
+                  </span>
+                )}
+              </Link>
+            )}
             <form action={signOutAction} className="lg:hidden">
               <button
                 className="hover:bg-surface-2 flex size-9 items-center justify-center rounded-full"

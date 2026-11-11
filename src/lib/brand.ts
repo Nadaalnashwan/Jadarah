@@ -27,9 +27,12 @@ export function contrastRatio(a: string, b: string): number {
   return (x + 0.05) / (y + 0.05);
 }
 
-/** White or JADARAH navy — whichever reads better on the given background. */
-export function readableOn(bg: string): "#FFFFFF" | "#0D1B3F" {
-  return contrastRatio(bg, "#FFFFFF") >= contrastRatio(bg, "#0D1B3F") ? "#FFFFFF" : "#0D1B3F";
+/** Darkest tone of the approved Deep Navy (#172F49) — text on light company colours. */
+export const NAVY_INK = "#0C1927";
+
+/** White or JADARAH navy ink — whichever reads better on the given background. */
+export function readableOn(bg: string): "#FFFFFF" | typeof NAVY_INK {
+  return contrastRatio(bg, "#FFFFFF") >= contrastRatio(bg, NAVY_INK) ? "#FFFFFF" : NAVY_INK;
 }
 
 /** Mix a colour toward white (amount 0..1) — used for soft tinted surfaces. */
@@ -52,7 +55,7 @@ export type CompanyIdentityRow = {
   accent_hex?: string | null;
 } | null;
 
-export const JADARAH_FALLBACK = { primary: "#0D1B3F", secondary: "#3B6CFF", accent: "#A9B8FF" } as const;
+export const JADARAH_FALLBACK = { primary: "#172F49", secondary: "#3B66F6", accent: "#A9CBE5" } as const;
 
 /** CSS custom properties for a company scope (JADARAH palette when the company has no branding). */
 export function brandVars(identity: CompanyIdentityRow): Record<string, string> {

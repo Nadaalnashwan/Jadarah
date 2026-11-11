@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GroupTabs } from "@/components/shell/group-tabs";
 import { CompanyStatusBadge } from "@/components/app/status-badge";
 import { Card, CardBody, CardHeader, PageHeader } from "@/components/ui/primitives";
 import { IdentityEditor } from "@/features/company/identity-editor";
@@ -25,6 +26,7 @@ export default async function CompanyProfilePage() {
     .maybeSingle();
   return (
     <>
+      <GroupTabs group="company-organization" />
       <PageHeader
         title={t.company.nav.profile}
         actions={

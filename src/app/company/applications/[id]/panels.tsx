@@ -524,7 +524,7 @@ export function InterviewForm({
                     onClick={() => setAt(local)}
                     className={cn(
                       "ltr-nums rounded-full border px-3 py-1 text-xs font-semibold transition",
-                      at === local ? "bg-primary border-primary text-white" : "bg-surface hover:border-primary/60",
+                      at === local ? "bg-primary border-primary text-primary-foreground" : "bg-surface hover:border-primary/60",
                     )}
                   >
                     {sl.label}

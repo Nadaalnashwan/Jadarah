@@ -69,7 +69,7 @@ export function EvaluationForm({
                     required
                     className="peer sr-only"
                   />
-                  <span className="ltr-nums peer-checked:border-primary peer-checked:bg-primary peer-focus-visible:ring-ring flex size-9 items-center justify-center rounded-xl border text-sm font-bold transition peer-checked:text-white peer-focus-visible:ring-2">
+                  <span className="ltr-nums peer-checked:border-primary peer-checked:bg-primary peer-focus-visible:ring-ring flex size-9 items-center justify-center rounded-xl border text-sm font-bold transition peer-checked:text-primary-foreground peer-focus-visible:ring-2">
                     {n}
                   </span>
                 </label>

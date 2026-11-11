@@ -1,19 +1,12 @@
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, CalendarClock, CheckCircle2, ClipboardCheck, MessageSquareQuote, Sparkles } from "lucide-react";
+import { StatusBadge } from "@/components/app/status-badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  EmptyState,
-  PageHeader,
-  Progress,
-  Stat,
-} from "@/components/ui/primitives";
+import { Badge, Card, CardBody, CardHeader, EmptyState, KpiCard, PageHeader, Progress } from "@/components/ui/primitives";
 import { requireCandidate } from "@/lib/auth/session";
 import { planProgress } from "@/lib/domain/career";
 import { isTerminal, type ApplicationStatus } from "@/lib/domain/application-status";
-import { formatNumber, pick, tx } from "@/lib/i18n/config";
+import { formatDate, formatDateTime, formatNumber, pick, tx } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/messages";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
@@ -24,20 +17,27 @@ import {
   matchJob,
   toSkillRecords,
 } from "@/services/candidate";
-import { ApplicationsByStatus } from "./overview-client";
 import { LISTED_JOB_FILTER } from "@/lib/domain/listings";
 
+/**
+ * Candidate overview, in priority order: 1) what needs action now (tasks, interview confirmations),
+ * 2) current applications, 3) relevant opportunities, 4) results and shared feedback, 5) career development.
+ * Every number is read from the candidate's own records (RLS); nothing is estimated.
+ */
 export default async function CandidateOverview() {
   const session = await requireCandidate();
   const { t, locale } = await getI18n();
   const L = tx(locale);
   const supabase = await createClient();
   const uid = session.userId;
+  const nowIso = new Date().toISOString();
 
   const [
     completion,
     { data: apps },
     { data: assignments },
+    { data: interviews },
+    { data: feedback },
     { data: plan },
     skills,
     { data: cp },
@@ -47,15 +47,35 @@ export default async function CandidateOverview() {
     supabase
       .from("applications")
       .select(
-        "id, job_id, status, submitted_at, job:jobs(title_en, title_ar, company:company_profiles(name_en, name_ar))",
+        "id, job_id, status, submitted_at, requires_task, completed_at, task_assignment_id, job:jobs(title_en, title_ar, company:company_profiles(name_en, name_ar))",
       )
       .eq("candidate_id", uid)
       .order("submitted_at", { ascending: false }),
     supabase
       .from("assessment_assignments")
-      .select("id, status, due_at, assessment:assessments(title_en, title_ar)")
+      .select(
+        "id, status, due_at, created_at, assessment:assessments(title_en, title_ar, duration_minutes), assessment_submissions(percentage, status, needs_review, submitted_at)",
+      )
       .eq("candidate_id", uid)
-      .in("status", ["assigned", "in_progress"]),
+      .order("created_at", { ascending: false })
+      .limit(30),
+    supabase
+      .from("interviews")
+      .select(
+        "id, title, status, scheduled_at, timezone, candidate_confirmed_at, application:applications!inner(candidate_id, job:jobs(title_en, title_ar))",
+      )
+      .eq("application.candidate_id", uid)
+      .eq("status", "scheduled")
+      .gte("scheduled_at", nowIso)
+      .order("scheduled_at")
+      .limit(5),
+    supabase
+      .from("interview_feedback")
+      .select("id, shared_at, application:applications!inner(candidate_id, job:jobs(title_en, title_ar))")
+      .eq("application.candidate_id", uid)
+      .eq("shared_with_candidate", true)
+      .order("shared_at", { ascending: false })
+      .limit(3),
     supabase
       .from("development_plans")
       .select("id, title_en, title_ar, development_plan_items(status, estimated_hours)")
@@ -76,7 +96,10 @@ export default async function CandidateOverview() {
   ]);
 
   const applications = apps ?? [];
-  const active = applications.filter((a) => !isTerminal(a.status as ApplicationStatus)).length;
+  const activeApps = applications.filter((a) => !isTerminal(a.status as ApplicationStatus));
+  const openTasks = (assignments ?? []).filter((a) => a.status === "assigned" || a.status === "in_progress");
+  const results = (assignments ?? []).filter((a) => a.status === "submitted" || a.status === "evaluated").slice(0, 3);
+  const toConfirm = (interviews ?? []).filter((i) => !i.candidate_confirmed_at);
   const progress = plan ? planProgress(plan.development_plan_items) : 0;
   const appliedJobIds = new Set(applications.map((a) => a.job_id));
   const records = toSkillRecords(skills);
@@ -85,76 +108,148 @@ export default async function CandidateOverview() {
     .map((j) => ({ job: j, match: matchJob(j, records, cp?.years_experience ?? null, locale) }))
     .sort((a, b) => b.match.score - a.match.score)
     .slice(0, 4);
-
   const firstName = session.profile.full_name.split(" ")[0] || "";
-  const statusRows = applications.map((a) => ({
-    id: a.id,
-    status: a.status as ApplicationStatus,
-    title: pick(a.job, "title", locale),
-    company: pick(a.job?.company, "name", locale),
-    submitted_at: a.submitted_at,
-  }));
+  const actionsCount = openTasks.length + toConfirm.length;
+  const nextStep = (s: ApplicationStatus, taskPending: boolean) =>
+    taskPending
+      ? L("Submit the practical task", "سلّم المهمة العملية")
+      : s === "interview_scheduled"
+        ? L("Prepare for your interview", "استعد لمقابلتك")
+        : s === "shortlisted"
+          ? L("Shortlisted — an interview may follow", "في القائمة المختصرة — قد تليها مقابلة")
+          : L("The company is reviewing", "الشركة تراجع طلبك");
 
   return (
     <>
-      <PageHeader
-        eyebrow={t.candidate.nav.overview}
-        title={fmt(t.candidate.overviewTitle, { name: firstName })}
-        description={t.candidate.overviewBody}
-      />
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card className="p-5">
-          <Stat label={t.candidate.profileCompletion} value={`${formatNumber(completion, locale)}%`} />
-          <Progress value={completion} className="mt-3" label={t.candidate.profileCompletion} />
-          {completion < 100 && (
-            <Link
-              href="/candidate/profile"
-              className="text-primary dark:text-lavender mt-3 inline-flex items-center gap-1 text-xs font-semibold"
-            >
-              {L("Complete your profile", "أكمل ملفك")} <ArrowUpRight className="size-3 rtl:-scale-x-100" />
-            </Link>
-          )}
-        </Card>
-        <Card className="p-5">
-          <Stat
-            label={t.candidate.applicationsActive}
-            value={formatNumber(active, locale)}
-            hint={L(`${applications.length} total`, `${applications.length} إجمالًا`)}
-          />
-        </Card>
-        <Card className="p-5">
-          <Stat label={t.candidate.assessmentsDue} value={formatNumber(assignments?.length ?? 0, locale)} />
-          {assignments?.[0] && (
-            <Link
-              href={`/candidate/assessments/${assignments[0].id}`}
-              className="text-primary dark:text-lavender mt-3 inline-flex items-center gap-1 text-xs font-semibold"
-            >
-              {pick(assignments[0].assessment, "title", locale)}{" "}
-              <ArrowUpRight className="size-3 rtl:-scale-x-100" />
-            </Link>
-          )}
-        </Card>
-        <Card className="p-5">
-          <Stat
-            label={t.candidate.planProgress}
-            value={plan ? `${formatNumber(progress, locale)}%` : "—"}
-            hint={plan ? pick(plan, "title", locale) : L("No plan yet", "لا توجد خطة بعد")}
-          />
-          {plan && <Progress value={progress} className="mt-3" />}
-        </Card>
+      <PageHeader title={fmt(t.candidate.overviewTitle, { name: firstName })} description={t.candidate.overviewBody} />
+
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        <KpiCard
+          tone="peach"
+          icon={<ClipboardCheck className="size-3.5" />}
+          label={L("Needs your action", "يحتاج إجراءً منك")}
+          value={formatNumber(actionsCount, locale)}
+          hint={L("Tasks and interview confirmations", "مهام وتأكيد مقابلات")}
+        />
+        <KpiCard
+          tone="blue"
+          label={t.candidate.applicationsActive}
+          value={formatNumber(activeApps.length, locale)}
+          hint={L(`${applications.length} in total`, `${applications.length} إجمالًا`)}
+        />
+        <KpiCard
+          tone="sage"
+          icon={<CheckCircle2 className="size-3.5" />}
+          label={L("Assessments submitted", "تقييمات مُسلّمة")}
+          value={formatNumber((assignments ?? []).filter((a) => a.status === "submitted" || a.status === "evaluated").length, locale)}
+        />
+        <KpiCard
+          tone="mist"
+          label={t.candidate.profileCompletion}
+          value={`${formatNumber(completion, locale)}%`}
+          hint={
+            completion < 100 ? (
+              <Link href="/candidate/profile" className="text-primary dark:text-lavender font-semibold">
+                {L("Complete your profile", "أكمل ملفك")}
+              </Link>
+            ) : undefined
+          }
+        />
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1.2fr_1fr]">
+      {/* 1. Required actions */}
+      <Card tone={actionsCount ? "peach" : "sage"} className="mt-6">
+        <CardHeader
+          className={actionsCount ? undefined : "pb-5 sm:pb-6"}
+          title={actionsCount ? L("Next actions", "الخطوات التالية") : L("You're all caught up", "لا شيء ينتظرك الآن")}
+          description={
+            actionsCount
+              ? undefined
+              : L("No open tasks or interview confirmations.", "لا توجد مهام مفتوحة أو مقابلات بانتظار التأكيد.")
+          }
+        />
+        {actionsCount > 0 && (
+          <CardBody>
+            <ul className="grid gap-2 md:grid-cols-2">
+              {openTasks.map((a) => (
+                <li key={a.id}>
+                  <Link
+                    href={`/candidate/assessments/${a.id}`}
+                    className="bg-surface-glass hover:border-primary/40 flex items-center gap-3 rounded-xl border p-3 transition"
+                  >
+                    <ClipboardCheck className="text-primary dark:text-lavender size-5 shrink-0" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold">{pick(a.assessment, "title", locale)}</span>
+                      <span className="text-subtle block text-xs">
+                        {a.status === "in_progress" ? L("In progress", "قيد التنفيذ") : L("Not started", "لم تبدأ")}
+                        {a.due_at && ` · ${L("Due", "الموعد")} ${formatDateTime(a.due_at, locale)}`}
+                      </span>
+                    </span>
+                    <span className="text-primary dark:text-lavender text-xs font-bold">
+                      {a.status === "in_progress" ? L("Continue", "متابعة") : L("Start", "ابدأ")}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+              {toConfirm.map((i) => (
+                <li key={i.id}>
+                  <Link
+                    href="/candidate/interviews"
+                    className="bg-surface-glass hover:border-primary/40 flex items-center gap-3 rounded-xl border p-3 transition"
+                  >
+                    <CalendarClock className="text-primary dark:text-lavender size-5 shrink-0" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold">{pick(i.application?.job, "title", locale)}</span>
+                      <span className="text-subtle block text-xs">{formatDateTime(i.scheduled_at, locale, i.timezone)}</span>
+                    </span>
+                    <span className="text-primary dark:text-lavender text-xs font-bold">{L("Confirm", "أكّد الحضور")}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </CardBody>
+        )}
+      </Card>
+
+      <div className="mt-6 grid items-start gap-6 xl:grid-cols-[1.25fr_1fr]">
+        {/* 2. Current applications */}
         <Card>
           <CardHeader
-            title={t.candidate.recentActivity}
+            title={L("Current applications", "طلباتك الحالية")}
+            action={
+              applications.length ? (
+                <Link href="/candidate/applications" className="text-primary dark:text-lavender text-xs font-semibold">
+                  {L("All applications", "كل الطلبات")}
+                </Link>
+              ) : undefined
+            }
           />
           <CardBody>
-            {statusRows.length ? (
-              <ApplicationsByStatus rows={statusRows} />
+            {activeApps.length ? (
+              <ul className="divide-y">
+                {activeApps.slice(0, 5).map((a) => {
+                  const taskPending = a.requires_task && !a.completed_at;
+                  return (
+                    <li key={a.id}>
+                      <Link
+                        href={taskPending && a.task_assignment_id ? `/candidate/assessments/${a.task_assignment_id}` : `/candidate/applications/${a.id}`}
+                        className="hover:bg-surface-2/60 -mx-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg px-2 py-3"
+                      >
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-semibold">{pick(a.job, "title", locale)}</span>
+                          <span className="text-subtle block truncate text-xs">
+                            {pick(a.job?.company, "name", locale)} · {nextStep(a.status as ApplicationStatus, taskPending)}
+                          </span>
+                        </span>
+                        <StatusBadge status={a.status as ApplicationStatus} t={t} />
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
             ) : (
               <EmptyState
-                title={t.candidate.noApplications}
+                title={applications.length ? L("No active applications", "لا توجد طلبات نشطة") : t.candidate.noApplications}
                 action={
                   <Button asChild>
                     <Link href="/candidate/jobs">{t.candidate.browseJobs}</Link>
@@ -164,57 +259,153 @@ export default async function CandidateOverview() {
             )}
           </CardBody>
         </Card>
-        <Card>
+
+        {/* 3. Relevant opportunities */}
+        <Card tone="blue">
           <CardHeader
             title={t.candidate.recommendedJobs}
+            action={
+              <Link href="/candidate/jobs" className="text-primary dark:text-lavender text-xs font-semibold">
+                {t.candidate.browseJobs}
+              </Link>
+            }
           />
           <CardBody>
             {recommended.length === 0 ? (
-              <EmptyState title={L("Add skills to get recommendations", "أضف مهاراتك لتحصل على اقتراحات")} />
+              <EmptyState
+                title={
+                  records.length === 0
+                    ? L("Add skills to get recommendations", "أضف مهاراتك لتحصل على اقتراحات")
+                    : L("No open opportunities right now", "لا توجد فرص متاحة حاليًا")
+                }
+                action={
+                  records.length === 0 ? (
+                    <Button asChild size="sm" variant="outline">
+                      <Link href="/candidate/skills">{L("Add skills", "أضف مهارات")}</Link>
+                    </Button>
+                  ) : undefined
+                }
+              />
             ) : (
               <ul className="flex flex-col gap-2">
                 {recommended.map(({ job, match }) => (
                   <li key={job.id}>
                     <Link
                       href={`/candidate/jobs/${job.id}`}
-                      className="group hover:border-primary/40 hover:bg-accent-soft/40 flex items-center gap-4 rounded-2xl border p-4 transition"
+                      className="group bg-surface-glass hover:border-primary/40 flex items-center gap-4 rounded-xl border p-3 transition"
                     >
-                      <div className="relative flex size-12 shrink-0 items-center justify-center">
-                        <svg viewBox="0 0 36 36" className="absolute inset-0 -rotate-90" aria-hidden>
-                          <circle
-                            cx="18"
-                            cy="18"
-                            r="15.5"
-                            fill="none"
-                            stroke="var(--surface-2)"
-                            strokeWidth="3"
-                          />
-                          <circle
-                            cx="18"
-                            cy="18"
-                            r="15.5"
-                            fill="none"
-                            stroke="var(--royal)"
-                            strokeWidth="3"
-                            strokeDasharray={`${(match.score / 100) * 97.4} 97.4`}
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                        <span className="ltr-nums text-xs font-extrabold">{match.score}</span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="group-hover:text-primary dark:group-hover:text-lavender truncate font-semibold">
+                      <span
+                        className="ltr-nums bg-tone-blue text-primary dark:text-lavender flex size-11 shrink-0 flex-col items-center justify-center rounded-xl text-sm font-extrabold"
+                        title={L("Evidence match out of 100", "مطابقة الأدلة من 100")}
+                      >
+                        {match.score}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="group-hover:text-primary dark:group-hover:text-lavender block truncate font-semibold">
                           {pick(job, "title", locale)}
-                        </p>
-                        <p className="text-subtle truncate text-xs">
+                        </span>
+                        <span className="text-subtle block truncate text-xs">
                           {pick(job.company, "name", locale)} · {job.city} · {t.workMode[job.work_mode]}
-                        </p>
-                      </div>
+                        </span>
+                      </span>
+                      <ArrowUpRight className="text-subtle size-4 shrink-0 rtl:-scale-x-100" />
                     </Link>
                   </li>
                 ))}
               </ul>
             )}
+          </CardBody>
+        </Card>
+      </div>
+
+      <div className="mt-6 grid items-start gap-6 lg:grid-cols-2">
+        {/* 4. Results & shared feedback */}
+        <Card tone="sage">
+          <CardHeader
+            title={L("Results and feedback", "النتائج والملاحظات")}
+            action={
+              <Link href="/candidate/assessments" className="text-primary dark:text-lavender text-xs font-semibold">
+                {L("All assessments", "كل التقييمات")}
+              </Link>
+            }
+          />
+          <CardBody>
+            {results.length === 0 && !(feedback ?? []).length ? (
+              <p className="text-muted text-sm">
+                {L("Results appear here after you submit an assessment.", "تظهر النتائج هنا بعد تسليمك تقييمًا.")}
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-2">
+                {results.map((r) => {
+                  const sub = r.assessment_submissions;
+                  return (
+                    <li key={r.id}>
+                      <Link
+                        href={`/candidate/assessments/${r.id}`}
+                        className="bg-surface-glass hover:border-primary/40 flex items-center gap-3 rounded-xl border p-3 transition"
+                      >
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-semibold">{pick(r.assessment, "title", locale)}</span>
+                          <span className="text-subtle block text-xs">
+                            {sub?.submitted_at ? formatDate(sub.submitted_at, locale) : ""}
+                          </span>
+                        </span>
+                        {sub?.needs_review || sub?.percentage === null || sub?.percentage === undefined ? (
+                          <Badge tone="progress">{L("Under human review", "قيد المراجعة البشرية")}</Badge>
+                        ) : (
+                          <span className="ltr-nums text-lg font-extrabold">{formatNumber(sub.percentage, locale)}%</span>
+                        )}
+                      </Link>
+                    </li>
+                  );
+                })}
+                {(feedback ?? []).map((f) => (
+                  <li key={f.id} className="bg-surface-glass flex items-center gap-3 rounded-xl border p-3">
+                    <MessageSquareQuote className="text-primary dark:text-lavender size-4 shrink-0" />
+                    <span className="min-w-0 flex-1 truncate text-sm">
+                      {L("Interview feedback shared", "ملاحظات مقابلة مشاركة")} · {pick(f.application?.job, "title", locale)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardBody>
+        </Card>
+
+        {/* 5. Career development */}
+        <Card tone="mist">
+          <CardHeader
+            title={L("Career development", "التطوير المهني")}
+            action={
+              <Link href="/candidate/career" className="text-primary dark:text-lavender text-xs font-semibold">
+                {plan ? L("Open plan", "افتح الخطة") : L("Set a goal", "حدّد هدفًا")}
+              </Link>
+            }
+          />
+          <CardBody className="flex flex-col gap-4">
+            {plan ? (
+              <div>
+                <p className="flex items-center justify-between gap-2 text-sm font-semibold">
+                  <span className="truncate">{pick(plan, "title", locale)}</span>
+                  <span className="ltr-nums">{formatNumber(progress, locale)}%</span>
+                </p>
+                <Progress value={progress} className="mt-2" label={t.candidate.planProgress} />
+              </div>
+            ) : (
+              <p className="text-muted flex items-start gap-2 text-sm">
+                <Sparkles className="text-primary dark:text-lavender mt-0.5 size-4 shrink-0" />
+                {L(
+                  "Choose a target role to see the skills you have demonstrated and the gaps to close.",
+                  "اختر دورًا مستهدفًا لترى المهارات التي أثبتّها والفجوات المتبقية.",
+                )}
+              </p>
+            )}
+            <p className="text-subtle text-xs">
+              {L(`${records.length} skills in your profile`, `${records.length} مهارة في ملفك`)} ·{" "}
+              <Link href="/candidate/skills" className="text-primary dark:text-lavender font-semibold">
+                {L("Manage skills", "إدارة المهارات")}
+              </Link>
+            </p>
           </CardBody>
         </Card>
       </div>

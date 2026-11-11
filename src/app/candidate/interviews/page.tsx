@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GroupTabs } from "@/components/shell/group-tabs";
 import { CalendarClock, CheckCircle2, MapPin, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { InterviewCalendar, type CalendarEvent } from "@/components/app/interview-calendar";
@@ -38,6 +39,7 @@ export default async function CandidateInterviews() {
   const upcoming = rows.filter((r) => r.status === "scheduled" && notEnded(r.ends_at));
   return (
     <>
+      <GroupTabs group="candidate-applications" />
       <PageHeader
         title={L("My interviews", "مقابلاتي")}
         description={L(

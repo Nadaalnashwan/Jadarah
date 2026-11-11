@@ -310,7 +310,7 @@ export const en = {
       assessments: "Assessments",
       resources: "Learning resources",
       reports: "Reports",
-      ai: "AI usage",
+      ai: "Monitoring & evaluation",
       audit: "Audit logs",
       settings: "Platform settings",
       demo: "Demo environment",

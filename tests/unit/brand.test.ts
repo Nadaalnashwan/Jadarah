@@ -13,19 +13,19 @@ describe("company identity colours", () => {
   });
   it("picks a readable foreground", () => {
     expect(readableOn("#0D1B3F")).toBe("#FFFFFF");
-    expect(readableOn("#F8F6F0")).toBe("#0D1B3F");
-    expect(readableOn("#FFD400")).toBe("#0D1B3F");
+    expect(readableOn("#F8F6F0")).toBe("#0C1927");
+    expect(readableOn("#FFD400")).toBe("#0C1927");
     for (const c of ["#0D1B3F", "#A9B8FF", "#CDE7F6", "#FFD400", "#00A651"])
       expect(contrastRatio(c, readableOn(c))).toBeGreaterThanOrEqual(4.5);
-    // The approved board blue with white text is 4.4:1 — AA for bold/large UI text (buttons use semibold ≥ 14px).
-    expect(contrastRatio("#3B6CFF", readableOn("#3B6CFF"))).toBeGreaterThanOrEqual(4.3);
+    // The approved Professional Blue #3B66F6 with white text is 4.75:1 — AA for bold/large UI text (buttons use semibold ≥ 14px).
+    expect(contrastRatio("#3B66F6", readableOn("#3B66F6"))).toBeGreaterThanOrEqual(4.5);
   });
   it("falls back to the JADARAH palette and never emits unsanitised values", () => {
     const v = brandVars(null);
-    expect(v["--brand"]).toBe("#0D1B3F");
-    expect(v["--brand-2"]).toBe("#3B6CFF");
+    expect(v["--brand"]).toBe("#172F49");
+    expect(v["--brand-2"]).toBe("#3B66F6");
     const w = brandVars({ primary_hex: "javascript:alert(1)", secondary_hex: "#00a651", accent_hex: null });
-    expect(w["--brand"]).toBe("#0D1B3F");
+    expect(w["--brand"]).toBe("#172F49");
     expect(w["--brand-2"]).toBe("#00A651");
     expect(tint("#000000", 0.5)).toBe("#808080");
   });

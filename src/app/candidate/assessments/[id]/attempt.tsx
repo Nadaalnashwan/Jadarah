@@ -284,7 +284,7 @@ function AttemptWorkspace({ attempt }: { attempt: Attempt }) {
                     className={cn(
                       "ltr-nums flex aspect-square w-full items-center justify-center rounded-xl text-sm font-bold transition",
                       i === index
-                        ? "bg-primary text-white"
+                        ? "bg-primary text-primary-foreground"
                         : done
                           ? "bg-accent-soft text-primary dark:text-lavender"
                           : "bg-surface-2 text-subtle hover:bg-border",
@@ -475,7 +475,7 @@ function QuestionInput({
                 className={cn(
                   "ltr-nums flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
                   multi ? "rounded-lg" : "",
-                  on ? "bg-primary text-white" : "bg-surface-2 text-subtle",
+                  on ? "bg-primary text-primary-foreground" : "bg-surface-2 text-subtle",
                 )}
               >
                 {on ? <Check className="size-4" /> : String.fromCharCode(65 + i)}

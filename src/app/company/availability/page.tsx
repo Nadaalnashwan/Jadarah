@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/ui/primitives";
+import { GroupTabs } from "@/components/shell/group-tabs";
 import { requireCompanyMember } from "@/lib/auth/session";
 import { DEFAULT_TZ } from "@/lib/domain/calendar";
 import { tx } from "@/lib/i18n/config";
@@ -20,6 +21,7 @@ export default async function AvailabilityPage() {
     .order("start_minute");
   return (
     <>
+      <GroupTabs group="company-interviews" />
       <PageHeader
         title={L("My availability", "أوقات توفّري")}
         description={L("Weekly interview hours. If none are set, Sunday–Thursday 09:00–17:00 is used.", "ساعات المقابلات الأسبوعية. إن لم تُحدَّد يُعتمد الأحد–الخميس 09:00–17:00.")}

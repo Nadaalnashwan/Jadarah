@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GroupTabs } from "@/components/shell/group-tabs";
 import { ArrowUpRight, Compass, FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge, Card, CardBody, CardHeader, PageHeader } from "@/components/ui/primitives";
@@ -23,6 +24,7 @@ export default async function DiscoverPage() {
   const d = await loadDiscovery(supabase, session.userId, locale);
   return (
     <>
+      <GroupTabs group="candidate-career" />
       <PageHeader
         eyebrow={L("Career discovery", "اكتشاف المسار")}
         title={L("Try the field before you choose it", "جرّب المجال قبل تختاره")}

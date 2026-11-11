@@ -235,7 +235,7 @@ export function SolutionStages() {
                   className={cn(
                     "relative z-10 flex size-9 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold transition-all duration-300",
                     i <= active
-                      ? "border-primary bg-primary text-white"
+                      ? "border-primary bg-primary text-primary-foreground"
                       : "border-border-strong bg-surface text-subtle",
                   )}
                 >
@@ -568,7 +568,7 @@ export function CareerTransformation() {
               transition={{ duration: 0.5, delay: i * 0.08, ease: ease.out }}
               className="surface-card flex flex-col gap-3 p-6"
             >
-              <span className="bg-primary ltr-nums flex size-8 items-center justify-center rounded-full text-xs font-bold text-white">
+              <span className="bg-primary ltr-nums flex size-8 items-center justify-center rounded-full text-xs font-bold text-primary-foreground">
                 {i + 1}
               </span>
               <p className="text-lg font-extrabold">{title}</p>

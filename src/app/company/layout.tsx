@@ -6,6 +6,7 @@ import type { NavItem } from "@/components/shell/workspace-nav";
 import { requireCompanyMember } from "@/lib/auth/session";
 import { pick, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
+import { groupRoutes } from "@/lib/nav-groups";
 
 export default async function CompanyLayout({ children }: { children: React.ReactNode }) {
   const session = await requireCompanyMember();
@@ -14,6 +15,8 @@ export default async function CompanyLayout({ children }: { children: React.Reac
   const n = t.company.nav;
   const role = session.activeMembership.role;
   const company = session.activeMembership.company;
+  // Employer journey: overview → jobs → applicants → assessments → interviews → analytics → assistant → company.
+  // Grouped items show their related pages as tabs (lib/nav-groups.ts); every route and permission is unchanged.
   const all: (NavItem & { roles?: string[] })[] = [
     { href: "/company", label: n.overview, icon: "LayoutDashboard", exact: true },
     { href: "/company/jobs", label: n.jobs, icon: "Briefcase", roles: ["company_admin", "recruiter"] },
@@ -23,33 +26,40 @@ export default async function CompanyLayout({ children }: { children: React.Reac
       icon: "Send",
       roles: ["company_admin", "recruiter"],
     },
-    { href: "/company/talent", label: n.talent, icon: "Users", roles: ["company_admin", "recruiter"] },
     {
       href: "/company/assessments",
       label: n.assessments,
       icon: "ClipboardCheck",
       roles: ["company_admin", "recruiter"],
     },
-    { href: "/company/interviews", label: n.interviews, icon: "CalendarClock" },
-    { href: "/company/calendar", label: n.calendar, icon: "CalendarDays" },
-    { href: "/company/availability", label: n.availability, icon: "Clock" },
-    { href: "/company/team", label: n.team, icon: "ShieldCheck", roles: ["company_admin"] },
+    {
+      href: "/company/interviews",
+      label: L("Interviews & calendar", "المقابلات والتقويم"),
+      icon: "CalendarClock",
+      also: groupRoutes("company-interviews"),
+    },
     {
       href: "/company/analytics",
       label: n.analytics,
       icon: "BarChart3",
       roles: ["company_admin", "recruiter"],
     },
-    { href: "/company/profile", label: n.profile, icon: "Building2", roles: ["company_admin"] },
     {
       href: "/company/assistant",
       label: t.candidate.nav.assistant,
       icon: "Bot",
       roles: ["company_admin", "recruiter"],
     },
-    { href: "/company/notifications", label: n.notifications, icon: "Bell" },
+    {
+      href: "/company/profile",
+      label: L("Company & team", "الشركة والفريق"),
+      icon: "Building2",
+      roles: ["company_admin"],
+      also: groupRoutes("company-organization"),
+    },
     { href: "/company/settings", label: n.settings, icon: "Settings" },
   ];
+
   const nav = all.filter((i) => !i.roles || i.roles.includes(role));
   const status = company?.status;
   const banner =
@@ -85,7 +95,6 @@ export default async function CompanyLayout({ children }: { children: React.Reac
       area={t.roles[role]}
       contextLabel={pick(company, "name", locale)}
       contextMark={company ? <CompanyMark company={company} size="sm" /> : undefined}
-      notificationsHref="/company/notifications"
       banner={banner}
     >
       {children}

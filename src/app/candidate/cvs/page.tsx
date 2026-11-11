@@ -1,4 +1,5 @@
 import { Card, CardBody, CardHeader, EmptyState, PageHeader } from "@/components/ui/primitives";
+import { GroupTabs } from "@/components/shell/group-tabs";
 import { requireCandidate } from "@/lib/auth/session";
 import { tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
@@ -24,6 +25,7 @@ export default async function CvsPage() {
   const ai = aiStatus();
   return (
     <>
+      <GroupTabs group="candidate-profile" />
       <PageHeader
         eyebrow={t.candidate.nav.cvs}
         title={L("Your CVs", "سيرك الذاتية")}

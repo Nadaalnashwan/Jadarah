@@ -192,3 +192,34 @@ npx playwright test             # needs a build (uses npm start) and DEMO_USER_P
 1. Owner completes the admin password via the reset email; configure custom SMTP + production redirect URLs.
 2. Configure an AI provider key (server env) and verify CV parsing, job drafting and question generation end to end.
 3. Deploy to Vercel (see DEPLOYMENT.md), set `environment='production'` for the production database, add CSP.
+
+---
+
+## Update 2026-11-11 — redesign, product fixes, Monitoring & Evaluation (supersedes the limitations above where they conflict)
+- **Design system**: exact light/dark tokens in `src/app/globals.css` (same semantic names in both themes; tonal cards via
+  `<Card tone="blue|mist|sand|peach|sage|teal|lilac">`; theme-aware chart colours `--chart-*` in `components/app/chart-colors.ts`).
+  A few text roles were darkened/lightened slightly from the requested hexes to keep WCAG AA (light secondary #3F5366,
+  muted #52606E, link ink #1C44B8; dark muted #C2CFDA, link #B3CCFF, primary-button text #0E1E2E).
+- **Landing**: Candidate · JADARAH · Employer first viewport (`features/landing/role-hero.tsx`); CTAs → `/sign-up` and
+  `/employer/request-access` (no auth bypass; organizations are never self-activated).
+- **Candidate**: dashboard prioritised (actions → applications → opportunities → results → career); assessment file
+  evidence works end to end **once migration 0029 is applied** (it is in `migrations/`, not yet on production);
+  "My skills" grouped by evidence (demonstrated / CV / self-declared, inline edit, no data removed); Career Development
+  ordered requirements → priorities → results → actions.
+- **Employer**: dashboard stats from the company stats RPC (no silent redirect on error); numbered job-form sections; CV
+  preview beside assessment evidence; Talent Pool removed from navigation (`/company/talent` → applications; no data removed);
+  `/company/analytics` uses the shared recruitment monitoring view, scoped to the company.
+- **Super Admin**: working filters + pagination on users/jobs/assessments (`lib/admin-filters.ts`, `admin/list-controls.tsx`);
+  **/admin/monitoring** with six tabs, alerts and offline evaluation — see `docs/MONITORING.md`.
+- **Not applied to production (owner approval needed)**: migration 0029; proposals 0028, 0030, 0031. Timezone risk in
+  `company_service_active()` documented in DATABASE.md.
+- Next: approve/apply 0029 then 0031 (backup first); add a labelled semantic-matching benchmark before reporting matching quality.
+
+## Update 2026-11-11 (final) — landing film, strict palette, navigation
+- Landing: cinematic 3D Riyadh film (`features/landing/saudi-city.tsx` over the existing Three.js scene): autoplay
+  opening → candidates → companies, progress bar, pause/replay/skip, reduced-motion manual mode; posters in `public/city/`
+  re-rendered from the scene without UI (old posters had a previous interface baked in). The two-card hero was removed.
+- Colours: tokens regenerated strictly from the approved palette (`docs/BRAND_COLORS.md`); off-palette literals replaced
+  (scene, email templates, auth panel, company-brand fallback). The logo artwork is unchanged.
+- Navigation: candidate 14 → 9 items, employer 13 → 9 (`docs/NAVIGATION.md`); grouped pages use tabs; notifications
+  and the standalone skills tab removed from the candidate/employer interface without touching data.

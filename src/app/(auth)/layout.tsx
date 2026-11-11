@@ -24,13 +24,13 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
           {children}
         </main>
       </div>
-      <aside className="relative hidden overflow-hidden bg-[#111B3D] p-12 text-white lg:flex lg:flex-col lg:justify-between">
+      <aside className="relative hidden overflow-hidden bg-[var(--navy-800)] p-12 text-white lg:flex lg:flex-col lg:justify-between">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_55%_at_70%_35%,rgb(59_108_255/0.35),transparent_70%),radial-gradient(40%_35%_at_20%_80%,rgb(169_184_255/0.25),transparent_70%)]" />
-        <p className="relative text-sm font-semibold text-[#A9B8FF]">{t.brand.tagline}</p>
+        <p className="relative text-sm font-semibold text-[var(--sky)]">{t.brand.tagline}</p>
         <SignatureLayers className="relative mx-auto w-full max-w-md" />
         <div className="relative">
           <p className="editorial max-w-md text-3xl font-extrabold">{L("You are more than your CV says.", "أنت أكثر مما تقوله سيرتك.")}</p>
-          <BrandPattern className="mt-10 h-14 w-full text-[#A9B8FF]" count={10} />
+          <BrandPattern className="mt-10 h-14 w-full text-[var(--sky)]" count={10} />
         </div>
       </aside>
     </div>

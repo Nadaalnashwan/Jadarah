@@ -1,7 +1,5 @@
-import Link from "next/link";
-import { Clock } from "lucide-react";
+import { GroupTabs } from "@/components/shell/group-tabs";
 import { InterviewCalendar, type CalendarEvent } from "@/components/app/interview-calendar";
-import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/primitives";
 import { requireCompanyMember } from "@/lib/auth/session";
 import { DEFAULT_TZ, isoDaysAgo } from "@/lib/domain/calendar";
@@ -37,6 +35,7 @@ export default async function CompanyCalendar() {
   const isRecruiter = ["company_admin", "recruiter"].includes(s.activeMembership.role);
   return (
     <>
+      <GroupTabs group="company-interviews" />
       <PageHeader
         title={L("Interview calendar", "تقويم المقابلات")}
         description={
@@ -46,13 +45,6 @@ export default async function CompanyCalendar() {
                 "كل مقابلات شركتك. يُمنع التعارض تلقائيًا لكل مُقابِل.",
               )
             : L("Interviews assigned to you.", "المقابلات المسندة إليك.")
-        }
-        actions={
-          <Button asChild variant="soft" size="sm">
-            <Link href="/company/availability">
-              <Clock /> {L("My availability", "أوقات توفّري")}
-            </Link>
-          </Button>
         }
       />
       <InterviewCalendar events={events} timeZone={DEFAULT_TZ} />

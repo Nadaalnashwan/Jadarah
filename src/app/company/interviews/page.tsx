@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GroupTabs } from "@/components/shell/group-tabs";
 import { CalendarClock } from "lucide-react";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/primitives";
 import { requireCompanyMember } from "@/lib/auth/session";
@@ -63,6 +64,7 @@ export default async function InterviewsPage() {
   };
   return (
     <>
+      <GroupTabs group="company-interviews" />
       <PageHeader
         title={t.company.nav.interviews}
         description={L(

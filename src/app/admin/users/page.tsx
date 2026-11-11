@@ -1,61 +1,78 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input, Select } from "@/components/ui/form";
 import { Badge, Card, PageHeader } from "@/components/ui/primitives";
 import { requireSuperAdmin } from "@/lib/auth/session";
-import { formatDate, tx } from "@/lib/i18n/config";
+import { formatDate, pick, tx } from "@/lib/i18n/config";
+import { dateRange, pageOf, pageRange, searchTerm, validUuid, type AdminListParams } from "@/lib/admin-filters";
+import { AdminFilterBar, AdminPager } from "../list-controls";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { UserControls } from "../admin-client";
 
-export default async function AdminUsers({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string; type?: string; status?: string; page?: string }>;
-}) {
+export default async function AdminUsers({ searchParams }: { searchParams: Promise<AdminListParams> }) {
   const sp = await searchParams;
   const session = await requireSuperAdmin();
   const { t, locale } = await getI18n();
   const L = tx(locale);
   const supabase = await createClient();
-  const page = Math.max(1, Number(sp.page ?? 1));
+  const page = pageOf(sp);
+  const { data: companyRows } = await supabase.from("company_profiles").select("id, name_en, name_ar").order("name_en");
   let q = supabase
     .from("profiles")
     .select(
       "id, full_name, email, account_type, status, created_at, is_demo, user_roles!user_roles_user_id_fkey(role), company_memberships!company_memberships_user_id_fkey(role, company:company_profiles(name_en, name_ar))",
       { count: "exact" },
     );
-  if (sp.q)
-    q = q.or(`full_name.ilike.%${sp.q.replace(/[%,()]/g, "")}%,email.ilike.%${sp.q.replace(/[%,()]/g, "")}%`);
-  if (sp.type) q = q.eq("account_type", sp.type);
-  if (sp.status) q = q.eq("status", sp.status as "active");
-  const { data, count } = await q
-    .order("created_at", { ascending: false })
-    .range((page - 1) * 25, page * 25 - 1);
+  const term = searchTerm(sp.q);
+  if (term) q = q.or(`full_name.ilike.%${term}%,email.ilike.%${term}%`);
+  if (sp.status && ["active", "suspended", "deactivated"].includes(sp.status)) q = q.eq("status", sp.status as "active");
+  // Role: candidate / super admin come from user_roles; employer roles from active memberships.
+  let ids: string[] | null = null;
+  const intersect = (next: string[]) => (ids = ids === null ? next : ids.filter((x) => next.includes(x)));
+  if (sp.role === "candidate" || sp.role === "super_admin") {
+    const { data } = await supabase.from("user_roles").select("user_id").eq("role", sp.role);
+    intersect((data ?? []).map((r) => r.user_id));
+  } else if (sp.role === "company_admin" || sp.role === "recruiter" || sp.role === "interviewer") {
+    const { data } = await supabase.from("company_memberships").select("user_id").eq("role", sp.role);
+    intersect((data ?? []).map((r) => r.user_id));
+  }
+  const company = validUuid(sp.company);
+  if (company) {
+    const { data } = await supabase.from("company_memberships").select("user_id").eq("company_id", company);
+    intersect((data ?? []).map((r) => r.user_id));
+  }
+  if (ids !== null) q = q.in("id", (ids as string[]).length ? (ids as string[]) : ["00000000-0000-0000-0000-000000000000"]);
+  const range = dateRange(sp);
+  if (range.gte) q = q.gte("created_at", range.gte);
+  if (range.lt) q = q.lt("created_at", range.lt);
+  const [from, to] = pageRange(page);
+  const { data, count } = await q.order("created_at", { ascending: false }).range(from, to);
   return (
     <>
       <PageHeader title={t.admin.nav.users} description={`${count ?? 0} ${t.common.results}`} />
-      <form className="surface-card mb-4 grid gap-3 p-4 sm:grid-cols-4">
-        <Input
-          name="q"
-          defaultValue={sp.q}
-          placeholder={L("Name or email…", "الاسم أو البريد…")}
-          aria-label={t.common.search}
-        />
-        <Select name="type" defaultValue={sp.type ?? ""} aria-label={L("Account type", "نوع الحساب")}>
-          <option value="">{t.common.all}</option>
-          <option value="candidate">{t.roles.candidate}</option>
-          <option value="company">{L("Company", "شركة")}</option>
-          <option value="admin">{t.roles.super_admin}</option>
-        </Select>
-        <Select name="status" defaultValue={sp.status ?? ""} aria-label={t.common.status}>
-          <option value="">{t.common.all}</option>
-          <option value="active">{L("Active", "نشط")}</option>
-          <option value="suspended">{L("Suspended", "معلّق")}</option>
-          <option value="deactivated">{L("Deactivated", "معطّل")}</option>
-        </Select>
-        <Button type="submit">{t.common.filter}</Button>
-      </form>
+      <AdminFilterBar
+        params={sp}
+        locale={locale}
+        searchPlaceholder={L("Name or email…", "الاسم أو البريد…")}
+        role={{
+          label: L("Role", "الدور"),
+          options: [
+            { value: "candidate", label: t.roles.candidate },
+            { value: "company_admin", label: t.roles.company_admin },
+            { value: "recruiter", label: t.roles.recruiter },
+            { value: "interviewer", label: t.roles.interviewer },
+            { value: "super_admin", label: t.roles.super_admin },
+          ],
+        }}
+        status={{
+          label: t.common.status,
+          options: [
+            { value: "active", label: L("Active", "نشط") },
+            { value: "suspended", label: L("Suspended", "معلّق") },
+            { value: "deactivated", label: L("Deactivated", "معطّل") },
+          ],
+        }}
+        companies={(companyRows ?? []).map((c) => ({ value: c.id, label: pick(c, "name", locale) }))}
+      />
       <Card>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[52rem] text-sm">
@@ -117,20 +134,7 @@ export default async function AdminUsers({
           </table>
         </div>
       </Card>
-      <div className="mt-4 flex justify-center gap-2">
-        {page > 1 && (
-          <Button asChild variant="outline" size="sm">
-            <Link href={`?${new URLSearchParams({ ...sp, page: String(page - 1) })}`}>
-              {t.common.previous}
-            </Link>
-          </Button>
-        )}
-        {(count ?? 0) > page * 25 && (
-          <Button asChild variant="outline" size="sm">
-            <Link href={`?${new URLSearchParams({ ...sp, page: String(page + 1) })}`}>{t.common.next}</Link>
-          </Button>
-        )}
-      </div>
+      <AdminPager params={sp} page={page} count={count ?? 0} locale={locale} />
     </>
   );
 }

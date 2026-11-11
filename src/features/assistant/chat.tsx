@@ -101,7 +101,7 @@ export function AssistantChat({ scope, starters }: { scope: "candidate" | "compa
               <div
                 className={cn(
                   "max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed",
-                  m.role === "user" ? "bg-primary text-white" : "bg-surface-2",
+                  m.role === "user" ? "bg-primary text-primary-foreground" : "bg-surface-2",
                 )}
               >
                 <p className="whitespace-pre-line" dir="auto">

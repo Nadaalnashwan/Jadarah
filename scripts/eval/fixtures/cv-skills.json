@@ -1,0 +1,107 @@
+{
+  "name": "jadarah-cv-skills-v1",
+  "description": "Synthetic, fictional CV excerpts (no real people) hand-labelled with the taxonomy skills a reviewer would accept as claimed by the candidate. Includes negations, ambiguous words and aliases on purpose.",
+  "labelled_by": "JADARAH engineering (single annotator)",
+  "cases": [
+    {
+      "id": "c01",
+      "text": "Data analyst with 4 years of experience. Built Power BI dashboards and wrote SQL queries against PostgreSQL. Automated reporting with Python and pandas.",
+      "expected": ["Power BI", "SQL", "PostgreSQL", "Python", "pandas", "Data Visualization"]
+    },
+    {
+      "id": "c02",
+      "text": "Frontend engineer: React, Next.js and TypeScript. Wrote automated tests with Playwright and set up CI/CD in GitHub Actions. Familiar with Figma handoff.",
+      "expected": ["React", "Next.js", "TypeScript", "Automated Testing", "CI/CD", "Figma"]
+    },
+    {
+      "id": "c03",
+      "text": "Backend developer (Java, Spring Boot). Designed REST API design guidelines and deployed services with Docker and Kubernetes on AWS.",
+      "expected": ["Java", "Spring Boot", "API Design", "Docker", "Kubernetes", "AWS"]
+    },
+    {
+      "id": "c04",
+      "text": "I have no experience with Python yet but I am eager to learn. Strong communication and stakeholder management skills from retail operations.",
+      "expected": ["Communication", "Stakeholder Management"]
+    },
+    {
+      "id": "c05",
+      "text": "Project coordinator. Maintained Primavera schedules and tracked the critical path for a 40 km road project; prepared BOQ and cost estimates.",
+      "expected": ["Project Scheduling", "Cost Estimation", "Project Management"]
+    },
+    {
+      "id": "c06",
+      "text": "Ready to go wherever the team needs me. I react quickly to customer issues and improved customer experience scores by 12%.",
+      "expected": ["Customer Experience"]
+    },
+    {
+      "id": "c07",
+      "text": "Security analyst: SIEM operations (Splunk), incident response playbooks and threat analysis. Reviewed web apps against the OWASP Top 10.",
+      "expected": ["SIEM Operations", "Incident Response", "Threat Analysis", "Web Application Security (OWASP)"]
+    },
+    {
+      "id": "c08",
+      "text": "Machine learning engineer. Trained deep learning models in PyTorch, classical models with scikit-learn, and maintained MLOps pipelines.",
+      "expected": ["Machine Learning", "Deep Learning", "PyTorch", "scikit-learn", "MLOps"]
+    },
+    {
+      "id": "c09",
+      "text": "Finance graduate. Financial modeling in Advanced Excel, budgeting and forecasting for a family business, basic IFRS accounting coursework.",
+      "expected": ["Financial Modeling", "Advanced Excel", "Budgeting & Forecasting", "IFRS Accounting"]
+    },
+    {
+      "id": "c10",
+      "text": "Events lead for a 30,000-visitor festival: event planning, vendor management and crowd management with the civil defence team.",
+      "expected": ["Event Planning", "Vendor Management", "Event Risk & Crowd Safety"]
+    },
+    {
+      "id": "c11",
+      "text": "Data engineer: ETL pipelines on Apache Spark orchestrated with Airflow; data modeling for the warehouse. Not familiar with Tableau.",
+      "expected": ["ETL Pipelines", "Apache Spark", "Apache Airflow", "Data Modeling"]
+    },
+    {
+      "id": "c12",
+      "text": "Quality engineer: Lean Six Sigma Green Belt, root cause analysis, statistical process control and ISO 9001 internal audits.",
+      "expected": ["Lean Six Sigma", "Root Cause Analysis", "Statistical Quality Control", "ISO 9001 Quality Management"]
+    },
+    {
+      "id": "c13",
+      "text": "Product manager. Owned the roadmap and product strategy, ran user research interviews and wrote requirements with engineering.",
+      "expected": ["Roadmapping", "Product Strategy", "User Research", "Requirements Engineering"]
+    },
+    {
+      "id": "c14",
+      "text": "Platform engineer: Terraform for Azure infrastructure, Linux administration, Git workflows. Some exposure to Go services.",
+      "expected": ["Terraform", "Microsoft Azure", "Linux", "Git", "Go"]
+    },
+    {
+      "id": "c15",
+      "text": "Policy researcher. Policy analysis on consumer protection regulation and regulatory compliance reviews for a government entity.",
+      "expected": ["Policy Analysis", "Consumer Protection", "Regulatory Compliance"]
+    },
+    {
+      "id": "c16",
+      "text": "Graduate in computer science. Courses: data structures and algorithms, statistics, natural language processing. Final project in C# and SQL Server.",
+      "expected": ["Data Structures & Algorithms", "Statistics", "Natural Language Processing", "C#", "SQL"]
+    },
+    {
+      "id": "c17",
+      "text": "Credit analyst at a bank: credit analysis, financial analysis of SME borrowers and risk assessment memos.",
+      "expected": ["Credit Analysis", "Financial Analysis", "Risk Assessment"]
+    },
+    {
+      "id": "c18",
+      "text": "UI designer creating prototypes in Figma; accessibility reviews (WCAG) and design systems. I do not code in JavaScript.",
+      "expected": ["UI Design", "Prototyping", "Figma", "Accessibility"]
+    },
+    {
+      "id": "c19",
+      "text": "Maintenance planner in a petrochemical plant: maintenance planning, process safety (HAZOP) and BPMN process modeling of work orders.",
+      "expected": ["Maintenance Planning", "Process Safety", "Process Modeling (BPMN)"]
+    },
+    {
+      "id": "c20",
+      "text": "Built LLM applications with retrieval for internal search using Node.js and JavaScript; identity and access management with Azure AD.",
+      "expected": ["LLM Application Development", "Node.js", "JavaScript", "Identity & Access Management", "Microsoft Azure"]
+    }
+  ]
+}

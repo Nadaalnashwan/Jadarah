@@ -43,7 +43,7 @@ export default async function CompanyApplicationDetail({
   const { data: app } = await supabase
     .from("applications")
     .select(
-      "*, job:jobs(id, title_en, title_ar, min_years, assessment_id, job_skills(importance, min_level, skill:skills(id, name_en, name_ar))), candidate:profiles!applications_candidate_id_fkey(id, full_name, email), cv:candidate_documents(id, file_name, version), application_answers(answer, question:job_application_questions(question_en, question_ar))",
+      "*, job:jobs(id, title_en, title_ar, min_years, assessment_id, job_skills(importance, min_level, skill:skills(id, name_en, name_ar))), candidate:profiles!applications_candidate_id_fkey(id, full_name, email), cv:candidate_documents(id, file_name, version, mime_type, bucket, storage_path), application_answers(answer, question:job_application_questions(question_en, question_ar))",
     )
     .eq("id", id)
     .eq("company_id", cid)
@@ -124,6 +124,11 @@ export default async function CompanyApplicationDetail({
         .in("submission_id", submissionIds)
         .order("created_at")
     : { data: [] as { id: string; submission_id: string; question_id: string; file_name: string; size_bytes: number }[] };
+  // Inline CV preview (PDF only) through a short-lived signed URL; storage RLS lets only this company's recruiters read it.
+  const cvPreview =
+    app.cv && app.cv.mime_type === "application/pdf"
+      ? (await supabase.storage.from(app.cv.bucket).createSignedUrl(app.cv.storage_path, 600)).data?.signedUrl ?? null
+      : null;
   const status = app.status as ApplicationStatus;
   const records: CandidateSkillRecord[] = (skills ?? [])
     .filter((x) => x.skill)
@@ -177,27 +182,72 @@ export default async function CompanyApplicationDetail({
           )}
         </p>
       )}
-      <div className="grid gap-6 xl:grid-cols-[1.25fr_1fr]">
+      {/* Candidate overview */}
+      <Card tone="blue" className="mb-6">
+        <CardBody className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+            <span>
+              <span className="text-subtle">{L("Applied for", "الوظيفة")}: </span>
+              <span className="font-semibold">{pick(app.job, "title", locale)}</span>
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="text-subtle">{L("Status", "الحالة")}:</span> <StatusBadge status={status} t={t} />
+            </span>
+            {cp?.years_experience !== null && cp?.years_experience !== undefined && (
+              <span>
+                <span className="text-subtle">{L("Experience", "الخبرة")}: </span>
+                <span className="ltr-nums font-semibold">{cp.years_experience}</span> {t.common.years}
+              </span>
+            )}
+          </div>
+          {(skills ?? []).length > 0 && (
+            <ul className="flex flex-wrap gap-1.5" aria-label={L("Skills by source", "المهارات حسب المصدر")}>
+              {(skills ?? [])
+                .filter((x) => x.skill)
+                .sort((x, y) => (["verified", "assessment"].includes(y.source) ? 1 : 0) - (["verified", "assessment"].includes(x.source) ? 1 : 0))
+                .slice(0, 12)
+                .map((x) => {
+                  const demonstrated = x.source === "verified" || x.source === "assessment";
+                  return (
+                    <li key={x.skill!.id}>
+                      <Badge tone={demonstrated ? "positive" : x.source === "cv" ? "info" : "neutral"}>
+                        {pick(x.skill, "name", locale)} ·{" "}
+                        {demonstrated ? L("demonstrated", "مُثبتة") : x.source === "cv" ? L("CV claim", "من السيرة") : L("self-declared", "ذاتية")}
+                      </Badge>
+                    </li>
+                  );
+                })}
+            </ul>
+          )}
+        </CardBody>
+      </Card>
+      {/* Review: CV and profile beside the assessment evidence (stacked on smaller screens). */}
+      <div className="grid items-start gap-6 xl:grid-cols-2">
         <div className="flex flex-col gap-6">
           <Card>
             <CardHeader
-              title={L("Evidence match", "مطابقة الأدلة")}
-              action={
-                <Link
-                  href={`/company/compare?ids=${id}`}
-                  className="text-primary dark:text-lavender text-xs font-semibold"
-                >
-                  {L("Compare", "قارن")}
-                </Link>
-              }
+              title={L("CV and profile", "السيرة والملف")}
+              description={L(
+                "From the candidate's CV and profile: claims until demonstrated in an assessment.",
+                "من سيرة المرشح وملفه: ادعاءات حتى تُثبت في تقييم.",
+              )}
             />
-            <CardBody>
-              <MatchExplanation match={match} t={t} locale={locale} />
-            </CardBody>
-          </Card>
-          <Card>
-            <CardHeader title={L("Candidate profile", "ملف المرشح")} />
             <CardBody className="flex flex-col gap-4 text-sm">
+              {cvPreview ? (
+                <iframe
+                  src={cvPreview}
+                  title={L("CV preview", "معاينة السيرة")}
+                  className="bg-input h-[28rem] w-full rounded-xl border"
+                />
+              ) : app.cv ? (
+                <p className="text-subtle text-xs">
+                  {L("Preview is available for PDF files. Download the CV to read it.", "المعاينة متاحة لملفات PDF. نزّل السيرة لقراءتها.")}
+                </p>
+              ) : (
+                <p className="bg-surface-2 text-muted rounded-xl px-3 py-2 text-xs">
+                  {L("No CV was attached to this application.", "لم تُرفق سيرة ذاتية بهذا الطلب.")}
+                </p>
+              )}
               <div className="text-muted flex flex-wrap gap-x-4 gap-y-1">
                 {cp?.city && (
                   <span className="flex items-center gap-1">
@@ -278,6 +328,28 @@ export default async function CompanyApplicationDetail({
               ))}
             </CardBody>
           </Card>
+          <Card>
+            <CardHeader
+              title={L("Skills match", "مطابقة المهارات")}
+              description={L(
+                "Requirement-by-requirement comparison of stated and demonstrated skills. Similarity is not proof of competence.",
+                "مقارنة متطلبًا بمتطلب بين المهارات المُصرّح بها والمُثبتة. التشابه ليس دليلًا على الكفاءة.",
+              )}
+              action={
+                <Link
+                  href={`/company/compare?ids=${id}`}
+                  className="text-primary dark:text-lavender text-xs font-semibold"
+                >
+                  {L("Compare", "قارن")}
+                </Link>
+              }
+            />
+            <CardBody>
+              <MatchExplanation match={match} t={t} locale={locale} />
+            </CardBody>
+          </Card>
+        </div>
+        <div className="flex flex-col gap-6">
           {(asg ?? []).map((a) => {
             const sub = a.submission;
             return (
@@ -375,9 +447,20 @@ export default async function CompanyApplicationDetail({
               </Card>
             );
           })}
+          {(asg ?? []).length === 0 && (
+            <Card>
+              <CardBody>
+                <p className="text-muted text-sm">
+                  {L("No assessment is attached to this application.", "لا يوجد تقييم مرتبط بهذا الطلب.")}
+                </p>
+              </CardBody>
+            </Card>
+          )}
         </div>
+      </div>
 
-        <div className="flex flex-col gap-6">
+      {/* Decision, interviews, notes */}
+      <div className="mt-6 grid items-start gap-6 lg:grid-cols-2 xl:grid-cols-3">
           <Card>
             <CardHeader
               title={L("Decision", "القرار")}
@@ -518,7 +601,6 @@ export default async function CompanyApplicationDetail({
               </ol>
             </CardBody>
           </Card>
-        </div>
       </div>
     </>
   );

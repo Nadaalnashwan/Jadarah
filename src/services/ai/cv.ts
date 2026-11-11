@@ -1,6 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import type { CvGrounding } from "@/lib/domain/cv-grounding";
+import { parseCvRules } from "@/lib/domain/cv-rules";
 import { parsedCvSchemaShape } from "./cv-schema";
 import { AIUnavailableError, generateJSON } from "./provider";
 
@@ -35,54 +36,9 @@ export async function parseCvWithAI(
   return { ...data, method: "ai", provider: `${provider} · ${model}` };
 }
 
-/**
- * Deterministic fallback when no AI provider is configured: matches the platform skill taxonomy
- * (names + aliases) against the CV text and extracts contact details with regexes.
- * Results are labelled rule-based and must be reviewed by the candidate.
- */
-export function parseCvRuleBased(
-  text: string,
-  taxonomy: { name_en: string; aliases: string[]; slug: string }[],
-): ParsedCv {
-  const lower = ` ${text.toLowerCase().replace(/\s+/g, " ")} `;
-  const skills = taxonomy
-    .filter((s) =>
-      [s.name_en, ...s.aliases].some(
-        (n) => n.length > 1 && new RegExp(`[^a-z0-9+#]${escapeRe(n.toLowerCase())}[^a-z0-9+#]`).test(lower),
-      ),
-    )
-    .map((s) => {
-      const idx = lower.indexOf(s.name_en.toLowerCase());
-      const evidence =
-        idx >= 0
-          ? text
-              .replace(/\s+/g, " ")
-              .slice(Math.max(0, idx - 40), idx + s.name_en.length + 40)
-              .trim()
-          : null;
-      return { name: s.name_en, evidence, kind: "explicit" as const };
-    });
-  const email = text.match(/[\w.+-]+@[\w-]+\.[\w.-]+/)?.[0] ?? null;
-  const phone = text.match(/(\+?966|0)5\d{8}/)?.[0] ?? null;
-  return {
-    full_name: null,
-    email,
-    phone,
-    headline: null,
-    summary: null,
-    education: [],
-    experience: [],
-    skills,
-    certifications: [],
-    projects: [],
-    languages: [],
-    method: "rule_based",
-    provider: "rule_based",
-  };
-}
-
-function escapeRe(s: string) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/** Rule-based fallback; see lib/domain/cv-rules. */
+export function parseCvRuleBased(text: string, taxonomy: { name_en: string; aliases: string[]; slug: string }[]): ParsedCv {
+  return parseCvRules(text, taxonomy) as ParsedCv;
 }
 
 export { AIUnavailableError };

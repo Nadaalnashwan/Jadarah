@@ -123,6 +123,10 @@ export function JobEditor({
     <form action={action} className="flex flex-col gap-6">
       <input type="hidden" name="ai_assisted" value={aiState.provider ? "true" : "false"} />
       <section className="surface-card grid gap-4 p-6 sm:grid-cols-2">
+        <h2 className="flex items-center gap-2 font-bold sm:col-span-2">
+          <span className="bg-tone-blue text-primary-ink ltr-nums grid size-6 place-items-center rounded-full text-xs">1</span>
+          {L("Role and description", "المسمى والوصف")}
+        </h2>
         <Field
           label={L("Title (English)", "المسمى (إنجليزي)")}
           htmlFor="title_en"
@@ -185,6 +189,13 @@ export function JobEditor({
             rows={4}
           />
         </Field>
+      </section>
+
+      <section className="surface-card grid gap-4 p-6 sm:grid-cols-2">
+        <h2 className="flex items-center gap-2 font-bold sm:col-span-2">
+          <span className="bg-tone-blue text-primary-ink ltr-nums grid size-6 place-items-center rounded-full text-xs">2</span>
+          {L("Responsibilities and qualifications", "المسؤوليات والمؤهلات")}
+        </h2>
         <Field
           label={L("Responsibilities (EN, one per line)", "المسؤوليات (EN، سطر لكل بند)")}
           htmlFor="responsibilities_en"
@@ -234,6 +245,10 @@ export function JobEditor({
       </section>
 
       <section className="surface-card grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-4">
+        <h2 className="flex items-center gap-2 font-bold sm:col-span-2 lg:col-span-4">
+          <span className="bg-tone-blue text-primary-ink ltr-nums grid size-6 place-items-center rounded-full text-xs">3</span>
+          {L("Seniority and constraints", "الأقدمية والقيود")}
+        </h2>
         <Field label={L("Field", "المجال")} htmlFor="category_id">
           <Select
             id="category_id"
@@ -370,7 +385,10 @@ export function JobEditor({
       </section>
 
       <section className="surface-card p-6">
-        <h2 className="font-bold">{L("Skill requirements", "متطلبات المهارات")}</h2>
+        <h2 className="flex items-center gap-2 font-bold ">
+          <span className="bg-tone-blue text-primary-ink ltr-nums grid size-6 place-items-center rounded-full text-xs">4</span>
+          {L("Skills — required and preferred", "المهارات — المطلوبة والمفضّلة")}
+        </h2>
         <p className="text-muted mt-1 text-sm">
           {L(
             "These drive explainable matching. Required skills weigh twice as much as preferred.",
@@ -457,6 +475,10 @@ export function JobEditor({
       </section>
 
       <section className="surface-card grid gap-4 p-6 sm:grid-cols-2">
+        <h2 className="flex items-center gap-2 font-bold sm:col-span-2">
+          <span className="bg-tone-blue text-primary-ink ltr-nums grid size-6 place-items-center rounded-full text-xs">5</span>
+          {L("Application questions (optional)", "أسئلة التقديم (اختيارية)")}
+        </h2>
         <Field
           label={L("Application questions (EN, one per line)", "أسئلة التقديم (EN، سطر لكل سؤال)")}
           htmlFor="questions_en"

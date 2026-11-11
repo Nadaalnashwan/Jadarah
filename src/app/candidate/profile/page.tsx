@@ -1,4 +1,5 @@
 import { Trash2 } from "lucide-react";
+import { GroupTabs } from "@/components/shell/group-tabs";
 import { Card, CardBody, CardHeader, PageHeader, Progress } from "@/components/ui/primitives";
 import { deleteProfileItem } from "@/features/candidate/actions";
 import { requireCandidate } from "@/lib/auth/session";
@@ -90,6 +91,7 @@ export default async function ProfilePage() {
 
   return (
     <>
+      <GroupTabs group="candidate-profile" />
       <PageHeader
         eyebrow={t.candidate.nav.profile}
         title={L("Your professional profile", "ملفك المهني")}
