@@ -45,7 +45,7 @@ Regression: lint ✓, typecheck ✓, vitest 30/30 ✓, existing Playwright 13 pa
 
 **Exact next steps**
 1. Owner: add OpenAI credits (deep evaluation currently skipped as `openai_quota_exhausted`).
-2. Wire `streamText` into the assistants (route handler + streaming chat UI).
+2. ~~Streaming assistants~~ — done: `/api/assistant` streams Groq tokens (first token 0.5–0.7 s); access tests in `tests/e2e/api-security.spec.ts`.
 3. Phase 3: AI Assessment Builder (questions + rubric generation), deep rubric-assisted evaluation, career plan generation.
 4. Phase 4–6: internal calendar (availability, conflict-safe booking via DB exclusion constraint, notifications + reminders via pg_cron), Daily rooms/tokens, Final Candidate Evaluation Report.
 5. Phase 7: Playwright E2E, Vercel preview deploy.

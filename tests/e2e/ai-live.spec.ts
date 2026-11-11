@@ -99,3 +99,16 @@ test("company: assistant and interview question suggestions use real AI", async 
   await expect(page.getByText("AI generated — review before use", { exact: true })).toBeVisible({ timeout: 45_000 });
   console.log(`interview_questions UI round-trip ${Date.now() - started} ms`);
 });
+
+test("company: rubric-assisted evaluation suggests scores for a human reviewer", async ({ page }) => {
+  await signIn(page, "recruiter.souqa");
+  // Deterministic demo-seed application with an evaluated open answer that has a rubric.
+  await page.goto("/company/applications/4bbec4b2-0c73-4fc3-a9ba-f0b481f31bf7");
+  const started = Date.now();
+  await page.getByRole("button", { name: "Suggest rubric scores with AI" }).first().click();
+  const badge = page.getByText(/AI suggestion — you decide · (gemini|groq|openai)/).first();
+  await expect(badge).toBeVisible({ timeout: 90_000 });
+  console.log(`assessment_evaluation UI round-trip ${Date.now() - started} ms · ${await badge.textContent()}`);
+  // Suggested scores are pre-filled but NOT saved until the reviewer submits.
+  await expect(page.locator('input[name^="rubric_"]').first()).not.toHaveValue("");
+});

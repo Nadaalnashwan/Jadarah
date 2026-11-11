@@ -2,7 +2,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { FileText } from "lucide-react";
+import { FileText, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, FormMessage, Input, Select, Textarea } from "@/components/ui/form";
 import {
@@ -14,6 +14,7 @@ import {
   shareAssessmentFeedback,
 } from "@/features/company/actions";
 import { getApplicationCvUrl } from "@/features/company/document-actions";
+import { suggestRubricScores, type RubricSuggestion } from "@/features/assessments/ai-evaluation-actions";
 import type { ApplicationStatus } from "@/lib/domain/application-status";
 import type { ActionResult } from "@/lib/errors";
 import { useI18n } from "@/lib/i18n/client";
@@ -192,12 +193,41 @@ export function EvaluateAnswerForm({
   );
   useToastResult(state);
   const [scores, setScores] = useState<Record<string, number>>({});
+  const [comments, setComments] = useState(existing?.comments ?? "");
+  const [ai, setAi] = useState<RubricSuggestion | null>(null);
+  const [aiBusy, setAiBusy] = useState(false);
+  async function askAi() {
+    setAiBusy(true);
+    const res = await suggestRubricScores(applicationId, submissionId, questionId);
+    setAiBusy(false);
+    if (!res.ok) return toast.error(res.error);
+    const d = res.data!;
+    setAi(d);
+    setScores(Object.fromEntries(d.criteria.map((c) => [c.key, c.score])));
+    if (!comments.trim()) setComments(d.overall_comment);
+  }
   const rubricTotal = criteria.reduce((s, c) => s + c.max_points, 0);
   const suggested = rubricTotal
     ? Math.round((Object.values(scores).reduce((a, b) => a + b, 0) / rubricTotal) * max * 10) / 10
     : undefined;
   return (
     <form action={action} className="mt-3 grid gap-3 sm:grid-cols-2">
+      <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
+        <Button type="button" size="sm" variant="soft" onClick={askAi} loading={aiBusy}>
+          <Sparkles /> {L("Suggest rubric scores with AI", "اقتراح درجات المعايير بالذكاء الاصطناعي")}
+        </Button>
+        {ai && (
+          <span className="bg-accent-soft rounded-full px-2.5 py-1 text-[11px] font-semibold">
+            {L("AI suggestion — you decide", "اقتراح آلي — القرار لك")} · {ai.provider}
+          </span>
+        )}
+      </div>
+      {ai?.concerns.length ? (
+        <p className="text-warning text-xs sm:col-span-2" role="note">
+          {L("AI flagged: ", "ملاحظات الذكاء الاصطناعي: ")}
+          {ai.concerns.join(" · ")}
+        </p>
+      ) : null}
       {criteria.map((c) => (
         <Field
           key={c.key}
@@ -211,8 +241,19 @@ export function EvaluateAnswerForm({
             min={0}
             max={c.max_points}
             step={1}
+            value={scores[c.key] ?? ""}
             onChange={(e) => setScores((s) => ({ ...s, [c.key]: Number(e.target.value) }))}
           />
+          {(() => {
+            const sug = ai?.criteria.find((x) => x.key === c.key);
+            return sug ? (
+              <p className="text-muted mt-1 text-[11px] leading-snug">
+                <Sparkles className="text-primary dark:text-lavender me-1 inline size-3" aria-hidden />
+                {sug.rationale}
+                {sug.evidence && <span className="text-subtle block truncate">“{sug.evidence}”</span>}
+              </p>
+            ) : null;
+          })()}
         </Field>
       ))}
       <Field
@@ -242,7 +283,13 @@ export function EvaluateAnswerForm({
         htmlFor={`${questionId}-comments`}
         className="sm:col-span-2"
       >
-        <Textarea id={`${questionId}-comments`} name="comments" rows={2} defaultValue={existing?.comments} />
+        <Textarea
+          id={`${questionId}-comments`}
+          name="comments"
+          rows={ai ? 4 : 2}
+          value={comments}
+          onChange={(e) => setComments(e.target.value)}
+        />
       </Field>
       {state && !state.ok && (
         <div className="sm:col-span-2">
