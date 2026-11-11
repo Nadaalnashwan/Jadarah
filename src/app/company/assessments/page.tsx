@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Copy, Timer } from "lucide-react";
+import { Copy, Sparkles, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge, Card, CardBody, CardHeader, PageHeader } from "@/components/ui/primitives";
 import { cloneAssessment } from "@/features/assessments/company-actions";
@@ -36,10 +36,13 @@ export default async function CompanyAssessments() {
     <>
       <PageHeader
         title={t.company.nav.assessments}
-        description={L(
-          "Use the platform library as-is, copy and adapt it, or build your own. Open answers are always reviewed by people.",
-          "استخدم مكتبة المنصة كما هي، أو انسخها وعدّلها، أو ابنِ تقييمك. الإجابات المفتوحة يراجعها أشخاص دائمًا.",
-        )}
+        actions={
+          <Button asChild size="sm">
+            <Link href="/company/assessments/builder">
+              <Sparkles /> {L("Assessment Builder", "منشئ التقييمات")}
+            </Link>
+          </Button>
+        }
       />
       <div className="grid gap-6 xl:grid-cols-[1fr_22rem]">
         <Card>

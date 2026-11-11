@@ -7,6 +7,8 @@ import { pick, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { AIQuestions, PublishControls, QuestionBuilder, RubricEditor } from "./builder";
+import { ApproveButton, MaterialLink, RegenerateButtons, ScenarioEditor, TaskEditor } from "./generated-client";
+import type { GeneratedDraft } from "@/services/ai/assessment-builder";
 
 export default async function AssessmentBuilder({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -32,6 +34,21 @@ export default async function AssessmentBuilder({ params }: { params: Promise<{ 
     description_ar?: string;
     max_points: number;
   }[];
+  const [{ data: gen }, { data: guide }, { data: materials }] = await Promise.all([
+    supabase
+      .from("assessment_generations")
+      .select("output, validation, references_used, status, provider, model, job_snapshot")
+      .eq("assessment_id", id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase.from("assessment_assessor_guides").select("guide").eq("assessment_id", id).maybeSingle(),
+    supabase.from("assessment_materials").select("id, file_name, audience, rows, columns, description").eq("assessment_id", id).order("file_name"),
+  ]);
+  const out = gen?.output as GeneratedDraft | null | undefined;
+  const checks = (gen?.validation ?? []) as { check: string; passed: boolean; detail: string }[];
+  const refsUsed = (gen?.references_used ?? []) as { role: string; sector: string | null; similarity: number; reason: string }[];
+  const failed = checks.filter((c) => !c.passed).length;
   const { data: jobs } = draft
     ? await supabase
         .from("jobs")
@@ -50,10 +67,112 @@ export default async function AssessmentBuilder({ params }: { params: Promise<{ 
           <>
             <Badge tone={a.status === "published" ? "positive" : "neutral"}>{a.status}</Badge>
             {a.ai_generated && <Badge tone="progress">{t.common.aiGenerated}</Badge>}
-            <PublishControls id={a.id} status={a.status as "draft"} />
+            {gen && draft ? (
+              <ApproveButton id={a.id} blocked={failed > 0} />
+            ) : (
+              <PublishControls id={a.id} status={a.status as "draft"} />
+            )}
           </>
         }
       />
+      {gen && out && (
+        <div className="mb-6 grid gap-6 xl:grid-cols-[1.4fr_1fr]">
+          <Card>
+            <CardHeader
+              title={L("Scenario", "السيناريو")}
+              action={draft ? <ScenarioEditor id={a.id} d={out} /> : undefined}
+            />
+            <CardBody className="flex flex-col gap-4 text-sm">
+              <p className="leading-relaxed whitespace-pre-line" dir="auto">{locale === "ar" ? out.scenario_ar : out.scenario_en}</p>
+              <ol className="flex flex-col gap-3">
+                {out.tasks.map((task, i) => (
+                  <li key={i} className="rounded-2xl border p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-bold">
+                        <span className="ltr-nums text-subtle me-1">{i + 1}.</span> {locale === "ar" ? task.title_ar : task.title_en}
+                      </p>
+                      <span className="text-subtle ltr-nums shrink-0 text-xs">{task.time_minutes} {t.common.minutes}</span>
+                    </div>
+                    <p className="text-muted mt-1 text-xs whitespace-pre-line" dir="auto">{locale === "ar" ? task.instructions_ar : task.instructions_en}</p>
+                    <ul className="mt-2 flex flex-wrap gap-1.5">
+                      {task.deliverables.map((dl, k) => (
+                        <li key={k}><Badge tone="neutral">{dl.name} · {dl.format}</Badge></li>
+                      ))}
+                    </ul>
+                    {draft && <TaskEditor id={a.id} index={i} t={task} />}
+                  </li>
+                ))}
+              </ol>
+              {draft && <RegenerateButtons id={a.id} />}
+            </CardBody>
+          </Card>
+          <div className="flex flex-col gap-6">
+            <Card>
+              <CardHeader title={L("Validation", "التحقق")} description={failed ? L(`${failed} to resolve`, `${failed} للمعالجة`) : L("All checks passed", "اجتازت كل الفحوص")} />
+              <CardBody>
+                <ul className="flex flex-col gap-1.5 text-xs">
+                  {checks.map((c) => (
+                    <li key={c.check} className="flex items-start gap-2">
+                      <span className={c.passed ? "text-success" : "text-danger"}>{c.passed ? "✓" : "✕"}</span>
+                      <span><span className="font-semibold">{c.check.replace(/_/g, " ")}</span> — <span className="text-muted">{c.detail}</span></span>
+                    </li>
+                  ))}
+                </ul>
+              </CardBody>
+            </Card>
+            <Card>
+              <CardHeader title={L("Materials", "المواد")} />
+              <CardBody className="flex flex-col gap-2">
+                {(materials ?? []).length === 0 && <p className="text-muted text-sm">—</p>}
+                {(materials ?? []).map((m) => (
+                  <div key={m.id}>
+                    <MaterialLink id={m.id} name={m.file_name} />
+                    <p className="text-subtle ltr-nums text-[11px]">{m.rows} × {m.columns?.length} · {m.description}</p>
+                  </div>
+                ))}
+              </CardBody>
+            </Card>
+            <Card>
+              <CardHeader title={L("Reference examples", "الأمثلة المرجعية")} />
+              <CardBody>
+                <ul className="flex flex-col gap-2 text-xs">
+                  {refsUsed.length === 0 && <li className="text-muted">—</li>}
+                  {refsUsed.map((r, i) => (
+                    <li key={i}>
+                      <span className="font-semibold">{r.role}</span> <span className="text-subtle">· {r.reason}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardBody>
+            </Card>
+            {guide && (
+              <Card className="border-navy/30">
+                <CardHeader title={L("Assessor guide", "دليل المقيّم")} description={L("Evaluators only", "للمقيّمين فقط")} />
+                <CardBody className="flex flex-col gap-3 text-xs">
+                  {(() => {
+                    const gd = guide.guide as { overview?: string; scoring_guidance?: string[]; red_flags?: string[]; rubric?: { key: string; criterion_en: string; criterion_ar: string; max_points: number; expected_evidence: string; levels?: { strong: string; adequate: string; weak: string } }[] };
+                    return (
+                      <>
+                        {gd.overview && <p className="leading-relaxed">{gd.overview}</p>}
+                        <ul className="flex flex-col gap-2">
+                          {(gd.rubric ?? []).map((c) => (
+                            <li key={c.key} className="rounded-xl border p-2.5">
+                              <p className="font-bold">{locale === "ar" ? c.criterion_ar : c.criterion_en} <span className="ltr-nums text-subtle">/{c.max_points}</span></p>
+                              <p className="text-muted mt-0.5">{c.expected_evidence}</p>
+                              {c.levels && <p className="text-subtle mt-1">↑ {c.levels.strong} · ↓ {c.levels.weak}</p>}
+                            </li>
+                          ))}
+                        </ul>
+                        {(gd.red_flags ?? []).length > 0 && <p className="text-warning">{gd.red_flags!.join(" · ")}</p>}
+                      </>
+                    );
+                  })()}
+                </CardBody>
+              </Card>
+            )}
+          </div>
+        </div>
+      )}
       <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
         <Card>
           <CardHeader

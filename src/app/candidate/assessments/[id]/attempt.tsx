@@ -33,11 +33,17 @@ export function AttemptGate({
   started,
   unavailable,
   intro,
+  brand,
+  materials,
 }: {
   assignmentId: string;
   started: boolean;
   unavailable: boolean;
   intro: { title: string; description: string; minutes: number; due: string | null; outcomes: string[] };
+  /** Organization identity (rendered server-side). */
+  brand?: React.ReactNode;
+  /** Candidate materials for this assessment (download links). */
+  materials?: React.ReactNode;
 }) {
   const { locale } = useI18n();
   const L = tx(locale);
@@ -59,16 +65,23 @@ export function AttemptGate({
     if (started) void begin();
   }, [started, begin]);
 
-  if (attempt) return <AttemptWorkspace attempt={attempt} />;
+  if (attempt)
+    return (
+      <>
+        {materials && <div className="mx-auto mb-4 max-w-3xl">{materials}</div>}
+        <AttemptWorkspace attempt={attempt} />
+      </>
+    );
   return (
     <div className="mx-auto max-w-2xl">
       <Card className="overflow-hidden">
         <div className="bg-navy text-ivory p-8">
-          <p className="eyebrow !text-lavender">{L("Practical assessment", "تقييم عملي")}</p>
+          {brand ?? <p className="eyebrow !text-lavender">{L("Practical assessment", "تقييم عملي")}</p>}
           <h1 className="editorial mt-3 text-4xl font-extrabold">{intro.title}</h1>
-          <p className="text-sky/90 mt-3">{intro.description}</p>
+          <p className="text-sky/90 mt-3 whitespace-pre-line">{intro.description}</p>
         </div>
         <CardBody className="flex flex-col gap-5">
+          {materials}
           <div className="flex flex-wrap gap-2">
             <Badge tone="info">
               <Clock className="size-3" /> <span className="ltr-nums">{intro.minutes}</span>{" "}

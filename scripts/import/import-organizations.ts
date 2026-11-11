@@ -38,7 +38,7 @@ function table(sheet: { rows: string[][] }) {
 (async () => {
   const file = join(root, REL);
   const sha = createHash("sha256").update(readFileSync(file)).digest("hex");
-  const sheets = Object.fromEntries(readXlsx(file).map((s) => [s.name, table(s)]));
+  const sheets = Object.fromEntries((await readXlsx(file)).map((s) => [s.name, table(s)]));
   const employers = sheets["Employers"];
   const brands = new Map(sheets["Brand Profiles"].map((b) => [b.company_id, b]));
   const sources = new Map(sheets["Sources"].map((s) => [s.company_id, s]));

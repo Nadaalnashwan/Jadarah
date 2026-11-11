@@ -735,6 +735,276 @@ export type Database = {
           },
         ]
       }
+      sector_skills: {
+        Row: {
+          id: string
+          sector_key: string
+          kind: string
+          name_ar: string
+          description_ar: string | null
+          source_sha256: string
+        }
+        Insert: {
+          id?: string
+          sector_key: string
+          kind: string
+          name_ar: string
+          description_ar?: string | null
+          source_sha256: string
+        }
+        Update: {
+          id?: string
+          sector_key?: string
+          kind?: string
+          name_ar?: string
+          description_ar?: string | null
+          source_sha256?: string
+        }
+        Relationships: []
+      }
+      reference_assessments: {
+        Row: {
+          id: string
+          ref_key: string
+          role_en: string
+          role_ar: string | null
+          sector_key: string | null
+          seniority: string | null
+          skills: string[]
+          scenario: string | null
+          objectives: string[]
+          instructions: string | null
+          deliverables: Json
+          input_assets: Json
+          time_limit_minutes: number | null
+          tools: string[]
+          completeness: string
+          validation_status: string
+          validation_notes: string | null
+          source_files: Json
+          extracted_by: string | null
+          extracted_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          ref_key: string
+          role_en: string
+          role_ar?: string | null
+          sector_key?: string | null
+          seniority?: string | null
+          skills?: string[]
+          scenario?: string | null
+          objectives?: string[]
+          instructions?: string | null
+          deliverables?: Json
+          input_assets?: Json
+          time_limit_minutes?: number | null
+          tools?: string[]
+          completeness: string
+          validation_status: string
+          validation_notes?: string | null
+          source_files?: Json
+          extracted_by?: string | null
+          extracted_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          ref_key?: string
+          role_en?: string
+          role_ar?: string | null
+          sector_key?: string | null
+          seniority?: string | null
+          skills?: string[]
+          scenario?: string | null
+          objectives?: string[]
+          instructions?: string | null
+          deliverables?: Json
+          input_assets?: Json
+          time_limit_minutes?: number | null
+          tools?: string[]
+          completeness?: string
+          validation_status?: string
+          validation_notes?: string | null
+          source_files?: Json
+          extracted_by?: string | null
+          extracted_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reference_assessment_assessor: {
+        Row: {
+          reference_id: string
+          rubric: Json
+          assessor_guidance: string | null
+          answer_expectations: string | null
+          source_files: Json
+        }
+        Insert: {
+          reference_id: string
+          rubric?: Json
+          assessor_guidance?: string | null
+          answer_expectations?: string | null
+          source_files?: Json
+        }
+        Update: {
+          reference_id?: string
+          rubric?: Json
+          assessor_guidance?: string | null
+          answer_expectations?: string | null
+          source_files?: Json
+        }
+        Relationships: []
+      }
+      reference_embeddings: {
+        Row: {
+          reference_id: string
+          model: string
+          dims: number
+          content_hash: string
+          embedding: string
+        }
+        Insert: {
+          reference_id: string
+          model: string
+          dims: number
+          content_hash: string
+          embedding: string
+        }
+        Update: {
+          reference_id?: string
+          model?: string
+          dims?: number
+          content_hash?: string
+          embedding?: string
+        }
+        Relationships: []
+      }
+      assessment_generations: {
+        Row: {
+          id: string
+          assessment_id: string
+          company_id: string
+          job_id: string | null
+          job_snapshot: Json
+          references_used: Json
+          output: Json | null
+          validation: Json | null
+          status: string
+          provider: string | null
+          model: string | null
+          created_by: string | null
+          approved_by: string | null
+          approved_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          assessment_id: string
+          company_id: string
+          job_id?: string | null
+          job_snapshot: Json
+          references_used?: Json
+          output?: Json | null
+          validation?: Json | null
+          status?: string
+          provider?: string | null
+          model?: string | null
+          created_by?: string | null
+          approved_by?: string | null
+          approved_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          assessment_id?: string
+          company_id?: string
+          job_id?: string | null
+          job_snapshot?: Json
+          references_used?: Json
+          output?: Json | null
+          validation?: Json | null
+          status?: string
+          provider?: string | null
+          model?: string | null
+          created_by?: string | null
+          approved_by?: string | null
+          approved_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      assessment_assessor_guides: {
+        Row: {
+          assessment_id: string
+          company_id: string
+          guide: Json
+          updated_at: string
+        }
+        Insert: {
+          assessment_id: string
+          company_id: string
+          guide: Json
+          updated_at?: string
+        }
+        Update: {
+          assessment_id?: string
+          company_id?: string
+          guide?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      assessment_materials: {
+        Row: {
+          id: string
+          assessment_id: string
+          company_id: string
+          audience: string
+          file_name: string
+          storage_path: string
+          mime_type: string
+          description: string | null
+          rows: number | null
+          columns: string[] | null
+          sha256: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          assessment_id: string
+          company_id: string
+          audience: string
+          file_name: string
+          storage_path: string
+          mime_type: string
+          description?: string | null
+          rows?: number | null
+          columns?: string[] | null
+          sha256?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          assessment_id?: string
+          company_id?: string
+          audience?: string
+          file_name?: string
+          storage_path?: string
+          mime_type?: string
+          description?: string | null
+          rows?: number | null
+          columns?: string[] | null
+          sha256?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       ai_provider_logs: {
         Row: {
           created_at: string
@@ -3549,6 +3819,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      is_active_recruiter: { Args: Record<PropertyKey, never>; Returns: boolean }
+      match_reference_assessments: { Args: { p_embedding: string; p_limit?: number; p_model: string }; Returns: { reference_id: string; similarity: number }[] }
+      reference_rubrics_for_builder: { Args: { p_ids: string[] }; Returns: { reference_id: string; rubric: Json }[] }
       company_service_active: { Args: { p_company: string }; Returns: boolean }
       access_request_companies: {
         Args: Record<PropertyKey, never>

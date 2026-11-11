@@ -1,4 +1,6 @@
 import { notFound } from "next/navigation";
+import { CompanyMark } from "@/components/app/company-mark";
+import { MaterialLink } from "@/app/company/assessments/[id]/generated-client";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { Badge, Card, CardBody, CardHeader, PageHeader, Progress } from "@/components/ui/primitives";
 import { requireCandidate } from "@/lib/auth/session";
@@ -53,13 +55,40 @@ export default async function AssessmentPage({ params }: { params: Promise<{ id:
   const { data: asg } = await supabase
     .from("assessment_assignments")
     .select(
-      "id, status, due_at, assessment:assessments(title_en, title_ar, description_en, description_ar, duration_minutes, passing_score, learning_outcomes_en, learning_outcomes_ar), assessment_submissions(status)",
+      "id, status, due_at, assessment_id, application:applications(company:company_profiles(name_en, name_ar, sector_en, sector_ar, organization_type, company_brand_profiles(identity_status, usage_permission, logo_source_url, primary_hex))), assessment:assessments(title_en, title_ar, description_en, description_ar, duration_minutes, passing_score, learning_outcomes_en, learning_outcomes_ar), assessment_submissions(status)",
     )
     .eq("id", id)
     .eq("candidate_id", session.userId)
     .maybeSingle();
   if (!asg) notFound();
   const submitted = asg.assessment_submissions && asg.assessment_submissions.status !== "in_progress";
+  // Candidate-audience files only (RLS: assigned candidates never see assessor materials).
+  const { data: materials } = await supabase
+    .from("assessment_materials")
+    .select("id, file_name, description")
+    .eq("assessment_id", asg.assessment_id)
+    .eq("audience", "candidate")
+    .order("file_name");
+  const company = asg.application?.company;
+  const brand = company ? (
+    <span className="flex items-center gap-2.5">
+      <CompanyMark company={company} size="sm" className="bg-white/10" />
+      <span className="text-lavender text-sm font-semibold">{locale === "ar" ? company.name_ar : company.name_en}</span>
+    </span>
+  ) : undefined;
+  const materialList = materials?.length ? (
+    <div className="bg-surface-2 rounded-2xl p-4">
+      <p className="mb-2 text-sm font-bold">{L("Materials", "المواد")}</p>
+      <ul className="flex flex-col gap-1.5">
+        {materials.map((m) => (
+          <li key={m.id}>
+            <MaterialLink id={m.id} name={m.file_name} />
+            {m.description && <p className="text-subtle text-xs">{m.description}</p>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  ) : undefined;
 
   if (!submitted) {
     return (
@@ -67,6 +96,8 @@ export default async function AssessmentPage({ params }: { params: Promise<{ id:
         assignmentId={asg.id}
         started={asg.status === "in_progress"}
         unavailable={asg.status === "expired" || asg.status === "cancelled"}
+        brand={brand}
+        materials={materialList}
         intro={{
           title: pick(asg.assessment, "title", locale),
           description: pick(asg.assessment, "description", locale),

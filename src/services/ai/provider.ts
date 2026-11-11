@@ -45,6 +45,8 @@ export interface CallInput {
   file?: { mimeType: string; base64: string };
   /** Cache identical requests from the same user for 10 minutes. */
   cacheable?: boolean;
+  /** Minimum per-call timeout for long generations (e.g. full practical assessments). */
+  timeoutMs?: number;
 }
 
 type RawOut = { text: string; inTok?: number; outTok?: number };
@@ -272,7 +274,7 @@ export async function generateJSON<T extends z.ZodTypeAny>(
   if (!chain.length) throw new AIUnavailableError("not_configured");
   if (!(await rateLimitUser("ai", input.userId, 20, 60_000))) throw new AIUnavailableError("rate_limited");
 
-  const deadline = Date.now() + AI_TIMEOUT_MS * 3;
+  const deadline = Date.now() + Math.max(AI_TIMEOUT_MS, input.timeoutMs ?? 0) * 3;
   let lastError = "unknown";
   for (const p of chain) {
     if (input.cacheable) {
@@ -327,7 +329,8 @@ export async function generateJSON<T extends z.ZodTypeAny>(
   throw new AIUnavailableError(lastError);
 }
 
-async function callProvider(p: ProviderConfig, input: CallInput, schema: z.ZodTypeAny): Promise<RawOut> {
+async function callProvider(base: ProviderConfig, input: CallInput, schema: z.ZodTypeAny): Promise<RawOut> {
+  const p = input.timeoutMs ? { ...base, timeoutMs: Math.max(base.timeoutMs, input.timeoutMs) } : base;
   try {
     if (p.name === "gemini") return await callGemini(input, p, jsonSchemaFor(schema));
     return await callCompat(p.name, input, p, jsonSchemaFor(schema));

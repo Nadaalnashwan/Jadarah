@@ -15,7 +15,7 @@ const walk = (d: string): string[] =>
     const rel = relative(root, f);
     if (focus && !rel.includes(focus)) continue;
     console.log(`\n=== ${rel}`);
-    for (const ws of readXlsx(f)) {
+    for (const ws of await readXlsx(f)) {
       console.log(`  [${ws.name}] rows=${ws.rows.length}`);
       const show = focus ? ws.rows.length : 2;
       for (const r of ws.rows.slice(0, show)) console.log("    | " + r.map((c) => c.replace(/\s+/g, " ").slice(0, focus ? 160 : 40)).join(" | "));

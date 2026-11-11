@@ -2,7 +2,7 @@
  * Minimal read-only XLSX reader for the import scripts (no dependencies; uses the system `unzip`).
  * Handles shared strings, inline strings, numbers and booleans. Untrusted input is only parsed.
  */
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 
 const part = (file: string, name: string): string | null => {
   try {
@@ -33,7 +33,63 @@ const colIndex = (ref: string) => {
 
 export type Sheet = { name: string; rows: string[][] };
 
-export function readXlsx(file: string, only?: (sheetName: string) => boolean): Sheet[] {
+/**
+ * Stream a worksheet's rows. Some source workbooks format every row down to 1,048,576 (40–110 MB of
+ * XML); streaming stops after `emptyRun` consecutive rows without values once data has been seen.
+ */
+function streamRows(file: string, partName: string, shared: string[], emptyRun = 3000): Promise<string[][]> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn("unzip", ["-p", file, partName]);
+    const rows: string[][] = [];
+    let buf = "";
+    let empties = 0;
+    let seen = false;
+    let done = false;
+    const rowRe = re("<~row\\b[^>]*?(?:/>|>([\\s\\S]*?)</~row>)");
+    const finish = () => {
+      if (done) return;
+      done = true;
+      proc.kill();
+      resolve(rows);
+    };
+    proc.stdout.setEncoding("utf8");
+    proc.stdout.on("data", (chunk: string) => {
+      if (done) return;
+      buf += chunk;
+      let m: RegExpExecArray | null;
+      rowRe.lastIndex = 0;
+      let consumed = 0;
+      while ((m = rowRe.exec(buf))) {
+        consumed = rowRe.lastIndex;
+        const row: string[] = [];
+        for (const c of (m[1] ?? "").matchAll(re("<~c\\b([^>]*?)(?:/>|>([\\s\\S]*?)</~c>)"))) {
+          const attrs = c[1];
+          const ref = /r="([A-Z]+\d+)"/.exec(attrs)?.[1];
+          const t = /t="([^"]+)"/.exec(attrs)?.[1];
+          const body = c[2] ?? "";
+          const v = re("<~v>([\\s\\S]*?)</~v>", "").exec(body)?.[1];
+          let val = "";
+          if (t === "s" && v !== undefined) val = shared[Number(v)] ?? "";
+          else if (t === "inlineStr") val = texts(body);
+          else if (v !== undefined) val = decode(v);
+          const idx = ref ? colIndex(ref) : row.length;
+          while (row.length < idx) row.push("");
+          row[idx] = val.trim();
+        }
+        if (row.some((x) => x)) {
+          rows.push(row);
+          seen = true;
+          empties = 0;
+        } else if (seen && ++empties >= emptyRun) return finish();
+      }
+      buf = buf.slice(consumed);
+    });
+    proc.on("close", finish);
+    proc.on("error", reject);
+  });
+}
+
+export async function readXlsx(file: string, only?: (sheetName: string) => boolean): Promise<Sheet[]> {
   const wb = part(file, "xl/workbook.xml") ?? "";
   const rels = part(file, "xl/_rels/workbook.xml.rels") ?? "";
   const relMap = new Map([...rels.matchAll(re("<~Relationship\\b[^>]*>"))].map((m) => {
@@ -43,32 +99,14 @@ export function readXlsx(file: string, only?: (sheetName: string) => boolean): S
   }));
   const ssXml = part(file, "xl/sharedStrings.xml") ?? "";
   const shared = [...ssXml.matchAll(re("<~si>([\\s\\S]*?)</~si>"))].map((m) => texts(m[1]));
-  return [...wb.matchAll(re("<~sheet\\b[^>]*/?>"))].flatMap((m) => {
+  const out: Sheet[] = [];
+  for (const m of wb.matchAll(re("<~sheet\\b[^>]*/?>"))) {
     const name = decode(/name="([^"]+)"/.exec(m[0])?.[1] ?? "");
-    if (only && !only(name)) return [];
+    if (only && !only(name)) continue;
     const rid = /r:id="([^"]+)"/.exec(m[0])?.[1] ?? "";
-    const xml = part(file, `xl/${relMap.get(rid) ?? ""}`) ?? "";
-    const rows: string[][] = [];
-    for (const r of xml.matchAll(re("<~row\\b[^>]*>([\\s\\S]*?)</~row>"))) {
-      const row: string[] = [];
-      for (const c of r[1].matchAll(re("<~c\\b([^>]*?)(?:/>|>([\\s\\S]*?)</~c>)"))) {
-        const attrs = c[1];
-        const ref = /r="([A-Z]+\d+)"/.exec(attrs)?.[1];
-        const t = /t="([^"]+)"/.exec(attrs)?.[1];
-        const body = c[2] ?? "";
-        const v = re("<~v>([\\s\\S]*?)</~v>", "").exec(body)?.[1];
-        let val = "";
-        if (t === "s" && v !== undefined) val = shared[Number(v)] ?? "";
-        else if (t === "inlineStr") val = texts(body);
-        else if (v !== undefined) val = decode(v);
-        const idx = ref ? colIndex(ref) : row.length;
-        while (row.length < idx) row.push("");
-        row[idx] = val.trim();
-      }
-      if (row.some((x) => x)) rows.push(row);
-    }
-    return [{ name, rows }];
-  });
+    out.push({ name, rows: await streamRows(file, `xl/${relMap.get(rid) ?? ""}`, shared) });
+  }
+  return out;
 }
 
 export function sheetNames(file: string): string[] {
