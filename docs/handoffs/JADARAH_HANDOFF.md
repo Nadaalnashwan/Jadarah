@@ -59,11 +59,20 @@ Regression: lint ✓, typecheck ✓, vitest 30/30 ✓, existing Playwright 13 pa
 
 **AI reliability behaviour:** Groq/OpenAI use `json_schema` structured outputs; quota/auth errors are not retried; a process-wide circuit breaker skips overloaded/timed-out models for 3 min and quota/auth failures for 10 min. On 2026-11-11 Google reported both Gemini 3.8 and 3.5 Flash as overloaded intermittently — structured tasks then ran on Groq (visible in badges + `ai_provider_logs`).
 
+**Phase 6 — Final Candidate Evaluation Report ✓** (migration 0019): `/company/applications/[id]/report` — sections A–H, transparent overall score, AI-assisted recommendation (de-identified evidence, source-tagged), editable 7-dimension interview rubric, reviewer comments, human decision (finalize + lock; hire without shortlist preserved), explicit candidate feedback sharing.
+
+**Phase 7 — verification (2026-11-11):** typecheck ✓ · lint ✓ · production build ✓ · vitest **51/51** · Playwright standard **17/17** · live AI **9/9** · live two-person Daily video **1/1**. See TESTING.md.
+
+**Status by category**
+- Completed and verified: restore on new Mac; Gemini (3.5 backup active; 3.8 overloaded at Google), Groq, Gemini embeddings; CV parsing; semantic matching; assessment generation + job-tailored rubric; rubric-assisted evaluation; assistants (streaming); career plans; internal calendar + reminders; Daily video; final evaluation report.
+- Implemented but not externally configured: OpenAI deep evaluation (key valid, **no credits** — deep tasks currently served by Gemini/Groq, visibly labelled); Daily webhooks (no public URL yet); custom SMTP (dashboard).
+- Not implemented (by decision): Resend — future work, lowest priority.
+- Not done: Vercel deployment (needs owner authorization + Vercel account; see DEPLOYMENT.md).
+
 **Exact next steps**
-1. Owner: add OpenAI credits (deep evaluation currently skipped as `openai_quota_exhausted`).
-2. ~~Streaming assistants~~ — done: `/api/assistant` streams Groq tokens (first token 0.5–0.7 s); access tests in `tests/e2e/api-security.spec.ts`.
-3. Phase 6: Final Candidate Evaluation Report (aggregate CV/match, assessment, interview evaluations; AI-assisted recommendation; human decision).
-4. Phase 7: Playwright E2E, Vercel preview deploy.
+1. Owner: add OpenAI credits; enable leaked-password protection; configure custom SMTP; set production Site URL/redirects.
+2. Deploy a Vercel **preview** from `feature/jadarah-greenfield-build` (owner authorizes and logs in to Vercel); add env vars (server keys only, never `NEXT_PUBLIC_`); add the preview URL to Supabase Auth redirect URLs; run the Playwright suite against `E2E_BASE_URL`.
+3. Optional: Daily webhooks (meeting.started/ended) once a public URL exists; shared rate-limit store (Upstash) before horizontal scaling.
 
 ## Repository
 - Repo: https://github.com/Nadaalnashwan/Jadarah — branch `feature/jadarah-greenfield-build` (only branch on the remote; `main` was never created; do not merge without owner approval).
