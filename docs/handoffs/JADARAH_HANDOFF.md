@@ -53,6 +53,8 @@ Regression: lint ✓, typecheck ✓, vitest 30/30 ✓, existing Playwright 13 pa
 - ✓ Calendar UI: `/company/calendar` (month/week/day, Asia/Riyadh, brand colours, RTL, phone → Day view), `/company/availability` (weekly editor), scheduling form **free-slot finder** (availability ∩ free/busy), `/candidate/interviews` (invitations + Confirm attendance). Nav items added. `src/lib/domain/calendar.ts` + 9 unit tests; `tests/e2e/calendar.spec.ts` passes (availability → slot-finder scheduling → candidate confirms → calendar). **Phase 4 complete.**
 - Dashboard to-dos for owner: enable leaked-password protection (Auth); `public.rls_auto_enable()` is a Supabase-created function flagged by the advisor.
 
+**Phase 5 — Daily.co video interviews ✓ (2026-11-11)** — migration 0018 applied. Private room per video interview (created at scheduling / on first interviewer join; opens 15 min before, closes 30 min after; moved on reschedule; deleted on cancel). `interview_video_access()` gates `/meet/[id]` (candidate of the application or assigned interviewers only). Server-minted short-lived tokens; API key server-only; no recording. Waiting room + Daily Prebuilt (camera/mic/screen share; Prebuilt UI has no Arabic — JADARAH chrome is bilingual). `interview_attendance` join/leave tracking. **Verified:** `RUN_LIVE_VIDEO=1 npx playwright test tests/e2e/video.spec.ts` — real two-person call, both joined the same private room, attendance recorded; outsiders refused. Daily webhooks (`DAILY_WEBHOOK_SECRET`) not used yet (needs a public URL).
+
 **Bug fixed:** CV upload was broken — `cv-actions.ts` exported a constant from a `"use server"` module (Next 16 rejects it → 500 on every CV page action). Pre-existing; previous E2E never uploaded.
 
 **AI reliability behaviour:** Groq/OpenAI use `json_schema` structured outputs; quota/auth errors are not retried; a process-wide circuit breaker skips overloaded/timed-out models for 3 min and quota/auth failures for 10 min. On 2026-11-11 Google reported both Gemini 3.8 and 3.5 Flash as overloaded intermittently — structured tasks then ran on Groq (visible in badges + `ai_provider_logs`).
@@ -60,9 +62,8 @@ Regression: lint ✓, typecheck ✓, vitest 30/30 ✓, existing Playwright 13 pa
 **Exact next steps**
 1. Owner: add OpenAI credits (deep evaluation currently skipped as `openai_quota_exhausted`).
 2. ~~Streaming assistants~~ — done: `/api/assistant` streams Groq tokens (first token 0.5–0.7 s); access tests in `tests/e2e/api-security.spec.ts`.
-3. Phase 5: Daily.co — server-side private rooms + short-lived meeting tokens per participant, embedded Daily Prebuilt join page (candidate + interviewers only), join window, status tracking. `DAILY_API_KEY` is valid (domain `midan`).
-4. Phase 6: Final Candidate Evaluation Report (aggregate CV/match, assessment, interview evaluations; AI-assisted recommendation; human decision).
-5. Phase 7: Playwright E2E, Vercel preview deploy.
+3. Phase 6: Final Candidate Evaluation Report (aggregate CV/match, assessment, interview evaluations; AI-assisted recommendation; human decision).
+4. Phase 7: Playwright E2E, Vercel preview deploy.
 
 ## Repository
 - Repo: https://github.com/Nadaalnashwan/Jadarah — branch `feature/jadarah-greenfield-build` (only branch on the remote; `main` was never created; do not merge without owner approval).
@@ -71,7 +72,7 @@ Regression: lint ✓, typecheck ✓, vitest 30/30 ✓, existing Playwright 13 pa
 
 ## Supabase
 - Project ref `qqvvlornhvfykusaxaid` (dashboard name "maknon Project"; confirmed by the owner as the new JADARAH project).
-- Migrations 0001–0017 in `supabase/migrations/` — **all applied** (0013–0017 on 2026-11-11 via MCP) (0009 and 0012 were applied by fetching the pinned commit file through the `http` extension; content identical to the repo files).
+- Migrations 0001–0018 in `supabase/migrations/` — **all applied** (0013–0018 on 2026-11-11 via MCP) (0009 and 0012 were applied by fetching the pinned commit file through the `http` extension; content identical to the repo files).
 - RLS on every public table; least-privilege grants (this project grants nothing to API roles by default — migrations 0010/0011 add explicit grants; **any new table/function needs explicit grants**).
 - Storage: 6 private buckets with object policies.
 - Demo seed applied: 61 Auth identities, 10 companies (9 approved, Imtidad pending), 30 jobs (24 published), 32 candidates, 15 assessments/75 questions, 51 resources, 10 plan templates, 12 personal plans, 82+ applications, 28+ interviews. `platform_settings.environment = 'demo'`.
