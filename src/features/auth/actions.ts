@@ -1,4 +1,5 @@
 "use server";
+import { kickEmailDispatch } from "@/services/email/dispatch";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { publicEnv } from "@/lib/env";
@@ -146,6 +147,7 @@ export async function submitAccessRequestAction(_: AuthState, form: FormData): P
     p_role: parsed.data.role,
   });
   if (error) return { error: localizeError(error, locale) };
+  kickEmailDispatch();
   redirect("/onboarding/company");
 }
 

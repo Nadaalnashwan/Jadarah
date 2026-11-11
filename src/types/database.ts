@@ -14,6 +14,194 @@ export type Database = {
   }
   public: {
     Tables: {
+      assessment_answer_files: {
+        Row: {
+          id: string
+          submission_id: string
+          question_id: string
+          candidate_id: string
+          storage_path: string
+          file_name: string
+          mime_type: string
+          size_bytes: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          submission_id: string
+          question_id: string
+          candidate_id: string
+          storage_path: string
+          file_name: string
+          mime_type: string
+          size_bytes: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          submission_id?: string
+          question_id?: string
+          candidate_id?: string
+          storage_path?: string
+          file_name?: string
+          mime_type?: string
+          size_bytes?: number
+          created_at?: string
+        }
+        Relationships: []
+      }
+      interview_attachments: {
+        Row: {
+          id: string
+          interview_id: string
+          company_id: string
+          uploaded_by: string | null
+          uploader_role: string
+          storage_path: string
+          file_name: string
+          mime_type: string
+          size_bytes: number
+          shared_with_candidate: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          interview_id: string
+          company_id: string
+          uploaded_by?: string | null
+          uploader_role: string
+          storage_path: string
+          file_name: string
+          mime_type: string
+          size_bytes: number
+          shared_with_candidate?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          interview_id?: string
+          company_id?: string
+          uploaded_by?: string | null
+          uploader_role?: string
+          storage_path?: string
+          file_name?: string
+          mime_type?: string
+          size_bytes?: number
+          shared_with_candidate?: boolean
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_outbox: {
+        Row: {
+          id: string
+          idempotency_key: string
+          template: string
+          recipient_user: string | null
+          recipient_email: string
+          locale: string
+          payload: Json
+          notification_id: string | null
+          invitation_id: string | null
+          status: string
+          attempts: number
+          max_attempts: number
+          next_attempt_at: string
+          locked_until: string | null
+          provider: string | null
+          provider_message_id: string | null
+          last_error: string | null
+          created_at: string
+          updated_at: string
+          sent_at: string | null
+        }
+        Insert: {
+          id?: string
+          idempotency_key: string
+          template: string
+          recipient_user?: string | null
+          recipient_email: string
+          locale?: string
+          payload?: Json
+          notification_id?: string | null
+          invitation_id?: string | null
+          status?: string
+          attempts?: number
+          max_attempts?: number
+          next_attempt_at?: string
+          locked_until?: string | null
+          provider?: string | null
+          provider_message_id?: string | null
+          last_error?: string | null
+          created_at?: string
+          updated_at?: string
+          sent_at?: string | null
+        }
+        Update: {
+          id?: string
+          idempotency_key?: string
+          template?: string
+          recipient_user?: string | null
+          recipient_email?: string
+          locale?: string
+          payload?: Json
+          notification_id?: string | null
+          invitation_id?: string | null
+          status?: string
+          attempts?: number
+          max_attempts?: number
+          next_attempt_at?: string
+          locked_until?: string | null
+          provider?: string | null
+          provider_message_id?: string | null
+          last_error?: string | null
+          created_at?: string
+          updated_at?: string
+          sent_at?: string | null
+        }
+        Relationships: []
+      }
+      video_webhook_events: {
+        Row: {
+          dedupe_key: string
+          event_id: string | null
+          event_type: string
+          room_name: string | null
+          interview_id: string | null
+          occurred_at: string | null
+          received_at: string
+          outcome: string | null
+        }
+        Insert: {
+          dedupe_key: string
+          event_id?: string | null
+          event_type: string
+          room_name?: string | null
+          interview_id?: string | null
+          occurred_at?: string | null
+          received_at?: string
+          outcome?: string | null
+        }
+        Update: {
+          dedupe_key?: string
+          event_id?: string | null
+          event_type?: string
+          room_name?: string | null
+          interview_id?: string | null
+          occurred_at?: string | null
+          received_at?: string
+          outcome?: string | null
+        }
+        Relationships: []
+      }
       ai_analysis_records: {
         Row: {
           company_id: string | null
@@ -572,6 +760,8 @@ export type Database = {
           role: string
           joined_at: string
           left_at: string | null
+          source: string
+          daily_session_id: string | null
         }
         Insert: {
           id?: string
@@ -580,6 +770,8 @@ export type Database = {
           role: string
           joined_at?: string
           left_at?: string | null
+          source?: string
+          daily_session_id?: string | null
         }
         Update: {
           id?: string
@@ -588,6 +780,8 @@ export type Database = {
           role?: string
           joined_at?: string
           left_at?: string | null
+          source?: string
+          daily_session_id?: string | null
         }
         Relationships: [
           {
@@ -3154,6 +3348,8 @@ export type Database = {
       }
       interviews: {
         Row: {
+          video_started_at: string | null
+          video_ended_at: string | null
           application_id: string
           candidate_confirmed_at: string | null
           video_room_name: string | null
@@ -3999,6 +4195,60 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      register_assessment_file: { Args: { p_assignment: string; p_question: string; p_path: string; p_name: string; p_mime: string; p_size: number }; Returns: string }
+      remove_assessment_file: { Args: { p_file: string }; Returns: string }
+      register_interview_attachment: { Args: { p_interview: string; p_path: string; p_name: string; p_mime: string; p_size: number; p_share?: boolean }; Returns: string }
+      set_interview_attachment_shared: { Args: { p_attachment: string; p_share: boolean }; Returns: undefined }
+      remove_interview_attachment: { Args: { p_attachment: string }; Returns: string }
+      interview_access_role: { Args: { p_interview: string }; Returns: string | null }
+      can_review_submission: { Args: { p_submission: string }; Returns: boolean }
+      accept_company_invitation_by_token: { Args: { p_token: string }; Returns: string }
+      invitation_preview: {
+        Args: { p_token: string }
+        Returns: {
+          company_name_en: string
+          company_name_ar: string
+          role: Database["public"]["Enums"]["membership_role"]
+          state: string
+          email_masked: string
+          for_current_user: boolean
+          expires_at: string
+        }[]
+      }
+      revoke_company_invitation: { Args: { p_invitation: string }; Returns: undefined }
+      resend_company_invitation: { Args: { p_invitation: string }; Returns: undefined }
+      company_invitation_delivery: {
+        Args: { p_company: string }
+        Returns: { invitation_id: string; status: string; attempts: number; last_attempt: string }[]
+      }
+      admin_retry_email: { Args: { p_id: string }; Returns: undefined }
+      assessment_in_use_for_manager: { Args: { p_assessment: string }; Returns: boolean | null }
+      health_ping: { Args: Record<PropertyKey, never>; Returns: Json }
+      internal_rate_limit: { Args: { p_service_key: string; p_key: string; p_limit: number; p_window_seconds: number }; Returns: boolean }
+      internal_ai_cooldowns: { Args: { p_service_key: string }; Returns: { key: string; until: string }[] }
+      internal_ai_cooldown_note: { Args: { p_service_key: string; p_key: string; p_seconds: number; p_reason: string }; Returns: undefined }
+      internal_claim_emails: {
+        Args: { p_service_key: string; p_limit?: number }
+        Returns: Database["public"]["Tables"]["email_outbox"]["Row"][]
+      }
+      internal_complete_email: {
+        Args: { p_service_key: string; p_id: string; p_ok: boolean; p_provider: string; p_message_id: string | null; p_error: string | null; p_retryable: boolean }
+        Returns: string
+      }
+      internal_ingest_daily_event: {
+        Args: {
+          p_service_key: string
+          p_event_id: string
+          p_type: string
+          p_occurred_at: string
+          p_room: string | null
+          p_session_id: string | null
+          p_user_id: string | null
+          p_joined_at: string | null
+          p_duration_seconds: number | null
+        }
+        Returns: string
+      }
       attach_job_task: {
         Args: { p_assessment: string | null; p_job: string }
         Returns: undefined

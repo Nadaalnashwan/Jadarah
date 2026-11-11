@@ -9,6 +9,7 @@ import { formatDateTime, pick, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { ConfirmAttendance } from "./confirm";
+import { InterviewAttachments } from "@/features/interviews/attachments";
 
 export default async function CandidateInterviews() {
   const s = await requireCandidate();
@@ -19,7 +20,7 @@ export default async function CandidateInterviews() {
   const { data } = await supabase
     .from("interviews")
     .select(
-      "id, title, type, status, scheduled_at, ends_at, timezone, location, instructions, candidate_confirmed_at, application:applications!inner(id, candidate_id, job:jobs(title_en, title_ar, company:company_profiles(name_en, name_ar)))",
+      "id, company_id, title, type, status, scheduled_at, ends_at, timezone, location, instructions, candidate_confirmed_at, application:applications!inner(id, candidate_id, job:jobs(title_en, title_ar, company:company_profiles(name_en, name_ar)))",
     )
     .eq("application.candidate_id", s.userId)
     .order("scheduled_at");
@@ -88,6 +89,18 @@ export default async function CandidateInterviews() {
                     {L("View application", "عرض الطلب")}
                   </Link>
                 </div>
+                <details className="bg-surface-2 rounded-xl p-3">
+                  <summary className="cursor-pointer text-sm font-semibold">{L("Interview documents", "مستندات المقابلة")}</summary>
+                  <div className="mt-3">
+                    <InterviewAttachments
+                      interviewId={r.id}
+                      companyId={r.company_id}
+                      viewer="candidate"
+                      canUpload={r.status === "scheduled"}
+                      currentUserId={s.userId}
+                    />
+                  </div>
+                </details>
               </Card>
             </li>
           ))}

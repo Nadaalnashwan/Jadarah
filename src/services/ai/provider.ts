@@ -3,6 +3,8 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { rateLimitUser } from "@/lib/rate-limit";
+import { hasServerKey, serverEnv } from "@/lib/server-env";
+import { rpcClient } from "@/lib/supabase/rpc-client";
 import {
   AI_TIMEOUT_MS,
   aiStatus,
@@ -242,7 +244,33 @@ function cooldownKey(p: ProviderConfig) {
 }
 function noteFailure(p: ProviderConfig, code: string) {
   const ms = COOLDOWN_MS.find(([re]) => re.test(code))?.[1];
-  if (ms) cooldown.set(cooldownKey(p), Date.now() + ms);
+  if (!ms) return;
+  const key = cooldownKey(p);
+  cooldown.set(key, Date.now() + ms);
+  // Shared with every instance, so an exhausted quota is not retried by each server separately.
+  if (hasServerKey())
+    void rpcClient()
+      .rpc("internal_ai_cooldown_note", { p_service_key: serverEnv.serverKey(), p_key: key, p_seconds: Math.round(ms / 1000), p_reason: code.slice(0, 80) })
+      .then(() => undefined, () => undefined);
+}
+
+/** Pull cooldowns noted by other instances (at most every 20 s; never blocks a request for long). */
+const SHARED_REFRESH_MS = 20_000;
+const gs = globalThis as typeof globalThis & { __jadarahAiCooldownSync?: number };
+async function syncSharedCooldowns() {
+  if (!hasServerKey() || Date.now() - (gs.__jadarahAiCooldownSync ?? 0) < SHARED_REFRESH_MS) return;
+  gs.__jadarahAiCooldownSync = Date.now();
+  try {
+    const { data } = await rpcClient()
+      .rpc("internal_ai_cooldowns", { p_service_key: serverEnv.serverKey() })
+      .abortSignal(AbortSignal.timeout(1000));
+    for (const row of data ?? []) {
+      const until = Date.parse(row.until);
+      if (until > (cooldown.get(row.key) ?? 0)) cooldown.set(row.key, until);
+    }
+  } catch {
+    // Local cooldowns still apply.
+  }
 }
 function available(chain: ProviderConfig[]) {
   const now = Date.now();
@@ -316,6 +344,7 @@ export async function generateJSON<T extends z.ZodTypeAny>(
   input: CallInput,
   schema: T,
 ): Promise<{ data: z.infer<T>; provider: ProviderName; model: string; latencyMs: number }> {
+  await syncSharedCooldowns();
   const chain = available(
     routeForOperation(taskOf(input), input.operation, { needsFile: Boolean(input.file && input.file.mimeType !== "text/plain") }),
   );
@@ -330,11 +359,13 @@ export async function generateJSON<T extends z.ZodTypeAny>(
       if (hit && Date.now() - hit.at < CACHE_TTL)
         return { data: hit.value as z.infer<T>, provider: p.name, model: p.model, latencyMs: 0 };
     }
+    let repair = "";
     for (let attempt = 0; attempt < 2; attempt++) {
       if (attempt > 0 && Date.now() > deadline) break;
       const started = Date.now();
       try {
-        const out = await callProvider(p, input, schema);
+        // Repair pass: the second attempt is told which fields failed validation (paths only, no content).
+        const out = await callProvider(p, repair ? { ...input, prompt: `${input.prompt}\n\n${repair}` } : input, schema);
         const parsed = schema.safeParse(parseJson(out.text));
         const latency = Date.now() - started;
         if (!parsed.success)
@@ -358,6 +389,7 @@ export async function generateJSON<T extends z.ZodTypeAny>(
           return { data: parsed.data, provider: p.name, model: p.model, latencyMs: latency };
         }
         lastError = "schema_mismatch";
+        repair = repairInstruction(parsed.error.issues);
       } catch (e) {
         const err = e instanceof ProviderError ? e : wrapFetchError(e, p.name);
         lastError = err.code;
@@ -378,6 +410,15 @@ export async function generateJSON<T extends z.ZodTypeAny>(
     }
   }
   throw new AIUnavailableError(lastError);
+}
+
+/** A short, content-free description of validation failures for one repair attempt. */
+export function repairInstruction(issues: { path: PropertyKey[]; message: string }[]): string {
+  const list = issues
+    .slice(0, 8)
+    .map((i) => `- ${i.path.map(String).join(".") || "(root)"}: ${i.message.slice(0, 120)}`)
+    .join("\n");
+  return `IMPORTANT: your previous response did not match the required JSON schema.\nFix these fields and return ONLY the corrected JSON object:\n${list}`;
 }
 
 async function callProvider(base: ProviderConfig, input: CallInput, schema: z.ZodTypeAny): Promise<RawOut> {
@@ -445,6 +486,7 @@ async function openStream(p: ProviderConfig, input: CallInput): Promise<Response
  * text is emitted; mid-stream failures end the stream (logged).
  */
 export async function streamText(input: CallInput): Promise<StreamResult> {
+  await syncSharedCooldowns();
   const chain = available(routeForOperation(taskOf(input), input.operation));
   if (!chain.length) throw new AIUnavailableError("not_configured");
   if (!(await rateLimitUser("ai", input.userId, 20, 60_000))) throw new AIUnavailableError("rate_limited");

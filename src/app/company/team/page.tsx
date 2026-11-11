@@ -3,7 +3,9 @@ import { requireCompanyMember } from "@/lib/auth/session";
 import { formatDate, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
-import { InviteForm, MemberRow } from "./team-client";
+import { publicEnv } from "@/lib/env";
+import { invitationUrl } from "@/services/email/templates";
+import { InvitationRow, InviteForm, MemberRow } from "./team-client";
 
 export default async function TeamPage() {
   const s = await requireCompanyMember(["company_admin"]);
@@ -21,10 +23,14 @@ export default async function TeamPage() {
       .order("created_at"),
     supabase
       .from("company_invitations")
-      .select("id, email, role, status, expires_at")
+      .select("id, email, role, status, expires_at, token")
       .eq("company_id", cid)
-      .eq("status", "pending"),
+      .eq("status", "pending")
+      .order("created_at", { ascending: false }),
   ]);
+  // Delivery state per invitation (absent before migration 0029 → shown as "link only").
+  const { data: delivery } = await supabase.rpc("company_invitation_delivery", { p_company: cid });
+  const deliveryBy = new Map((delivery ?? []).map((d) => [d.invitation_id, d]));
   return (
     <>
       <PageHeader
@@ -66,12 +72,16 @@ export default async function TeamPage() {
               {(invites ?? []).length ? (
                 <ul className="space-y-2 text-sm">
                   {invites!.map((i) => (
-                    <li key={i.id} className="flex justify-between rounded-xl border p-3">
-                      <span dir="ltr">{i.email}</span>
-                      <span className="text-subtle text-xs">
-                        {t.roles[i.role]} · {formatDate(i.expires_at, locale)}
-                      </span>
-                    </li>
+                    <InvitationRow
+                      key={i.id}
+                      id={i.id}
+                      email={i.email}
+                      roleLabel={t.roles[i.role]}
+                      expires={formatDate(i.expires_at, locale)}
+                      expired={new Date(i.expires_at) < new Date()}
+                      link={invitationUrl(publicEnv.siteUrl, i.token)}
+                      delivery={(deliveryBy.get(i.id)?.status as string | undefined) ?? null}
+                    />
                   ))}
                 </ul>
               ) : (

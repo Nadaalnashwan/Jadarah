@@ -24,6 +24,8 @@ import {
   type Attempt,
   type AttemptQuestion,
 } from "@/features/assessments/candidate-actions";
+import { listAttemptFiles, type AnswerFile } from "@/features/assessments/file-actions";
+import { FileAnswer } from "@/features/assessments/file-answer";
 import { useI18n } from "@/lib/i18n/client";
 import { tx } from "@/lib/i18n/config";
 import { cn } from "@/lib/utils";
@@ -158,6 +160,22 @@ function AttemptWorkspace({ attempt }: { attempt: Attempt }) {
   const [remaining, setRemaining] = useState(() => new Date(attempt.ends_at).getTime() - Date.now());
   const [submitting, setSubmitting] = useState(false);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const [files, setFiles] = useState<Record<string, AnswerFile[]>>({});
+  const hasFileQuestions = qs.some((q) => q.type === "file_upload");
+
+  useEffect(() => {
+    if (!hasFileQuestions) return;
+    let alive = true;
+    void listAttemptFiles(attempt.submission_id).then((rows) => {
+      if (!alive) return;
+      const by: Record<string, AnswerFile[]> = {};
+      for (const r of rows) (by[r.question_id] ??= []).push(r);
+      setFiles(by);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [attempt.submission_id, hasFileQuestions]);
 
   useEffect(() => {
     const t = setInterval(() => setRemaining(new Date(attempt.ends_at).getTime() - Date.now()), 1000);
@@ -188,10 +206,11 @@ function AttemptWorkspace({ attempt }: { attempt: Attempt }) {
     persist(q.id, next, delay);
   }
 
-  const answered = useMemo(
-    () => qs.filter((q) => drafts[q.id].selected.length > 0 || drafts[q.id].text.trim() !== "").length,
-    [qs, drafts],
+  const isDone = useCallback(
+    (qid: string) => drafts[qid].selected.length > 0 || drafts[qid].text.trim() !== "" || (files[qid]?.length ?? 0) > 0,
+    [drafts, files],
   );
+  const answered = useMemo(() => qs.filter((q) => isDone(q.id)).length, [qs, isDone]);
   const anySaving = Object.values(saveState).some((s) => s === "saving");
   const q = qs[index];
   const mins = Math.max(0, Math.floor(remaining / 60000));
@@ -256,7 +275,7 @@ function AttemptWorkspace({ attempt }: { attempt: Attempt }) {
         <Card className="p-4">
           <ol className="grid grid-cols-5 gap-2" aria-label={L("Questions", "الأسئلة")}>
             {qs.map((qq, i) => {
-              const done = drafts[qq.id].selected.length > 0 || drafts[qq.id].text.trim() !== "";
+              const done = isDone(qq.id);
               return (
                 <li key={qq.id}>
                   <button
@@ -315,12 +334,37 @@ function AttemptWorkspace({ attempt }: { attempt: Attempt }) {
                 {locale === "ar" ? q.prompt_ar : q.prompt_en}
               </h2>
               <div className="mt-6">
-                <QuestionInput
-                  q={q}
-                  draft={drafts[q.id]}
-                  disabled={timeUp}
-                  onChange={(patch, delay) => update(q, patch, delay)}
-                />
+                {q.type === "file_upload" ? (
+                  <div className="flex flex-col gap-4">
+                    <FileAnswer
+                      assignmentId={attempt.assignment_id}
+                      submissionId={attempt.submission_id}
+                      questionId={q.id}
+                      files={files[q.id] ?? []}
+                      disabled={timeUp}
+                      onFilesChange={(update) => setFiles((f) => ({ ...f, [q.id]: update(f[q.id] ?? []) }))}
+                    />
+                    <label className="text-muted text-sm font-semibold" htmlFor={`note-${q.id}`}>
+                      {L("Note for the reviewer (optional)", "ملاحظة للمراجِع (اختياري)")}
+                    </label>
+                    <Textarea
+                      id={`note-${q.id}`}
+                      value={drafts[q.id].text}
+                      disabled={timeUp}
+                      onChange={(e) => update(q, { text: e.target.value }, 900)}
+                      rows={3}
+                      dir="auto"
+                      maxLength={4000}
+                    />
+                  </div>
+                ) : (
+                  <QuestionInput
+                    q={q}
+                    draft={drafts[q.id]}
+                    disabled={timeUp}
+                    onChange={(patch, delay) => update(q, patch, delay)}
+                  />
+                )}
               </div>
               {q.rubric && (
                 <details className="bg-surface-2 mt-6 rounded-2xl p-4 text-sm">

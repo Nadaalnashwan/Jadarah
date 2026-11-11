@@ -299,6 +299,7 @@ export const ar: Messages = {
   },
   admin: {
     nav: {
+      emails: "تسليم البريد",
       overview: "نظرة عامة",
       companies: "الشركات",
       accessRequests: "طلبات الانضمام",

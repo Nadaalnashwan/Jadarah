@@ -1,4 +1,5 @@
 "use server";
+import { kickEmailDispatch } from "@/services/email/dispatch";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -253,6 +254,7 @@ export async function applyToJob(
     }
     return { ok: false, error: localizeError(error, locale) };
   }
+  kickEmailDispatch();
   revalidatePath("/candidate", "layout");
   // A job with a practical task: go straight to it (no employer approval or manual assignment).
   const { data: app } = await supabase
@@ -277,6 +279,7 @@ export async function withdrawApplication(applicationId: string, form: FormData)
       `/candidate/applications/${applicationId}?error=${encodeURIComponent(localizeError(error, locale))}`,
     );
   }
+  kickEmailDispatch();
   revalidatePath("/candidate", "layout");
 }
 

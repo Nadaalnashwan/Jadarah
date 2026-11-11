@@ -1,4 +1,5 @@
 "use server";
+import { kickEmailDispatch } from "@/services/email/dispatch";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireCompanyMember } from "@/lib/auth/session";
@@ -142,6 +143,7 @@ export async function decideFinal(applicationId: string, input: unknown): Promis
     p_candidate_message: parsed.data.candidate_message || undefined,
   });
   if (error) return { ok: false, error: localizeError(error, locale) };
+  kickEmailDispatch();
   revalidatePath(`/company/applications/${applicationId}`, "layout");
   return { ok: true, message: locale === "ar" ? "سُجّل القرار واعتُمد التقييم." : "Decision recorded; evaluation finalized." };
 }
@@ -151,6 +153,7 @@ export async function shareFinalFeedback(applicationId: string, feedback: string
   const draft = await ensureDraft(supabase, applicationId, cid);
   const { error } = await supabase.rpc("share_final_feedback", { p_eval: draft.id, p_feedback: feedback });
   if (error) return { ok: false, error: localizeError(error, locale) };
+  kickEmailDispatch();
   revalidatePath(`/company/applications/${applicationId}/report`);
   return { ok: true, message: locale === "ar" ? "تمت مشاركة الملاحظات مع المرشح." : "Feedback shared with the candidate." };
 }

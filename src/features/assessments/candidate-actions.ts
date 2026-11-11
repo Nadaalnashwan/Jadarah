@@ -1,4 +1,5 @@
 "use server";
+import { kickEmailDispatch } from "@/services/email/dispatch";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireCandidate } from "@/lib/auth/session";
@@ -89,6 +90,7 @@ export async function submitAttempt(assignmentId: string): Promise<ActionResult>
   const supabase = await createClient();
   const { error } = await supabase.rpc("submit_assessment", { p_assignment: assignmentId });
   if (error) return { ok: false, error: localizeError(error, locale) };
+  kickEmailDispatch();
   revalidatePath("/candidate", "layout");
   return { ok: true };
 }

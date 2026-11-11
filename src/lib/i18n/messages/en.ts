@@ -301,6 +301,7 @@ export const en = {
   },
   admin: {
     nav: {
+      emails: "Email delivery",
       overview: "Overview",
       companies: "Companies",
       accessRequests: "Access requests",

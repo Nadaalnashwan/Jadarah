@@ -1,4 +1,5 @@
 "use server";
+import { kickEmailDispatch } from "@/services/email/dispatch";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireSuperAdmin } from "@/lib/auth/session";
@@ -30,6 +31,7 @@ export async function reviewAccessRequest(requestId: string, input: unknown): Pr
     p_note: p.data.note || undefined,
   });
   if (error) return { ok: false, error: localizeError(error, locale) };
+  kickEmailDispatch();
   revalidatePath("/admin/access-requests");
   return p.data.decision === "approve" ? ok(locale, "Access approved.", "تمت الموافقة.") : ok(locale, "Request rejected.", "تم رفض الطلب.");
 }

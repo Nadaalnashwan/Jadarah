@@ -8,6 +8,7 @@ import { formatDateTime, pick, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { getInterviewRubric } from "@/services/interview-rubric";
+import { InterviewAttachments } from "@/features/interviews/attachments";
 import {
   EvaluationForm,
   FeedbackForm,
@@ -35,6 +36,12 @@ export default async function InterviewDetail({ params }: { params: Promise<{ id
   const mine = iv.interview_evaluations.find((e) => e.interviewer_id === s.userId);
   const questions = [...iv.interview_questions].sort((a, b) => a.position - b.position);
   const rubric = await getInterviewRubric(supabase, s.activeMembership.company_id);
+  // Attendance (embedded call + verified Daily webhooks). Separate query so the page renders without it.
+  const { data: attendance } = await supabase
+    .from("interview_attendance")
+    .select("id, role, joined_at, left_at, user:profiles!interview_attendance_user_id_fkey(full_name)")
+    .eq("interview_id", id)
+    .order("joined_at");
   return (
     <>
       <PageHeader
@@ -194,6 +201,56 @@ export default async function InterviewDetail({ params }: { params: Promise<{ id
               )}
             </CardBody>
           </Card>
+          <Card>
+            <CardHeader
+              title={L("Documents", "المستندات")}
+              description={L(
+                "Internal unless you choose to share with the candidate.",
+                "داخلية ما لم تختر مشاركتها مع المرشح.",
+              )}
+            />
+            <CardBody>
+              <InterviewAttachments
+                interviewId={iv.id}
+                companyId={iv.company_id}
+                viewer="staff"
+                canUpload={(recruiter || isParticipant) && iv.status !== "cancelled"}
+                currentUserId={s.userId}
+                canManageAll={recruiter}
+              />
+            </CardBody>
+          </Card>
+          {(iv.video_started_at || (attendance ?? []).length > 0) && (
+            <Card>
+              <CardHeader title={L("Video session", "الجلسة المرئية")} />
+              <CardBody className="flex flex-col gap-2 text-sm">
+                {iv.video_started_at && (
+                  <p>
+                    {L("Started", "بدأت")}: <span className="ltr-nums">{formatDateTime(iv.video_started_at, locale, iv.timezone)}</span>
+                  </p>
+                )}
+                {iv.video_ended_at && (
+                  <p>
+                    {L("Ended", "انتهت")}: <span className="ltr-nums">{formatDateTime(iv.video_ended_at, locale, iv.timezone)}</span>
+                  </p>
+                )}
+                <ul className="text-muted flex flex-col gap-1">
+                  {(attendance ?? []).map((a) => (
+                    <li key={a.id} className="flex flex-wrap justify-between gap-2">
+                      <span>
+                        {(a.user as { full_name?: string } | null)?.full_name ?? "—"} ·{" "}
+                        {a.role === "candidate" ? L("Candidate", "المرشح") : L("Interviewer", "مُقابِل")}
+                      </span>
+                      <span className="ltr-nums text-xs">
+                        {formatDateTime(a.joined_at, locale, iv.timezone)}
+                        {a.left_at ? ` → ${formatDateTime(a.left_at, locale, iv.timezone)}` : ""}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </CardBody>
+            </Card>
+          )}
           {recruiter && iv.status === "scheduled" && (
             <Card>
               <CardHeader title={L("Manage", "الإدارة")} />

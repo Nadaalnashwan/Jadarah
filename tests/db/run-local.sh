@@ -39,11 +39,10 @@ export PGOPTIONS="-c client_min_messages=warning"
 PSQL=(psql -h /tmp -p "$PORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -q -X)
 "${PSQL[@]}" -f "$ROOT/tests/db/supabase-shim.sql"
 for f in "$ROOT"/supabase/migrations/*.sql; do
-  # The live project loaded the demo seed functions before 0011 (which revokes them).
-  case "$(basename "$f")" in 20261110000011_*) "${PSQL[@]}" -f "$ROOT/supabase/seed/demo_seed.sql" >/dev/null ;; esac
   "${PSQL[@]}" -f "$f" >/dev/null || { echo "MIGRATION FAILED: $(basename "$f")"; exit 1; }
 done
 # Fictional demo data (local only; random throwaway password).
+"${PSQL[@]}" -f "$ROOT/supabase/seed/demo_seed.sql" >/dev/null
 "${PSQL[@]}" -c "select public.seed_demo('local-only-' || md5(random()::text))" >/dev/null && echo "demo seed loaded" 
 echo "migrations applied: $(ls "$ROOT"/supabase/migrations/*.sql | wc -l)"
 

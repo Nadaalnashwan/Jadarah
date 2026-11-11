@@ -10,6 +10,8 @@ import { canCreateInterview, manualTargets, type ApplicationStatus } from "@/lib
 import { formatDate, formatDateTime, formatNumber, pick, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
+import { assessmentFileUrl } from "@/features/assessments/file-actions";
+import { SignedFileLink } from "@/features/assessments/file-download";
 import { matchJob } from "@/services/candidate";
 import { withSemantics } from "@/services/semantic";
 import type { CandidateSkillRecord } from "@/lib/domain/matching";
@@ -112,6 +114,16 @@ export default async function CompanyApplicationDetail({
       .or(`company_id.is.null,company_id.eq.${cid}`)
       .order("title_en"),
   ]);
+  // Submitted deliverables (file_upload answers). Separate query: if the files table is not available
+  // yet, the rest of the page still renders.
+  const submissionIds = (asg ?? []).map((x) => x.submission?.id).filter((x): x is string => Boolean(x));
+  const { data: answerFiles } = submissionIds.length
+    ? await supabase
+        .from("assessment_answer_files")
+        .select("id, submission_id, question_id, file_name, size_bytes")
+        .in("submission_id", submissionIds)
+        .order("created_at")
+    : { data: [] as { id: string; submission_id: string; question_id: string; file_name: string; size_bytes: number }[] };
   const status = app.status as ApplicationStatus;
   const records: CandidateSkillRecord[] = (skills ?? [])
     .filter((x) => x.skill)
@@ -317,8 +329,21 @@ export default async function CompanyApplicationDetail({
                               className="bg-surface-2 mt-2 max-h-60 overflow-auto rounded-xl p-3 font-mono text-xs whitespace-pre-wrap"
                               dir="auto"
                             >
-                              {ans?.text_answer || L("(no answer)", "(بلا إجابة)")}
+                              {ans?.text_answer || (q.type === "file_upload" ? L("(no note)", "(بلا ملاحظة)") : L("(no answer)", "(بلا إجابة)"))}
                             </pre>
+                            {q.type === "file_upload" && (
+                              <div className="mt-2 flex flex-col gap-2">
+                                {(answerFiles ?? []).filter((f) => f.submission_id === sub.id && f.question_id === q.id).length === 0 ? (
+                                  <p className="text-subtle text-xs">{L("No files submitted.", "لم تُرفع ملفات.")}</p>
+                                ) : (
+                                  (answerFiles ?? [])
+                                    .filter((f) => f.submission_id === sub.id && f.question_id === q.id)
+                                    .map((f) => (
+                                      <SignedFileLink key={f.id} name={f.file_name} size={f.size_bytes} getUrl={assessmentFileUrl.bind(null, f.id)} />
+                                    ))
+                                )}
+                              </div>
+                            )}
                             <EvaluateAnswerForm
                               applicationId={id}
                               submissionId={sub.id}

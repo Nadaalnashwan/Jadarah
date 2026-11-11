@@ -1,4 +1,5 @@
 "use server";
+import { kickEmailDispatch } from "@/services/email/dispatch";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireSuperAdmin } from "@/lib/auth/session";
@@ -24,6 +25,7 @@ export async function reviewCompany(
     p_notes: String(form.get("notes") ?? "").slice(0, 1000),
   });
   if (error) return { ok: false, error: localizeError(error, locale) };
+  kickEmailDispatch();
   revalidatePath("/admin", "layout");
   return {
     ok: true,
@@ -205,4 +207,16 @@ export async function resetDemo(_: ActionResult | null, form: FormData): Promise
     };
   revalidatePath("/admin", "layout");
   return { ok: true, message: JSON.stringify(data) };
+}
+
+/** Requeue a permanently failed email (Super Admin). Same outbox row → no duplicate. */
+export async function retryEmail(id: string): Promise<ActionResult> {
+  await requireSuperAdmin();
+  const { locale } = await getI18n();
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_retry_email", { p_id: id });
+  if (error) return { ok: false, error: localizeError(error, locale) };
+  kickEmailDispatch();
+  revalidatePath("/admin/emails");
+  return { ok: true };
 }

@@ -1,4 +1,6 @@
 "use server";
+import { kickEmailDispatch } from "@/services/email/dispatch";
+import { emailConfig } from "@/services/email/provider";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -294,6 +296,7 @@ export async function changeStatus(
     p_candidate_message: parsed.data.candidate_message ?? "",
   });
   if (error) return { ok: false, error: localizeError(error, locale) };
+  kickEmailDispatch();
   revalidatePath(`/company/applications/${applicationId}`);
   revalidatePath("/company", "layout");
   return {
@@ -339,6 +342,7 @@ export async function assignAssessment(
     p_due_at: due ? new Date(due).toISOString() : undefined,
   });
   if (error) return { ok: false, error: localizeError(error, locale) };
+  kickEmailDispatch();
   revalidatePath(`/company/applications/${applicationId}`);
   return {
     ok: true,
@@ -386,6 +390,7 @@ export async function shareAssessmentFeedback(
     p_feedback: String(form.get("feedback") ?? "").slice(0, 2000),
   });
   if (error) return { ok: false, error: localizeError(error, locale) };
+  kickEmailDispatch();
   revalidatePath(`/company/applications/${applicationId}`);
   return {
     ok: true,
@@ -425,6 +430,7 @@ export async function shortlistForInterview(applicationId: string): Promise<Acti
     p_candidate_message: "",
   });
   if (error) return { ok: false, error: localizeError(error, locale) };
+  kickEmailDispatch();
   revalidatePath(`/company/applications/${applicationId}`);
   return {
     ok: true,
@@ -474,6 +480,7 @@ export async function scheduleInterview(
     p_interviewers: interviewers,
   });
   if (error) return { ok: false, error: localizeError(error, locale) };
+  kickEmailDispatch();
   // Private Daily room for video interviews (best-effort: it is also created on first join).
   await ensureVideoRoom(supabase, data as string).catch((e) =>
     console.error("daily: room creation failed:", e instanceof Error ? e.message : "unknown"),
@@ -512,6 +519,7 @@ export async function setInterviewStatus(
     p_status: status,
   });
   if (error) return { ok: false, error: localizeError(error, locale) };
+  kickEmailDispatch();
   if (status === "cancelled")
     await removeVideoRoom(supabase, interviewId).catch((e) =>
       console.error("daily: room deletion failed:", e instanceof Error ? e.message : "unknown"),
@@ -537,6 +545,7 @@ export async function rescheduleInterview(
     p_new_time: zonedToUtc(local, tz),
   });
   if (error) return { ok: false, error: localizeError(error, locale) };
+  kickEmailDispatch();
   await syncVideoRoomWindow(supabase, interviewId).catch((e) =>
     console.error("daily: room window update failed:", e instanceof Error ? e.message : "unknown"),
   );
@@ -655,6 +664,7 @@ export async function toggleFeedbackShare(
   await recruiter();
   const supabase = await createClient();
   await supabase.rpc("share_interview_feedback", { p_feedback: feedbackId, p_share: share });
+  if (share) kickEmailDispatch();
   revalidatePath(`/company/interviews/${interviewId}`);
 }
 
@@ -670,14 +680,52 @@ export async function inviteMember(_: ActionResult | null, form: FormData): Prom
     p_role: role,
   });
   if (error) return { ok: false, error: localizeError(error, locale) };
+  kickEmailDispatch();
   revalidatePath("/company/team");
+  const delivering = emailConfig().configured;
   return {
     ok: true,
-    message:
-      locale === "ar"
-        ? "أُنشئت الدعوة. يقبلها العضو بعد تسجيل الدخول بنفس البريد."
-        : "Invitation created. The person accepts it after signing in with that email.",
+    message: delivering
+      ? locale === "ar"
+        ? "أُرسلت الدعوة بالبريد. يقبلها العضو بعد تسجيل الدخول بنفس البريد."
+        : "Invitation emailed. The person accepts it after signing in with that email."
+      : locale === "ar"
+        ? "أُنشئت الدعوة. البريد غير مُفعّل بعد، فانسخ رابط الدعوة وأرسله بنفسك."
+        : "Invitation created. Email isn't enabled yet, so copy the invitation link and send it yourself.",
   };
+}
+
+export async function revokeInvitation(invitationId: string): Promise<ActionResult> {
+  await requireCompanyMember(["company_admin"]);
+  const { locale } = await getI18n();
+  if (!z.string().uuid().safeParse(invitationId).success) return { ok: false, error: localizeError(null, locale) };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("revoke_company_invitation", { p_invitation: invitationId });
+  if (error) return { ok: false, error: localizeError(error, locale) };
+  revalidatePath("/company/team");
+  return { ok: true };
+}
+
+export async function resendInvitation(invitationId: string): Promise<ActionResult> {
+  await requireCompanyMember(["company_admin"]);
+  const { locale } = await getI18n();
+  if (!z.string().uuid().safeParse(invitationId).success) return { ok: false, error: localizeError(null, locale) };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("resend_company_invitation", { p_invitation: invitationId });
+  if (error) return { ok: false, error: localizeError(error, locale) };
+  kickEmailDispatch();
+  revalidatePath("/company/team");
+  return { ok: true };
+}
+
+/** Accept from the emailed link. The database enforces: same confirmed email, pending, not expired. */
+export async function acceptInvitationByToken(token: string): Promise<void> {
+  await requireSession(`/invitations/accept?token=${encodeURIComponent(token)}`);
+  if (!z.string().uuid().safeParse(token).success) redirect("/invitations/accept?error=1");
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("accept_company_invitation_by_token", { p_token: token });
+  if (error) redirect(`/invitations/accept?token=${encodeURIComponent(token)}&error=1`);
+  redirect("/company");
 }
 
 export async function updateMember(
