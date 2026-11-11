@@ -107,21 +107,25 @@ export function CompanyIdentity({
   locale,
   size = "md",
   showSector = true,
+  heading = false,
   className,
 }: {
   company: CompanyLike;
   locale: "ar" | "en";
   size?: keyof typeof SIZE;
   showSector?: boolean;
+  /** Render the name as the page heading (profile pages). */
+  heading?: boolean;
   className?: string;
 }) {
+  const Name = heading ? "h1" : "span";
   const name = locale === "ar" ? company.name_ar : company.name_en;
   const sector = locale === "ar" ? company.sector_ar : company.sector_en;
   return (
     <span className={cn("flex min-w-0 items-center gap-3", className)}>
       <CompanyMark company={company} size={size} />
       <span className="min-w-0">
-        <span className={cn("block truncate font-bold", size === "lg" ? "text-lg" : "text-sm")}>{name}</span>
+        <Name className={cn("block truncate font-bold", heading ? "text-2xl" : size === "lg" ? "text-lg" : "text-sm")}>{name}</Name>
         {showSector && sector && <span className="text-subtle block truncate text-xs">{sector}</span>}
       </span>
     </span>

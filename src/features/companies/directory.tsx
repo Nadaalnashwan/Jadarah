@@ -79,7 +79,7 @@ export function CompanyProfile({
   return (
     <div className="flex flex-col gap-8">
       <section className="surface-card flex flex-col gap-5 p-6 sm:p-8">
-        <CompanyIdentity company={c} locale={locale} size="lg" />
+        <CompanyIdentity company={c} locale={locale} size="lg" heading />
         {description && <p className="text-muted max-w-2xl leading-relaxed">{description}</p>}
         <dl className="grid gap-3 text-sm sm:grid-cols-3">
           {c.organization_type && (

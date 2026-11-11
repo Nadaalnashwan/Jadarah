@@ -155,7 +155,7 @@ export const ar: Messages = {
     footerPrivacy: "الخصوصية",
     footerTerms: "الشروط",
     footerContact: "تواصل معنا",
-    footerNote: "الشركات والأشخاص في العرض التجريبي خياليون.",
+    footerNote: "الفرص الموسومة «محاكاة» ليست شواغر حقيقية. الحسابات التجريبية خيالية.",
   },
   auth: {
     signInTitle: "مرحبًا بعودتك",

@@ -34,3 +34,10 @@ Candidate A cannot read B's records; companies are isolated; interviewers see on
 - **Final evaluation:** company-internal (RLS); workflow columns writable only via RPCs; finalized reports locked; candidates see only explicitly shared feedback via a candidate-scoped RPC.
 - Found/fixed: `'use server'` non-function export broke CV upload (now guarded by a unit test); companies could not create assessments (RLS on INSERT…RETURNING, 0015); `ON CONFLICT DO NOTHING` swallowed double-booking (0017).
 - Owner to-dos: enable leaked-password protection; custom SMTP; MFA for Super Admins.
+
+## B2B access and assessment confidentiality (0020–0023)
+- **Employer access:** no public organization creation; sign-up is candidate-only; employer access is a request reviewed by a Super Admin. Every employer policy and RPC checks the subscription through `has_company_role`; a paused workspace exposes nothing.
+- **Branding:** a logo is shown only when the identity is verified **and** usage is granted; otherwise a neutral tile. No organization is presented as a partner.
+- **Reference library:** assessor content (answer expectations, guidance) is stored in a Super Admin-only table; recruiters retrieve rubric structure only; candidates cannot read references at all. Originals are kept in a private bucket.
+- **Generated assessments:** never auto-published; approval re-runs validation (including assessor-leakage and legacy-branding checks). Assessor guides and assessor files are company-internal; candidates get candidate files through 60 s signed URLs only when assigned. File names containing legacy branding are rejected by the database.
+- Verified live by `tests/integration/assessment-security.test.ts` and `tests/integration/b2b.test.ts`.

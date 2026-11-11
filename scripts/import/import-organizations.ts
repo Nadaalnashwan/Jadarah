@@ -28,7 +28,6 @@ const SHORT: Record<string, string> = {
   "ALM-006": "sdaia", "ALM-007": "sipchem", "ALM-008": "srsa", "ALM-009": "mof", "ALM-010": "sidf",
 };
 const ROLE_LABEL = { company_admin: "Company Admin", recruiter: "Recruiter", interviewer: "Interviewer" } as const;
-const TYPE_AR: Record<string, string> = {};
 
 function table(sheet: { rows: string[][] }) {
   const [hdr, ...rows] = sheet.rows;

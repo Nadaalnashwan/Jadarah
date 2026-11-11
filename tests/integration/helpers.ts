@@ -3,6 +3,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { config } from "dotenv";
+import { onTestFinished } from "vitest";
 import type { Database } from "../../src/types/database";
 
 config({ path: ".env.local" });
@@ -77,5 +78,9 @@ export async function freshJob(recruiter: SupabaseClient<Database>, companyId: s
     .select("id")
     .single();
   if (error) throw new Error(`freshJob failed: ${error.message}`);
+  // Keep test roles out of public listings once the test ends.
+  onTestFinished(async () => {
+    await recruiter.from("jobs").update({ status: "closed" }).eq("id", data.id);
+  });
   return data;
 }

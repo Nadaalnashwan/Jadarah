@@ -52,6 +52,9 @@ Never prefix secrets with `NEXT_PUBLIC_`.
 | `npm run admin:provision` | Idempotently create the first Super Admin |
 | `npm run ai:verify` | Verify AI/Daily keys, exact model IDs, real requests, latency |
 | `npm run ai:embed-skills` / `ai:embed-profiles` | Backfill pgvector embeddings (idempotent, content-hashed) |
+| `npx tsx scripts/import/apply-migration.ts <file>` | Apply one migration in a transaction and record it |
+| `npx tsx scripts/import/import-organizations.ts <package dir>` | Import/reconcile the ten registry organizations (idempotent) |
+| `npx tsx scripts/import/import-references.ts <package dir> [--skip-upload] [--only key]` | Import the assessment reference library (cached, idempotent) |
 | `npm run demo:rotate-password -- --yes` | Rotate the shared password of `@jadarah-demo.test` identities only |
 
 ## Documentation

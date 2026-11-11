@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import { ListingBadge } from "@/components/app/company-mark";
 import { JobStatusBadge } from "@/components/app/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, EmptyState, PageHeader } from "@/components/ui/primitives";
@@ -17,7 +18,7 @@ export default async function CompanyJobs({ searchParams }: { searchParams: Prom
   const supabase = await createClient();
   let q = supabase
     .from("jobs")
-    .select("id, title_en, title_ar, status, city, deadline, published_at, updated_at, applications(count)")
+    .select("id, title_en, title_ar, status, listing_type, city, deadline, published_at, updated_at, applications(count)")
     .eq("company_id", s.activeMembership.company_id);
   if (sp.status) q = q.eq("status", sp.status as "draft");
   const { data } = await q.order("updated_at", { ascending: false });
@@ -76,7 +77,8 @@ export default async function CompanyJobs({ searchParams }: { searchParams: Prom
                         className="hover:text-primary dark:hover:text-lavender font-semibold"
                       >
                         {pick(j, "title", locale)}
-                      </Link>
+                      </Link>{" "}
+                      <ListingBadge type={j.listing_type} locale={locale} />
                       <p className="text-subtle text-xs">{j.city}</p>
                     </td>
                     <td className="p-4">

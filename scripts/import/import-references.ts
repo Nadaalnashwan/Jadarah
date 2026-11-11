@@ -82,7 +82,18 @@ const SECTOR: Record<string, string> = {
 };
 
 // ---------------------------------------------------------------- extraction
+// One-time import model (owner-approved 2026-11-11: gemini-3.5-flash-lite while Flash quota is exhausted).
+const IMPORT_MODEL = process.env.IMPORT_GEMINI_MODEL || "";
+let lastCall = 0;
 async function geminiCall(body: unknown, model: string, timeoutMs = 120_000) {
+  // Pace requests (per-minute quotas) and drop Flash-only options for lite models.
+  const wait = lastCall + 4000 - Date.now();
+  if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+  lastCall = Date.now();
+  if (/lite/.test(model)) {
+    const b = body as { generationConfig?: { thinkingConfig?: unknown } };
+    if (b.generationConfig) delete b.generationConfig.thinkingConfig;
+  }
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY! },
@@ -97,7 +108,7 @@ async function geminiCall(body: unknown, model: string, timeoutMs = 120_000) {
   return out;
 }
 async function gemini(body: unknown) {
-  const models = [process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash", process.env.GEMINI_MODEL || "gemini-3.8-flash"];
+  const models = IMPORT_MODEL ? [IMPORT_MODEL] : [process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash", process.env.GEMINI_MODEL || "gemini-3.8-flash"];
   let last: unknown;
   for (const m of models)
     for (let i = 0; i < 2; i++)
@@ -121,23 +132,53 @@ async function pdfText(file: string): Promise<{ text: string; method: "text" | "
   const garbled = presentation > t.replace(/\s+/g, "").length * 0.05;
   if (t.replace(/\s+/g, "").length > 200 && !garbled) return { text: t, method: "text" };
   // Image-only (scanned) PDF → document vision transcription, cached by content hash.
+  // Some models stop after the first page, so multi-page documents are also transcribed page by
+  // page; the longer transcript is kept (".paged" cache marks that this was done).
+  const pages = (buf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) ?? []).length;
   const cache = join(CACHE, `${sha(buf)}.vision.txt`);
-  if (existsSync(cache)) return { text: readFileSync(cache, "utf8"), method: "vision" };
-  const { text: out } = await gemini({
-    contents: [
-      {
-        role: "user",
-        parts: [
-          { text: "Transcribe this document faithfully in its original language(s). Preserve headings, numbered lists and tables (as Markdown). Do not summarise, translate or add anything." },
-          { inline_data: { mime_type: "application/pdf", data: buf.toString("base64") } },
+  const paged = join(CACHE, `${sha(buf)}.vision.paged.txt`);
+  if (existsSync(paged)) return { text: readFileSync(paged, "utf8"), method: "vision" };
+  let out: string;
+  if (existsSync(cache)) out = readFileSync(cache, "utf8");
+  else {
+    out = (
+      await gemini({
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: "Transcribe EVERY page of this document faithfully in its original language(s), from the first page to the last. Preserve headings, numbered lists and tables (as Markdown). Do not summarise, skip, translate or add anything." },
+              { inline_data: { mime_type: "application/pdf", data: buf.toString("base64") } },
+            ],
+          },
         ],
-      },
-    ],
-    generationConfig: { temperature: 0, thinkingConfig: { thinkingLevel: "low" } },
-  });
-  if (out.replace(/\s+/g, "").length < 200) throw new Error(`vision extraction too short for ${basename(file)}`);
-  writeFileSync(cache, out);
-  return { text: out, method: "vision" };
+        generationConfig: { temperature: 0, maxOutputTokens: 32768, thinkingConfig: { thinkingLevel: "low" } },
+      })
+    ).text;
+    if (out.replace(/\s+/g, "").length < 200) throw new Error(`vision extraction too short for ${basename(file)}`);
+    writeFileSync(cache, out);
+  }
+  if (pages <= 1 || (process.env.VISION_PER_PAGE !== "1" && out.length >= pages * 650)) return { text: out, method: "vision" };
+  const parts: string[] = [];
+  for (let p = 1; p <= pages; p++) {
+    const { text: part } = await gemini({
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { text: `Transcribe ONLY page ${p} of ${pages} of this document, faithfully, in its original language(s). Preserve headings, lists and tables (as Markdown). Do not summarise, translate or add anything.` },
+            { inline_data: { mime_type: "application/pdf", data: buf.toString("base64") } },
+          ],
+        },
+      ],
+      generationConfig: { temperature: 0, maxOutputTokens: 16384, thinkingConfig: { thinkingLevel: "low" } },
+    });
+    parts.push(part.trim());
+  }
+  const joined = parts.join("\n\n---\n\n");
+  const transcript = joined.length > out.length ? joined : out;
+  writeFileSync(paged, transcript);
+  return { text: transcript, method: "vision" };
 }
 
 async function describeData(file: string) {
@@ -213,7 +254,7 @@ Keep the original language of the content (Arabic stays Arabic). role_en must be
   let text = "";
   let model = "";
   try {
-    model = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash";
+    model = IMPORT_MODEL || process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash";
     text = await geminiCall(
       {
         systemInstruction: { parts: [{ text: system }] },

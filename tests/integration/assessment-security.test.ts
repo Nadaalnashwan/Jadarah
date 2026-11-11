@@ -71,5 +71,15 @@ describe.skipIf(!integrationEnabled)("assessment materials & reference library s
     expect(rErr).toBeNull();
     expect(JSON.stringify(rub ?? [])).not.toMatch(/answer_expectations|assessor_guidance/);
     expect((await recruiter.from("reference_assessment_assessor").select("reference_id").limit(1)).data ?? []).toHaveLength(0);
+
+    // Reference originals live in a private, Super Admin-only bucket.
+    const original = "quality_engineer/assessor/ae46c3994ded-17_Quality_Engineer_Assessor_Guide_Answer_Key.pdf";
+    for (const who of [recruiter, candidate]) {
+      expect((await who.storage.from("reference-library").download(original)).error).not.toBeNull();
+      expect((await who.storage.from("reference-library").createSignedUrl(original, 60)).error).not.toBeNull();
+      expect((await who.storage.from("reference-library").list("quality_engineer/assessor")).data ?? []).toHaveLength(0);
+    }
+    const sa = await as("platform.admin");
+    expect((await sa.storage.from("reference-library").createSignedUrl(original, 60)).error).toBeNull();
   }, 120_000);
 });

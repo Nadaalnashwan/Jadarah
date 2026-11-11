@@ -23,8 +23,12 @@ Supabase project ref: `qqvvlornhvfykusaxaid`. All schema changes are versioned i
 | 0017 | fix_interview_double_booking | conflicts raise instead of being swallowed |
 | 0018 | video_interviews | Daily room columns, access RPC, attach/detach, attendance |
 | 0019 | final_evaluation | interview rubric, final evaluations (draft/finalized), comments, decision + feedback RPCs |
+| 0020 | b2b_subscriptions_access | organization registry fields, brand profiles, aliases, subscriptions, payments, access requests; `company_service_active()` inside `has_company_role`; credits trigger; `admin_provision_company`, `request_company_access`, `review_access_request`; public `create_company` revoked; daily expiry cron |
+| 0021 | fix_job_insert_returning | companies can create jobs (row-based SELECT policy) |
+| 0022 | catalogue_listing_types | `jobs.listing_type` verified/simulation (+ source URL and check date; verified requires a source), sector skill and job categories |
+| 0023 | assessment_reference_library | sector skills, reference assessments (recruiter-readable), reference assessor content (Super Admin only), reference embeddings, generations, assessor guides, assessment materials; private buckets `assessment-materials` and `reference-library` |
 
-Applying: migrations were applied through the Supabase MCP connection. For a fresh project use the Supabase CLI (`supabase db push`) or run the files in order.
+Applying: 0001–0019 were applied through the Supabase MCP connection; 0020–0023 with `npx tsx scripts/import/apply-migration.ts <file>` (one transaction, recorded in `supabase_migrations.schema_migrations`). For a fresh project use the Supabase CLI (`supabase db push`) or run the files in order.
 
 ## Status machine
 `submitted → under_review → assessment_pending → assessment_completed → shortlisted → interview_scheduled → interview_completed → hired`, with `rejected`/`hired`/`withdrawn` reachable from any open state (see `application_transition_allowed`). `assessment_completed`, `interview_scheduled`, `interview_completed` and `withdrawn` are set only by their workflows.
@@ -33,6 +37,11 @@ Applying: migrations were applied through the Supabase MCP connection. For a fre
 - Interview creation requires `was_shortlisted` and a shortlisted/interview stage (`create_interview` + `interviews_enforce_shortlist`).
 - Hiring is allowed from any open stage without shortlisting.
 - Job publication requires an approved company (`enforce_job_publication`).
+- Employer access needs an active user, an approved membership with an authorised role, an approved organization and an eligible subscription (`active`, not past `ends_on`) — enforced by `has_company_role` in every employer policy and RPC, and by `requireCompanyMember` (redirects to `/workspace-paused`). There is no organization-count limit.
+- Organizations are provisioned by a Super Admin only (`admin_provision_company`); employees request access (`request_company_access`, email confirmed) and a Super Admin approves or rejects (`review_access_request`, role adjustable). One pending request per user and organization.
+- Demonstration subscriptions carry `payment_status = 'demo'` and no price; payments cannot be recorded against them. Revenue reports separate recorded payments, contract value and demonstrations.
+- Simulation jobs are labelled in every listing; verified jobs need a source URL.
+- Assessment reference assessor content is readable by Super Admin only; recruiters receive rubric structure through `reference_rubrics_for_builder`. Candidate materials are readable only by candidates assigned the assessment; assessor materials and guides never.
 - Users cannot change their own `status`, `account_type`, `email`, `is_demo`; companies cannot change their own approval fields.
 
 ## Demo seed

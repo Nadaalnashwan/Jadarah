@@ -157,7 +157,7 @@ export const en = {
     footerPrivacy: "Privacy",
     footerTerms: "Terms",
     footerContact: "Contact",
-    footerNote: "Companies and people shown in the demo are fictional.",
+    footerNote: "Opportunities marked Simulation are not real vacancies. Demo accounts are fictional.",
   },
   auth: {
     signInTitle: "Welcome back",

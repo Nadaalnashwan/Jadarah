@@ -39,8 +39,8 @@ export default async function Terms() {
         {
           title: L("Demo environment", "البيئة التجريبية"),
           body: L(
-            "Demo companies and people are fictional and exist only to show how the product works.",
-            "الشركات والأشخاص في العرض التجريبي خياليون ولا وجود لهم إلا لتوضيح طريقة عمل المنتج.",
+            "Opportunities marked Simulation are practice scenarios, not vacancies, and do not represent the organization's hiring. Listing an organization does not imply a partnership or endorsement. Demo accounts and people are fictional.",
+            "الفرص الموسومة «محاكاة» سيناريوهات تدريبية وليست شواغر، ولا تمثّل توظيف الجهة. ظهور الجهة لا يعني شراكة أو اعتمادًا. الحسابات والأشخاص في العرض التجريبي خياليون.",
           ),
         },
       ]}
