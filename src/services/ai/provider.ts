@@ -6,7 +6,7 @@ import { rateLimitUser } from "@/lib/rate-limit";
 import {
   AI_TIMEOUT_MS,
   aiStatus,
-  routeFor,
+  routeForOperation,
   taskForOperation,
   type AIStatus,
   type AITask,
@@ -66,6 +66,16 @@ async function httpError(res: Response, provider: ProviderName): Promise<Provide
   // 503 = model overloaded ("high demand"): move straight to the next model instead of retrying it.
   if (res.status === 503) return new ProviderError(`${provider}_overloaded`, false);
   if (res.status >= 500) return new ProviderError(`${provider}_http_${res.status}`, true, 800);
+  // Client errors (bad request/schema) are not retried; log the provider's reason (never the prompt).
+  const reason = await res.text().catch(() => "");
+  const msg = (() => {
+    try {
+      return String(JSON.parse(reason)?.error?.message ?? "").slice(0, 300);
+    } catch {
+      return "";
+    }
+  })();
+  console.warn(`[ai] ${provider} HTTP ${res.status}: ${msg}`);
   return new ProviderError(`${provider}_http_${res.status}`, false);
 }
 
@@ -78,9 +88,37 @@ function wrapFetchError(e: unknown, provider: ProviderName): ProviderError {
 }
 
 // ---------- Gemini ----------
+/**
+ * Lite models reject size constraints (min/max length/items/values, patterns) in response schemas
+ * with HTTP 400. They are removed from the request only; Zod still validates the full schema.
+ */
+const SIZE_KEYS = new Set(["pattern", "minItems", "maxItems", "minimum", "maximum", "minLength", "maxLength", "exclusiveMinimum", "exclusiveMaximum"]);
+const HINT: Record<string, string> = {
+  pattern: "must match",
+  minItems: "at least {} items",
+  maxItems: "at most {} items",
+  minimum: "minimum {}",
+  maximum: "maximum {}",
+  minLength: "at least {} characters",
+  maxLength: "at most {} characters",
+  exclusiveMinimum: "greater than {}",
+  exclusiveMaximum: "less than {}",
+};
+function relaxSchema(o: unknown): unknown {
+  if (Array.isArray(o)) return o.map(relaxSchema);
+  if (!o || typeof o !== "object") return o;
+  const entries = Object.entries(o as Record<string, unknown>);
+  // The constraint stays visible to the model as a description hint.
+  const hints = entries.filter(([k]) => SIZE_KEYS.has(k)).map(([k, v]) => (k === "pattern" ? `${HINT[k]} ${v}` : HINT[k].replace("{}", String(v))));
+  const out = Object.fromEntries(entries.filter(([k]) => !SIZE_KEYS.has(k)).map(([k, v]) => [k, k === "properties" ? Object.fromEntries(Object.entries(v as object).map(([pk, pv]) => [pk, relaxSchema(pv)])) : relaxSchema(v)]));
+  if (hints.length) out.description = [out.description, `Constraint: ${hints.join("; ")}.`].filter(Boolean).join(" ");
+  return out;
+}
+
 function geminiThinking(model: string) {
   const level = process.env.GEMINI_THINKING_LEVEL ?? "low";
-  return /^gemini-3/.test(model) && level !== "default" ? { thinkingLevel: level } : undefined;
+  // Lite models are called without thinking options.
+  return /^gemini-3/.test(model) && !/lite/.test(model) && level !== "default" ? { thinkingLevel: level } : undefined;
 }
 
 async function callGemini(input: CallInput, p: ProviderConfig, jsonSchema?: unknown): Promise<RawOut> {
@@ -88,7 +126,7 @@ async function callGemini(input: CallInput, p: ProviderConfig, jsonSchema?: unkn
   const parts: unknown[] = [{ text: input.prompt }];
   if (input.file) parts.push({ inline_data: { mime_type: input.file.mimeType, data: input.file.base64 } });
   const generationConfig: Record<string, unknown> = { responseMimeType: "application/json", temperature: 0.2 };
-  if (jsonSchema) generationConfig.responseJsonSchema = jsonSchema;
+  if (jsonSchema) generationConfig.responseJsonSchema = /lite/.test(model) ? relaxSchema(jsonSchema) : jsonSchema;
   const thinking = geminiThinking(model);
   if (thinking) generationConfig.thinkingConfig = thinking;
   const res = await fetch(
@@ -269,7 +307,7 @@ export async function generateJSON<T extends z.ZodTypeAny>(
   schema: T,
 ): Promise<{ data: z.infer<T>; provider: ProviderName; model: string; latencyMs: number }> {
   const chain = available(
-    routeFor(taskOf(input), { needsFile: Boolean(input.file && input.file.mimeType !== "text/plain") }),
+    routeForOperation(taskOf(input), input.operation, { needsFile: Boolean(input.file && input.file.mimeType !== "text/plain") }),
   );
   if (!chain.length) throw new AIUnavailableError("not_configured");
   if (!(await rateLimitUser("ai", input.userId, 20, 60_000))) throw new AIUnavailableError("rate_limited");
@@ -289,6 +327,8 @@ export async function generateJSON<T extends z.ZodTypeAny>(
         const out = await callProvider(p, input, schema);
         const parsed = schema.safeParse(parseJson(out.text));
         const latency = Date.now() - started;
+        if (!parsed.success)
+          console.warn(`[ai] ${p.model} schema mismatch: ${parsed.error.issues.slice(0, 8).map((i) => `${i.path.join(".")}:${i.code}`).join(", ")}`);
         void logCall({
           provider: p.name,
           model: p.model,
@@ -311,6 +351,7 @@ export async function generateJSON<T extends z.ZodTypeAny>(
       } catch (e) {
         const err = e instanceof ProviderError ? e : wrapFetchError(e, p.name);
         lastError = err.code;
+        if (process.env.AI_DEBUG === "1") console.warn(`[ai] ${p.model} ${err.code}`);
         void logCall({
           provider: p.name,
           model: p.model,
@@ -394,7 +435,7 @@ async function openStream(p: ProviderConfig, input: CallInput): Promise<Response
  * text is emitted; mid-stream failures end the stream (logged).
  */
 export async function streamText(input: CallInput): Promise<StreamResult> {
-  const chain = available(routeFor(taskOf(input)));
+  const chain = available(routeForOperation(taskOf(input), input.operation));
   if (!chain.length) throw new AIUnavailableError("not_configured");
   if (!(await rateLimitUser("ai", input.userId, 20, 60_000))) throw new AIUnavailableError("rate_limited");
 

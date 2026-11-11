@@ -252,7 +252,7 @@ export async function generateAssessmentDraft(opts: {
       : "Return a complete new assessment.",
   ].join("\n\n");
   return generateJSON(
-    { operation: "assessment_generation", userId: opts.userId, system: SYSTEM(opts.company), prompt, timeoutMs: 90_000 },
+    { operation: "assessment_builder", userId: opts.userId, system: SYSTEM(opts.company), prompt, timeoutMs: 90_000 },
     draftSchema,
   );
 }
@@ -368,7 +368,7 @@ export async function applyDraft(supabase: ServerSupabase, assessmentId: string,
     const rows = generateRows(spec, assessmentId);
     const csv = toCsv(spec, rows);
     const path = `${assessmentId}/candidate/${spec.file_name}`;
-    const { error: upErr } = await supabase.storage.from("assessment-materials").upload(path, new Blob([csv], { type: "text/csv" }), { upsert: true, contentType: "text/csv" });
+    const { error: upErr } = await supabase.storage.from("assessment-materials").upload(path, new Blob([csv], { type: "text/csv" }), { contentType: "text/csv" });
     if (upErr) throw upErr;
     await supabase.from("assessment_materials").insert({
       assessment_id: assessmentId,

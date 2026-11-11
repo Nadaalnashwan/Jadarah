@@ -96,7 +96,13 @@ export async function generateFromJob(_: ActionResult | null, form: FormData): P
     .select("id")
     .single();
   if (error) return { ok: false, error: localizeError(error, locale) };
-  await applyDraft(supabase, a.id, company.id, d);
+  try {
+    await applyDraft(supabase, a.id, company.id, d);
+  } catch (e) {
+    // Never leave an empty draft behind when saving its parts fails.
+    await supabase.from("assessments").delete().eq("id", a.id).eq("status", "draft");
+    throw e;
+  }
   await supabase.from("assessment_generations").insert({
     assessment_id: a.id,
     company_id: company.id,

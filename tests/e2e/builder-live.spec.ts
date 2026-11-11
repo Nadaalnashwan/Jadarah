@@ -18,7 +18,7 @@ const LEGACY = /midan|الميدان|ميدان/i;
 
 test.describe("Assessment Builder (live AI)", () => {
   test.skip(!process.env.RUN_LIVE_AI, "set RUN_LIVE_AI=1");
-  test.describe.configure({ timeout: 420_000 });
+  test.describe.configure({ timeout: 1_500_000 });
 
   for (const c of CASES.filter((x) => !only || only.includes(x.org))) {
     test(`${c.org}: ${c.job}`, async ({ page }) => {
@@ -26,8 +26,20 @@ test.describe("Assessment Builder (live AI)", () => {
       await page.goto("/company/assessments/builder");
       await page.locator("#b-job").selectOption({ label: c.job });
       await expect(page.locator("#b-title")).toHaveValue(c.job);
-      await page.getByRole("button", { name: "Generate draft" }).click();
-      await page.waitForURL(/\/company\/assessments\/[0-9a-f-]{36}$/, { timeout: 400_000 });
+      // Free-tier models can be briefly overloaded; the circuit breaker parks a model for 3 min,
+      // so a failed attempt is retried after that window (up to 3 attempts).
+      const done = /\/company\/assessments\/[0-9a-f-]{36}$/;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        await page.getByRole("button", { name: "Generate draft" }).click();
+        const outcome = await Promise.race([
+          page.waitForURL(done, { timeout: 300_000 }).then(() => "ok"),
+          page.getByRole("alert").filter({ hasText: /unavailable/i }).waitFor({ timeout: 300_000 }).then(() => "unavailable"),
+        ]);
+        if (outcome === "ok") break;
+        expect(attempt, "generation unavailable after 3 attempts").toBeLessThan(3);
+        await page.waitForTimeout(190_000);
+      }
+      await expect(page).toHaveURL(done);
 
       const body = page.locator("body");
       await expect(page.getByText("Scenario").first()).toBeVisible();

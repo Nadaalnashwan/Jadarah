@@ -69,6 +69,7 @@ const OPERATION_TASK: Record<string, AITask> = {
   cv_parse: "structured",
   job_description: "structured",
   assessment_generation: "structured",
+  assessment_builder: "structured",
   rubric_generation: "structured",
   career_plan: "structured",
   assessment_evaluation: "deep",
@@ -101,6 +102,20 @@ export function routeFor(task: AITask, opts: { needsFile?: boolean } = {}): Prov
     .flatMap(withBackups);
   const eligible = opts.needsFile ? chain.filter((p) => p.name === "gemini") : chain;
   return strict() ? eligible.filter((p) => p.name === ROUTES[task][0]) : eligible;
+}
+
+/**
+ * Owner-approved, operation-scoped model override (2026-11-11): the Assessment Builder runs on
+ * AI_BUILDER_GEMINI_MODEL (e.g. gemini-3.5-flash-lite) while the Gemini Flash daily quota is
+ * exhausted. Only the "assessment_builder" operation is affected; the model used is recorded on
+ * every generation and in ai_provider_logs. Unset the variable to return to normal routing.
+ */
+export function routeForOperation(task: AITask, operation: string, opts: { needsFile?: boolean } = {}): ProviderConfig[] {
+  const chain = routeFor(task, opts);
+  const override = operation === "assessment_builder" ? process.env.AI_BUILDER_GEMINI_MODEL : undefined;
+  const gemini = providerConfig("gemini");
+  if (!override || !gemini.configured) return chain;
+  return [{ ...gemini, model: override, timeoutMs: AI_TIMEOUT_MS }, ...chain.filter((p) => !(p.name === "gemini" && p.model === override))];
 }
 
 export interface AIStatus {

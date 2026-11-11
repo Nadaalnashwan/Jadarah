@@ -47,3 +47,14 @@
 | Live video (`RUN_LIVE_VIDEO=1 npx playwright test tests/e2e/video.spec.ts`) | **1/1** — real two-person Daily call in a private room; outsiders refused |
 
 Notes: the app limits sign-in to 10/min per IP; the E2E `signIn` helper waits out the window once instead of weakening the control. Live suites cost provider credits and create demo artifacts (draft assessments, CV versions, cancelled interviews).
+
+## 2026-11-11 (B2B, registry organizations, reference library, Assessment Builder)
+| Suite | Result |
+|---|---|
+| Typecheck · lint · production build | clean · 0 warnings · passes |
+| Vitest (`npx vitest run`) | **59/59** — adds assessment quality checks (5), B2B chain (2, live), assessment materials + reference library confidentiality (1, live, includes the private `reference-library` bucket) |
+| Playwright standard (`npx playwright test`) | **24/24** (16 live specs skipped by flag) — adds `b2b.spec.ts`: directory (ten organizations, fictional hidden, no unverified logos, no legacy branding), ten profiles with Simulation labels, candidate-only sign-up + database-driven employer access form, Elm workspace + labelled opportunities, subscriptions (demonstrations apart from revenue), employee access request → pending (no workspace) → Super Admin decision |
+| Live builder (`RUN_LIVE_AI=1 npx playwright test tests/e2e/builder-live.spec.ts --project=desktop`) | **5/5** — Elm SWE, SDAIA ML Engineer, MoF Financial Analyst, GEA Event Coordinator, Sipchem Quality Engineer; each a draft with 11/11 checks, references, CSV data, rubric, assessor guide. `BUILDER_ONLY=elm,…` limits the run |
+
+Evidence screenshots: `EVIDENCE_DIR=$PWD/docs/evidence npx playwright test tests/e2e/b2b.spec.ts --project=desktop` → `docs/evidence/`.
+Test hygiene: `freshJob()` closes its job when the test ends, so test roles never stay in public listings. The access-request E2E uses a throwaway `@jadarah-demo.test` employee and declines the request, so no false membership is created at a real organization (approval is covered by `b2b.test.ts` on a throwaway organization).

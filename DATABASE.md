@@ -27,6 +27,7 @@ Supabase project ref: `qqvvlornhvfykusaxaid`. All schema changes are versioned i
 | 0021 | fix_job_insert_returning | companies can create jobs (row-based SELECT policy) |
 | 0022 | catalogue_listing_types | `jobs.listing_type` verified/simulation (+ source URL and check date; verified requires a source), sector skill and job categories |
 | 0023 | assessment_reference_library | sector skills, reference assessments (recruiter-readable), reference assessor content (Super Admin only), reference embeddings, generations, assessor guides, assessment materials; private buckets `assessment-materials` and `reference-library` |
+| 0024 | assessment_materials_delete | owning company may remove its material files (regenerating draft data) |
 
 Applying: 0001–0019 were applied through the Supabase MCP connection; 0020–0023 with `npx tsx scripts/import/apply-migration.ts <file>` (one transaction, recorded in `supabase_migrations.schema_migrations`). For a fresh project use the Supabase CLI (`supabase db push`) or run the files in order.
 

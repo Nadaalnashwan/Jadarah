@@ -9,8 +9,14 @@ import { headers } from "next/headers";
 const buckets = new Map<string, { count: number; reset: number }>();
 
 export async function rateLimit(key: string, limit: number, windowMs: number): Promise<boolean> {
-  const h = await headers();
-  const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "local";
+  // Outside a request (scripts, background jobs) there are no headers: key by "local".
+  let h: Awaited<ReturnType<typeof headers>> | null = null;
+  try {
+    h = await headers();
+  } catch {
+    h = null;
+  }
+  const ip = h?.get("x-forwarded-for")?.split(",")[0]?.trim() || h?.get("x-real-ip") || "local";
   const id = `${key}:${ip}`;
   const now = Date.now();
   const b = buckets.get(id);
