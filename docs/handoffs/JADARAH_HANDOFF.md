@@ -50,7 +50,7 @@ Regression: lint ✓, typecheck ✓, vitest 30/30 ✓, existing Playwright 13 pa
 **Phase 4 progress — internal calendar (2026-11-11)**
 - ✓ Backend (migrations 0016–0017 applied): `interviews.ends_at`, `candidate_confirmed_at`; participant booking windows with **EXCLUDE USING gist** (no interviewer double-booking, DB-enforced); candidate double-booking rejected (23P01); `interviewer_availability` (weekly, RLS); `interviewer_busy()` free/busy RPC; `confirm_interview_attendance()`; reschedule/cancel notify candidate **and** interviewers; **pg_cron** job `jadarah-interview-reminders` every 5 min (24 h / 1 h / evaluation-due, idempotent `interview_reminders` ledger).
 - ✓ `tests/integration/calendar.test.ts` 2/2 (live). Found + fixed: `ON CONFLICT DO NOTHING` swallowed exclusion violations (0017).
-- ☐ Calendar UI (month/week/day), availability editor, scheduling form with free/busy slots, candidate interviews page with confirm button.
+- ✓ Calendar UI: `/company/calendar` (month/week/day, Asia/Riyadh, brand colours, RTL, phone → Day view), `/company/availability` (weekly editor), scheduling form **free-slot finder** (availability ∩ free/busy), `/candidate/interviews` (invitations + Confirm attendance). Nav items added. `src/lib/domain/calendar.ts` + 9 unit tests; `tests/e2e/calendar.spec.ts` passes (availability → slot-finder scheduling → candidate confirms → calendar). **Phase 4 complete.**
 - Dashboard to-dos for owner: enable leaked-password protection (Auth); `public.rls_auto_enable()` is a Supabase-created function flagged by the advisor.
 
 **Bug fixed:** CV upload was broken — `cv-actions.ts` exported a constant from a `"use server"` module (Next 16 rejects it → 500 on every CV page action). Pre-existing; previous E2E never uploaded.
@@ -60,8 +60,9 @@ Regression: lint ✓, typecheck ✓, vitest 30/30 ✓, existing Playwright 13 pa
 **Exact next steps**
 1. Owner: add OpenAI credits (deep evaluation currently skipped as `openai_quota_exhausted`).
 2. ~~Streaming assistants~~ — done: `/api/assistant` streams Groq tokens (first token 0.5–0.7 s); access tests in `tests/e2e/api-security.spec.ts`.
-3. Phase 4–6: internal calendar (availability, conflict-safe booking via DB exclusion constraint, notifications + reminders via pg_cron), Daily rooms/tokens, Final Candidate Evaluation Report.
-4. Phase 7: Playwright E2E, Vercel preview deploy.
+3. Phase 5: Daily.co — server-side private rooms + short-lived meeting tokens per participant, embedded Daily Prebuilt join page (candidate + interviewers only), join window, status tracking. `DAILY_API_KEY` is valid (domain `midan`).
+4. Phase 6: Final Candidate Evaluation Report (aggregate CV/match, assessment, interview evaluations; AI-assisted recommendation; human decision).
+5. Phase 7: Playwright E2E, Vercel preview deploy.
 
 ## Repository
 - Repo: https://github.com/Nadaalnashwan/Jadarah — branch `feature/jadarah-greenfield-build` (only branch on the remote; `main` was never created; do not merge without owner approval).
