@@ -45,7 +45,7 @@ Regression: lint ✓, typecheck ✓, vitest 30/30 ✓, existing Playwright 13 pa
 - ✓ Migration 0014 (new AI record kinds) and **0015 (bug fix: companies could never create/clone assessments — INSERT…RETURNING failed RLS)** applied.
 - Tests: vitest **33/33** (new `tests/integration/assessments-and-semantic.test.ts`), live AI E2E **7/7**.
 - Test artifacts: live E2E creates draft assessments titled `E2E live AI assessment <timestamp>` in Nawat, and `e2e-live-ai-cv.pdf` CV versions for candidate01 (harmless demo data).
-- ☐ Remaining Phase 3: AI career/development plan from a career goal (currently rule-based gap analysis + templates).
+- ✓ AI career plan: setting a career goal personalises milestones from the deterministic gap analysis (only verified library resources / required skills accepted; template fallback labelled rule-based). Live E2E ✓. **Phase 3 complete.** Live AI E2E total: 8/8.
 
 **Bug fixed:** CV upload was broken — `cv-actions.ts` exported a constant from a `"use server"` module (Next 16 rejects it → 500 on every CV page action). Pre-existing; previous E2E never uploaded.
 
@@ -54,9 +54,8 @@ Regression: lint ✓, typecheck ✓, vitest 30/30 ✓, existing Playwright 13 pa
 **Exact next steps**
 1. Owner: add OpenAI credits (deep evaluation currently skipped as `openai_quota_exhausted`).
 2. ~~Streaming assistants~~ — done: `/api/assistant` streams Groq tokens (first token 0.5–0.7 s); access tests in `tests/e2e/api-security.spec.ts`.
-3. Phase 3 remainder: AI career/development plan generation (career goal → plan; structured task, human-editable).
-4. Phase 4–6: internal calendar (availability, conflict-safe booking via DB exclusion constraint, notifications + reminders via pg_cron), Daily rooms/tokens, Final Candidate Evaluation Report.
-5. Phase 7: Playwright E2E, Vercel preview deploy.
+3. Phase 4–6: internal calendar (availability, conflict-safe booking via DB exclusion constraint, notifications + reminders via pg_cron), Daily rooms/tokens, Final Candidate Evaluation Report.
+4. Phase 7: Playwright E2E, Vercel preview deploy.
 
 ## Repository
 - Repo: https://github.com/Nadaalnashwan/Jadarah — branch `feature/jadarah-greenfield-build` (only branch on the remote; `main` was never created; do not merge without owner approval).
