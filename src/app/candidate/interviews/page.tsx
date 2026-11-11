@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { CalendarClock, CheckCircle2, MapPin } from "lucide-react";
+import { CalendarClock, CheckCircle2, MapPin, Video } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { InterviewCalendar, type CalendarEvent } from "@/components/app/interview-calendar";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/primitives";
 import { requireCandidate } from "@/lib/auth/session";
@@ -76,6 +77,13 @@ export default async function CandidateInterviews() {
                 {r.instructions && <p className="bg-surface-2 rounded-xl p-3 text-sm">{r.instructions}</p>}
                 <div className="flex flex-wrap items-center gap-2">
                   {!r.candidate_confirmed_at && <ConfirmAttendance interviewId={r.id} />}
+                  {["video", "technical", "behavioral", "panel"].includes(r.type) && (
+                    <Button asChild size="sm" variant={r.candidate_confirmed_at ? "primary" : "soft"}>
+                      <Link href={`/meet/${r.id}`}>
+                        <Video /> {L("Interview room", "غرفة المقابلة")}
+                      </Link>
+                    </Button>
+                  )}
                   <Link href={`/candidate/applications/${r.application?.id}`} className="text-primary text-sm font-semibold">
                     {L("View application", "عرض الطلب")}
                   </Link>

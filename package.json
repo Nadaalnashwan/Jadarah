@@ -24,6 +24,7 @@
     "demo:rotate-password": "tsx scripts/demo/rotate-password.ts"
   },
   "dependencies": {
+    "@daily-co/daily-js": "0.94.0",
     "@hookform/resolvers": "^7.0.5",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.0",

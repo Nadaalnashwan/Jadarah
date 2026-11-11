@@ -2226,6 +2226,8 @@ export type Database = {
         Row: {
           application_id: string
           candidate_confirmed_at: string | null
+          video_room_name: string | null
+          video_room_url: string | null
           ends_at: string
           company_id: string
           created_at: string
@@ -2245,6 +2247,8 @@ export type Database = {
         Insert: {
           application_id: string
           candidate_confirmed_at?: string | null
+          video_room_name?: string | null
+          video_room_url?: string | null
           ends_at?: string
           company_id: string
           created_at?: string
@@ -2264,6 +2268,8 @@ export type Database = {
         Update: {
           application_id?: string
           candidate_confirmed_at?: string | null
+          video_room_name?: string | null
+          video_room_url?: string | null
           ends_at?: string
           company_id?: string
           created_at?: string
@@ -3054,6 +3060,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      interview_video_access: {
+        Args: { p_interview: string }
+        Returns: {
+          access_role: string
+          title: string
+          status: Database["public"]["Enums"]["interview_status"]
+          scheduled_at: string
+          ends_at: string
+          timezone: string
+          room_name: string | null
+          room_url: string | null
+          display_name: string
+          company_name_en: string
+          company_name_ar: string
+          job_title_en: string
+          job_title_ar: string
+        }[]
+      }
+      attach_video_room: { Args: { p_interview: string; p_name: string; p_url: string }; Returns: undefined }
+      detach_video_room: { Args: { p_interview: string }; Returns: undefined }
+      record_interview_presence: { Args: { p_event: string; p_interview: string }; Returns: undefined }
       interviewer_busy: {
         Args: { p_company: string; p_from: string; p_to: string; p_users: string[] }
         Returns: { ends_at: string; starts_at: string; user_id: string }[]

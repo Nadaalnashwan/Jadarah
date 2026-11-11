@@ -6,6 +6,7 @@ import { requireCompanyMember, requireSession } from "@/lib/auth/session";
 import { localizeError, type ActionResult } from "@/lib/errors";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
+import { ensureVideoRoom, removeVideoRoom, syncVideoRoomWindow } from "@/features/interviews/video";
 import { APPLICATION_STATUSES } from "@/lib/domain/application-status";
 
 const opt = (max: number) =>
@@ -421,6 +422,10 @@ export async function scheduleInterview(
     p_interviewers: interviewers,
   });
   if (error) return { ok: false, error: localizeError(error, locale) };
+  // Private Daily room for video interviews (best-effort: it is also created on first join).
+  await ensureVideoRoom(supabase, data as string).catch((e) =>
+    console.error("daily: room creation failed:", e instanceof Error ? e.message : "unknown"),
+  );
   revalidatePath(`/company/applications/${applicationId}`);
   redirect(`/company/interviews/${data}`);
 }
@@ -453,6 +458,10 @@ export async function setInterviewStatus(
     p_status: status,
   });
   if (error) return { ok: false, error: localizeError(error, locale) };
+  if (status === "cancelled")
+    await removeVideoRoom(supabase, interviewId).catch((e) =>
+      console.error("daily: room deletion failed:", e instanceof Error ? e.message : "unknown"),
+    );
   revalidatePath(`/company/interviews/${interviewId}`);
   return { ok: true };
 }
@@ -474,6 +483,9 @@ export async function rescheduleInterview(
     p_new_time: zonedToUtc(local, tz),
   });
   if (error) return { ok: false, error: localizeError(error, locale) };
+  await syncVideoRoomWindow(supabase, interviewId).catch((e) =>
+    console.error("daily: room window update failed:", e instanceof Error ? e.message : "unknown"),
+  );
   revalidatePath(`/company/interviews/${interviewId}`);
   return {
     ok: true,

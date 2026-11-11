@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Video } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Badge, Card, CardBody, CardHeader, PageHeader } from "@/components/ui/primitives";
 import { canRecruit, requireCompanyMember } from "@/lib/auth/session";
 import { formatDateTime, pick, tx } from "@/lib/i18n/config";
@@ -39,11 +40,23 @@ export default async function InterviewDetail({ params }: { params: Promise<{ id
         title={`${iv.application?.candidate?.full_name ?? "—"} · ${iv.title}`}
         description={`${formatDateTime(iv.scheduled_at, locale, iv.timezone)} (${iv.timezone}) · ${iv.duration_minutes} ${t.common.minutes}`}
         actions={
-          <Badge
-            tone={iv.status === "completed" ? "positive" : iv.status === "cancelled" ? "muted" : "progress"}
-          >
-            {iv.status}
-          </Badge>
+          <>
+            {isParticipant && iv.status === "scheduled" && (
+              <Button asChild size="sm">
+                <Link href={`/meet/${iv.id}`}>
+                  <Video /> {L("Join video interview", "انضم إلى المقابلة المرئية")}
+                </Link>
+              </Button>
+            )}
+            {iv.candidate_confirmed_at && iv.status === "scheduled" && (
+              <Badge tone="positive">{L("Candidate confirmed", "أكّد المرشح")}</Badge>
+            )}
+            <Badge
+              tone={iv.status === "completed" ? "positive" : iv.status === "cancelled" ? "muted" : "progress"}
+            >
+              {iv.status}
+            </Badge>
+          </>
         }
       />
       <div className="grid gap-6 xl:grid-cols-[1.2fr_1fr]">

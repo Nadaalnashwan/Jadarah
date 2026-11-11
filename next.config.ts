@@ -22,7 +22,20 @@ const nextConfig: NextConfig = {
     serverActions: { bodySizeLimit: "12mb" },
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // Built-in video interviews only: allow camera/mic/screen share for this page and Daily's frame.
+      {
+        source: "/meet/:path*",
+        headers: [
+          {
+            key: "Permissions-Policy",
+            value:
+              'camera=(self "https://*.daily.co"), microphone=(self "https://*.daily.co"), display-capture=(self "https://*.daily.co"), autoplay=(self "https://*.daily.co"), fullscreen=(self "https://*.daily.co"), geolocation=()',
+          },
+        ],
+      },
+    ];
   },
 };
 
