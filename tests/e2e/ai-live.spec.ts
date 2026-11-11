@@ -145,3 +145,21 @@ test("candidate: career goal → AI-personalised development plan from the verif
   console.log(`career_plan UI round-trip ${Date.now() - started} ms`);
   await expect(page.getByText(/AI generated — review before use/).first()).toBeVisible();
 });
+
+test("company: Final Candidate Evaluation Report with AI-assisted recommendation (draft, human decides)", async ({ page }) => {
+  await signIn(page, "recruiter.madar");
+  // Deterministic demo-seed application: interview completed, evaluated, with an assessment.
+  await page.goto("/company/applications/0c714e2c-7061-48e4-a015-c0b2afc9b2a7/report");
+  await expect(page.getByText("Final Candidate Evaluation Report")).toBeVisible();
+  await expect(page.getByText("Overall evidence score")).toBeVisible();
+  await expect(page.getByText("D · Structured interview evaluation")).toBeVisible();
+  const started = Date.now();
+  await page.getByRole("button", { name: /Generate AI-assisted analysis|Regenerate AI analysis/ }).click();
+  await expect(page.getByText("AI recommendation")).toBeVisible({ timeout: 120_000 });
+  console.log(`final_evaluation UI round-trip ${Date.now() - started} ms`);
+  await expect(page.getByText(/Strengths \(evidence-backed\)/)).toBeVisible();
+  // The decision stays human: the report is still a draft with the decision form available.
+  await expect(page.getByRole("button", { name: "Record decision & finalize" })).toBeVisible();
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.screenshot({ path: "/private/tmp/claude-501/shots/report-en.png", fullPage: true });
+});

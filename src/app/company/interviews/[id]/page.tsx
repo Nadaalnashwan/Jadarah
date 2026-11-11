@@ -7,6 +7,7 @@ import { canRecruit, requireCompanyMember } from "@/lib/auth/session";
 import { formatDateTime, pick, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
+import { getInterviewRubric } from "@/services/interview-rubric";
 import {
   EvaluationForm,
   FeedbackForm,
@@ -33,6 +34,7 @@ export default async function InterviewDetail({ params }: { params: Promise<{ id
   const isParticipant = iv.interview_participants.some((p) => p.user_id === s.userId);
   const mine = iv.interview_evaluations.find((e) => e.interviewer_id === s.userId);
   const questions = [...iv.interview_questions].sort((a, b) => a.position - b.position);
+  const rubric = await getInterviewRubric(supabase, s.activeMembership.company_id);
   return (
     <>
       <PageHeader
@@ -97,6 +99,7 @@ export default async function InterviewDetail({ params }: { params: Promise<{ id
               <CardBody>
                 <EvaluationForm
                   interviewId={iv.id}
+                  criteria={rubric}
                   existing={
                     mine
                       ? {

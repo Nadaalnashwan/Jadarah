@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CalendarClock, Lock, Mail, MapPin } from "lucide-react";
+import { CalendarClock, FileBarChart, Lock, Mail, MapPin } from "lucide-react";
 import { MatchExplanation } from "@/components/app/match-explanation";
+import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/app/status-badge";
 import { Badge, Card, CardBody, CardHeader, PageHeader } from "@/components/ui/primitives";
 import { requireCompanyMember } from "@/lib/auth/session";
@@ -122,7 +123,16 @@ export default async function CompanyApplicationDetail({ params }: { params: Pro
         eyebrow={pick(app.job, "title", locale)}
         title={app.candidate?.full_name ?? "—"}
         description={cp?.headline ?? undefined}
-        actions={<StatusBadge status={status} t={t} />}
+        actions={
+          <>
+            <Button asChild size="sm" variant="soft">
+              <Link href={`/company/applications/${id}/report`}>
+                <FileBarChart /> {L("Final evaluation report", "تقرير التقييم النهائي")}
+              </Link>
+            </Button>
+            <StatusBadge status={status} t={t} />
+          </>
+        }
       />
       <div className="grid gap-6 xl:grid-cols-[1.25fr_1fr]">
         <div className="flex flex-col gap-6">

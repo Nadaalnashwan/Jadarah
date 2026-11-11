@@ -123,6 +123,9 @@ const KNOWN: [RegExp, string, string][] = [
   [/interviewer_availability.*exclu|exclusion constraint/i, "Time ranges overlap.", "الفترات الزمنية متداخلة."],
   [/must be in the future/i, "The interview time must be in the future.", "يجب أن يكون موعد المقابلة في المستقبل."],
   [/duration must be between/i, "Duration must be between 15 and 240 minutes.", "يجب أن تكون المدة بين 15 و240 دقيقة."],
+  [/finalized evaluation is locked/i, "This evaluation is finalized and locked.", "هذا التقييم نهائي ومقفل."],
+  [/explain the decision/i, "Explain the decision (at least 10 characters).", "اكتب مبررًا للقرار (10 أحرف على الأقل)."],
+  [/feedback is too short/i, "The feedback is too short.", "الملاحظات قصيرة جدًا."],
   [/unknown time zone/i, "Unknown time zone.", "منطقة زمنية غير معروفة."],
   [/can no longer be confirmed/i, "This interview can no longer be confirmed.", "لم يعد بالإمكان تأكيد هذه المقابلة."],
   [

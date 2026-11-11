@@ -7,6 +7,7 @@ import { localizeError, type ActionResult } from "@/lib/errors";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { ensureVideoRoom, removeVideoRoom, syncVideoRoomWindow } from "@/features/interviews/video";
+import { getInterviewRubric } from "@/services/interview-rubric";
 import { APPLICATION_STATUSES } from "@/lib/domain/application-status";
 
 const opt = (max: number) =>
@@ -524,14 +525,11 @@ export async function addInterviewQuestions(
 
 const evalSchema = z.object({
   recommendation: z.enum(["strong_yes", "yes", "neutral", "no", "strong_no"]),
-  technical: z.coerce.number().int().min(1).max(5),
-  problem_solving: z.coerce.number().int().min(1).max(5),
-  communication: z.coerce.number().int().min(1).max(5),
-  culture: z.coerce.number().int().min(1).max(5),
   strengths: opt(2000),
   concerns: opt(2000),
   comments: opt(3000),
 });
+const rating = z.coerce.number().int().min(1).max(5);
 export async function submitInterviewEvaluation(
   interviewId: string,
   _: ActionResult | null,
@@ -544,6 +542,14 @@ export async function submitInterviewEvaluation(
     return { ok: false, error: locale === "ar" ? "أكمل التقييم." : "Complete all ratings." };
   const v = parsed.data;
   const supabase = await createClient();
+  // Ratings are validated against the company's interview rubric (default: 7 structured dimensions).
+  const criteria = await getInterviewRubric(supabase, s.activeMembership.company_id);
+  const ratings: Record<string, number> = {};
+  for (const c of criteria) {
+    const r = rating.safeParse(form.get(c.key));
+    if (!r.success) return { ok: false, error: locale === "ar" ? "قيّم كل المعايير." : "Rate every criterion." };
+    ratings[c.key] = r.data;
+  }
   const { error } = await supabase
     .from("interview_evaluations")
     .upsert(
@@ -551,12 +557,7 @@ export async function submitInterviewEvaluation(
         interview_id: interviewId,
         interviewer_id: s.userId,
         recommendation: v.recommendation,
-        ratings: {
-          technical: v.technical,
-          problem_solving: v.problem_solving,
-          communication: v.communication,
-          culture: v.culture,
-        },
+        ratings,
         strengths: v.strengths,
         concerns: v.concerns,
         comments: v.comments,

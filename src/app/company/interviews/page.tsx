@@ -5,6 +5,8 @@ import { requireCompanyMember } from "@/lib/auth/session";
 import { formatDateTime, pick, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
+import { getInterviewRubric } from "@/services/interview-rubric";
+import { InterviewRubricEditor } from "./rubric-editor";
 
 export default async function InterviewsPage() {
   const s = await requireCompanyMember();
@@ -95,6 +97,15 @@ export default async function InterviewsPage() {
             </ul>
           </section>
         </div>
+      )}
+      {["company_admin", "recruiter"].includes(s.activeMembership.role) && (
+        <Card className="mt-8 p-5">
+          <h2 className="font-bold">{L("Structured interview rubric", "معايير المقابلة المنظّمة")}</h2>
+          <p className="text-muted mb-4 text-sm">
+            {L("Used by every interviewer in your company and by the Final Candidate Evaluation Report.", "يستخدمها كل المُقابِلين في شركتك وتقرير التقييم النهائي للمرشح.")}
+          </p>
+          <InterviewRubricEditor initial={await getInterviewRubric(supabase, s.activeMembership.company_id)} />
+        </Card>
       )}
     </>
   );

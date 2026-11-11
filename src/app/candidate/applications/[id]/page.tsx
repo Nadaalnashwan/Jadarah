@@ -34,7 +34,7 @@ export default async function ApplicationDetail({
     .eq("candidate_id", session.userId)
     .maybeSingle();
   if (!app) notFound();
-  const [{ data: timeline }, { data: interviews }, { data: feedback }, { data: assignments }] =
+  const [{ data: timeline }, { data: interviews }, { data: feedback }, { data: assignments }, { data: finalFeedback }] =
     await Promise.all([
       supabase.rpc("get_application_timeline", { p_app: id }),
       supabase
@@ -53,6 +53,7 @@ export default async function ApplicationDetail({
         .from("assessment_assignments")
         .select("id, status, due_at, assessment:assessments(title_en, title_ar)")
         .eq("application_id", id),
+      supabase.rpc("get_shared_final_feedback", { p_app: id }),
     ]);
   const status = app.status as ApplicationStatus;
   const reached = new Set((timeline ?? []).map((h) => h.to_status));
@@ -223,6 +224,17 @@ export default async function ApplicationDetail({
                     {iv.instructions && <p className="mt-2 text-sm">{iv.instructions}</p>}
                   </div>
                 ))}
+              </CardBody>
+            </Card>
+          )}
+          {(finalFeedback ?? []).length > 0 && (
+            <Card className="border-primary/30">
+              <CardHeader
+                title={L("Feedback on your application", "ملاحظات على طلبك")}
+                description={L("Written for you by the hiring team after the final evaluation.", "كتبها فريق التوظيف لك بعد التقييم النهائي.")}
+              />
+              <CardBody>
+                <p className="bg-accent-soft/60 rounded-xl p-3 text-sm leading-relaxed whitespace-pre-line">{finalFeedback![0].feedback}</p>
               </CardBody>
             </Card>
           )}

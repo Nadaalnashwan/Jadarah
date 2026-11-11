@@ -32,8 +32,10 @@ function useDone(state: ActionResult | null) {
 export function EvaluationForm({
   interviewId,
   existing,
+  criteria,
 }: {
   interviewId: string;
+  criteria: { key: string; name_en: string; name_ar: string }[];
   existing: {
     recommendation: string;
     ratings: Record<string, number>;
@@ -49,12 +51,7 @@ export function EvaluationForm({
     null,
   );
   useDone(state);
-  const dims = [
-    ["technical", L("Technical depth", "العمق التقني")],
-    ["problem_solving", L("Problem solving", "حل المشكلات")],
-    ["communication", L("Communication", "التواصل")],
-    ["culture", L("Collaboration", "التعاون")],
-  ] as const;
+  const dims = criteria.map((c) => [c.key, locale === "ar" ? c.name_ar : c.name_en] as const);
   return (
     <form action={action} className="flex flex-col gap-4">
       <div className="grid gap-3 sm:grid-cols-2">

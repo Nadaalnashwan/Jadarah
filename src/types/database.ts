@@ -285,6 +285,209 @@ export type Database = {
         }
         Relationships: []
       }
+      final_evaluations: {
+        Row: {
+          id: string
+          application_id: string
+          company_id: string
+          status: string
+          ai_report: Json | null
+          ai_provider: string | null
+          ai_model: string | null
+          ai_generated_at: string | null
+          ai_generated_by: string | null
+          summary: string | null
+          decision: string | null
+          decision_rationale: string | null
+          decided_by: string | null
+          decided_at: string | null
+          finalized_by: string | null
+          finalized_at: string | null
+          candidate_feedback: string | null
+          feedback_shared_at: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          application_id: string
+          company_id: string
+          status?: string
+          ai_report?: Json | null
+          ai_provider?: string | null
+          ai_model?: string | null
+          ai_generated_at?: string | null
+          ai_generated_by?: string | null
+          summary?: string | null
+          decision?: string | null
+          decision_rationale?: string | null
+          decided_by?: string | null
+          decided_at?: string | null
+          finalized_by?: string | null
+          finalized_at?: string | null
+          candidate_feedback?: string | null
+          feedback_shared_at?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          application_id?: string
+          company_id?: string
+          status?: string
+          ai_report?: Json | null
+          ai_provider?: string | null
+          ai_model?: string | null
+          ai_generated_at?: string | null
+          ai_generated_by?: string | null
+          summary?: string | null
+          decision?: string | null
+          decision_rationale?: string | null
+          decided_by?: string | null
+          decided_at?: string | null
+          finalized_by?: string | null
+          finalized_at?: string | null
+          candidate_feedback?: string | null
+          feedback_shared_at?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "final_evaluations_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "final_evaluations_ai_generated_by_fkey"
+            columns: ["ai_generated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "final_evaluations_finalized_by_fkey"
+            columns: ["finalized_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "final_evaluations_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      final_evaluation_comments: {
+        Row: {
+          id: string
+          final_evaluation_id: string
+          author_id: string
+          body: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          final_evaluation_id: string
+          author_id?: string
+          body: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          final_evaluation_id?: string
+          author_id?: string
+          body?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "final_evaluation_comments_final_evaluation_id_fkey"
+            columns: ["final_evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "final_evaluations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "final_evaluation_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      interview_rubrics: {
+        Row: {
+          company_id: string
+          criteria: Json
+          updated_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          criteria: Json
+          updated_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          criteria?: Json
+          updated_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      interview_attendance: {
+        Row: {
+          id: string
+          interview_id: string
+          user_id: string
+          role: string
+          joined_at: string
+          left_at: string | null
+        }
+        Insert: {
+          id?: string
+          interview_id: string
+          user_id: string
+          role: string
+          joined_at?: string
+          left_at?: string | null
+        }
+        Update: {
+          id?: string
+          interview_id?: string
+          user_id?: string
+          role?: string
+          joined_at?: string
+          left_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_attendance_interview_id_fkey"
+            columns: ["interview_id"]
+            isOneToOne: false
+            referencedRelation: "interviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interview_attendance_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_provider_logs: {
         Row: {
           created_at: string
@@ -3060,6 +3263,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      decide_final_evaluation: {
+        Args: { p_candidate_message?: string; p_decision: string; p_eval: string; p_rationale: string }
+        Returns: undefined
+      }
+      share_final_feedback: { Args: { p_eval: string; p_feedback: string }; Returns: undefined }
+      get_shared_final_feedback: { Args: { p_app: string }; Returns: { feedback: string; shared_at: string }[] }
       interview_video_access: {
         Args: { p_interview: string }
         Returns: {
