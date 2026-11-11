@@ -135,3 +135,13 @@ test("company: job → AI-generated assessment with a job-tailored, editable rub
   await page.reload();
   await expect(page.getByLabel("Criterion (English)").first()).toHaveValue("Technical accuracy (edited)");
 });
+
+test("candidate: career goal → AI-personalised development plan from the verified gap analysis", async ({ page }) => {
+  await signIn(page, "candidate30");
+  await page.goto("/candidate/career");
+  const started = Date.now();
+  await page.getByRole("button", { name: "Set as my goal" }).first().click();
+  await expect(page.getByText("AI coaching based on your verified gap analysis")).toBeVisible({ timeout: 90_000 });
+  console.log(`career_plan UI round-trip ${Date.now() - started} ms`);
+  await expect(page.getByText(/AI generated — review before use/).first()).toBeVisible();
+});

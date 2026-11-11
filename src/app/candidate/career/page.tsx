@@ -34,7 +34,7 @@ export default async function CareerPage() {
       .order("title_en"),
     supabase
       .from("skill_gap_analyses")
-      .select("analysis, method, created_at")
+      .select("analysis, method, provider, created_at")
       .eq("candidate_id", session.userId)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -87,6 +87,16 @@ export default async function CareerPage() {
                   description={gap!.method === "ai" ? t.common.aiGenerated : t.common.ruleBased}
                 />
                 <CardBody className="flex flex-col gap-4 text-sm">
+                  {gap!.method === "ai" && (analysis as { summary_en?: string }).summary_en && (
+                    <p className="bg-accent-soft/60 rounded-2xl p-3 leading-relaxed" dir="auto">
+                      {locale === "ar"
+                        ? (analysis as { summary_ar?: string }).summary_ar
+                        : (analysis as { summary_en?: string }).summary_en}
+                      <span className="text-subtle mt-1 block text-[11px]">
+                        {L("AI coaching based on your verified gap analysis", "إرشاد آلي مبني على تحليل فجواتك")} · {gap!.provider}
+                      </span>
+                    </p>
+                  )}
                   <div>
                     <p className="text-success mb-1.5 font-semibold">{L("Strong", "قوية")}</p>
                     <div className="flex flex-wrap gap-1.5">

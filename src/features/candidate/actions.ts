@@ -7,6 +7,7 @@ import { localizeError, type ActionResult } from "@/lib/errors";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { analyzeSkillGap } from "@/lib/domain/career";
+import { personalisePlan } from "@/services/ai/career";
 
 const optText = (max: number) =>
   z
@@ -274,12 +275,21 @@ export async function startCareerGoal(templateId: string): Promise<void> {
     .from("candidate_skills")
     .select("level, source, skill:skills(slug)")
     .eq("candidate_id", session.userId);
-  const gap = analyzeSkillGap(
-    tpl.required_skill_slugs,
-    (skills ?? [])
-      .filter((s) => s.skill)
-      .map((s) => ({ slug: s.skill!.slug, level: s.level, source: s.source as "self" })),
-  );
+  const levels = (skills ?? [])
+    .filter((s) => s.skill)
+    .map((s) => ({ slug: s.skill!.slug, level: s.level, source: s.source as "self" }));
+  const gap = analyzeSkillGap(tpl.required_skill_slugs, levels);
+  // AI personalises the milestones from the deterministic gap; null → template plan (rule-based).
+  const ai = await personalisePlan(
+    supabase,
+    session.userId,
+    { title_en: tpl.title_en, level: tpl.target_level, weeks: tpl.estimated_weeks, required: tpl.required_skill_slugs },
+    gap,
+    levels,
+  ).catch((e) => {
+    console.error("career_plan: AI personalisation failed:", e instanceof Error ? e.message : "unknown");
+    return null;
+  });
   await supabase
     .from("career_goals")
     .update({ status: "archived" })
@@ -307,9 +317,9 @@ export async function startCareerGoal(templateId: string): Promise<void> {
     .insert({
       candidate_id: session.userId,
       goal_id: goal!.id,
-      method: "rule_based",
-      provider: "rule_based",
-      analysis: { ...gap },
+      method: ai ? "ai" : "rule_based",
+      provider: ai ? `${ai.provider} · ${ai.model}` : "rule_based",
+      analysis: ai ? { ...gap, summary_en: ai.summary_en, summary_ar: ai.summary_ar } : { ...gap },
     });
   const { data: plan } = await supabase
     .from("development_plans")
@@ -328,6 +338,35 @@ export async function startCareerGoal(templateId: string): Promise<void> {
     })
     .select("id")
     .single();
+  if (ai) {
+    await supabase.from("development_plan_items").insert(
+      ai.items.map((i, position) => ({
+        plan_id: plan!.id,
+        title_en: i.title_en,
+        title_ar: i.title_ar,
+        description_en: i.description_en,
+        description_ar: i.description_ar,
+        skill_slug: i.skill_slug,
+        kind: i.kind,
+        resource_id: i.resource_id,
+        position,
+        estimated_hours: i.estimated_hours,
+        status: "not_started" as const,
+        completed_at: null,
+      })),
+    );
+    await supabase.from("ai_generation_records").insert({
+      user_id: session.userId,
+      kind: "career_plan",
+      provider: ai.provider,
+      model: ai.model,
+      input_summary: tpl.title_en,
+      output: { items: ai.items.length, summary_en: ai.summary_en.slice(0, 300) },
+      review_status: "not_required",
+    });
+    revalidatePath("/candidate", "layout");
+    redirect("/candidate/career");
+  }
   // Skills the candidate already has strongly are marked completed up front; gaps stay open.
   const items = [...tpl.development_plan_items].sort((a, b) => a.position - b.position);
   await supabase.from("development_plan_items").insert(
