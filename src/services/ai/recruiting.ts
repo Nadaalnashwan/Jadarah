@@ -36,7 +36,7 @@ export async function draftJobWithAI(
   const supabase = await createClient();
   const { data: taxonomy } = await supabase.from("skills").select("id, name_en");
   try {
-    const { data, provider } = await generateJSON(
+    const { data, provider, model } = await generateJSON(
       {
         operation: "job_description",
         userId: s.userId,
@@ -61,13 +61,14 @@ export async function draftJobWithAI(
         company_id: s.activeMembership.company_id,
         kind: "job_description",
         provider,
+        model,
         input_summary: title.slice(0, 140),
         output: data,
         review_status: "pending_review",
       })
       .select("id")
       .single();
-    return { ok: true, draft: { ...data, skill_ids, provider, recordId: rec?.id ?? "" } };
+    return { ok: true, draft: { ...data, skill_ids, provider: `${provider} · ${model}`, recordId: rec?.id ?? "" } };
   } catch (e) {
     if (e instanceof AIUnavailableError)
       return { ok: false, reason: e.message === "not_configured" ? "not_configured" : "failed" };
@@ -109,7 +110,7 @@ export async function suggestInterviewQuestions(
   const job = iv?.application?.job;
   const skills = (job?.job_skills ?? []).filter((j) => j.importance === "required").map((j) => j.skill!);
   try {
-    const { data, provider } = await generateJSON(
+    const { data, provider, model } = await generateJSON(
       {
         operation: "interview_questions",
         userId: s.userId,
@@ -125,6 +126,7 @@ export async function suggestInterviewQuestions(
         company_id: s.activeMembership.company_id,
         kind: "interview_questions",
         provider,
+        model,
         input_summary: job?.title_en ?? "",
         output: data,
         review_status: "pending_review",

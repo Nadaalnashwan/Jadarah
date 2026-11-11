@@ -16,7 +16,7 @@ export async function parseCvWithAI(
   text: string,
   file?: { mimeType: string; base64: string },
 ): Promise<ParsedCv> {
-  const { data, provider } = await generateJSON(
+  const { data, provider, model } = await generateJSON(
     {
       system: SYSTEM,
       operation: "cv_parse",
@@ -26,7 +26,7 @@ export async function parseCvWithAI(
     },
     parsedCvSchema,
   );
-  return { ...data, method: "ai", provider };
+  return { ...data, method: "ai", provider: `${provider} · ${model}` };
 }
 
 /**

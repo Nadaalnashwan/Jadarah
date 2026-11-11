@@ -7,7 +7,7 @@ import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { AIUnavailableError, parseCvRuleBased, parseCvWithAI, type ParsedCv } from "@/services/ai/cv";
 
-export const CV_MIME = [
+const CV_MIME = [
   "application/pdf",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/msword",

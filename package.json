@@ -20,7 +20,8 @@
     "demo:reset": "tsx scripts/demo/reset.ts",
     "ai:verify": "tsx scripts/ai/verify-providers.ts",
     "ai:embed-skills": "tsx scripts/ai/embed-skills.ts",
-    "ai:embed-profiles": "tsx scripts/ai/embed-profiles.ts"
+    "ai:embed-profiles": "tsx scripts/ai/embed-profiles.ts",
+    "demo:rotate-password": "tsx scripts/demo/rotate-password.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.5",

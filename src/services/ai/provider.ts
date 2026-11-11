@@ -54,8 +54,13 @@ const MAX_RETRY_WAIT_MS = 4_000;
 async function httpError(res: Response, provider: ProviderName): Promise<ProviderError> {
   const ra = Number(res.headers.get("retry-after"));
   const retryAfterMs = Number.isFinite(ra) && ra > 0 ? ra * 1000 : 1000;
-  if (res.status === 429)
+  if (res.status === 429) {
+    // Exhausted credits/quota is not a transient rate limit: never retry it.
+    const body = await res.text().catch(() => "");
+    if (/insufficient_quota|credit_balance|quota/i.test(body)) return new ProviderError(`${provider}_quota_exhausted`, false);
     return new ProviderError(`${provider}_rate_limited`, retryAfterMs <= MAX_RETRY_WAIT_MS, retryAfterMs);
+  }
+  if (res.status === 401 || res.status === 403) return new ProviderError(`${provider}_auth_${res.status}`, false);
   // 503 = model overloaded ("high demand"): move straight to the next model instead of retrying it.
   if (res.status === 503) return new ProviderError(`${provider}_overloaded`, false);
   if (res.status >= 500) return new ProviderError(`${provider}_http_${res.status}`, true, 800);
@@ -112,7 +117,14 @@ function compatEndpoint(provider: "openai" | "groq") {
     : { url: "https://api.openai.com/v1/chat/completions", key: process.env.OPENAI_API_KEY! };
 }
 
-function compatBody(provider: "openai" | "groq", model: string, input: CallInput, json: boolean, stream: boolean) {
+function compatBody(
+  provider: "openai" | "groq",
+  model: string,
+  input: CallInput,
+  json: boolean,
+  stream: boolean,
+  jsonSchema?: unknown,
+) {
   const body: Record<string, unknown> = {
     model,
     messages: [
@@ -121,7 +133,11 @@ function compatBody(provider: "openai" | "groq", model: string, input: CallInput
     ],
     stream,
   };
-  if (json) body.response_format = { type: "json_object" };
+  // Structured outputs: the provider constrains generation to the schema (Zod still validates).
+  if (json)
+    body.response_format = jsonSchema
+      ? { type: "json_schema", json_schema: { name: "result", schema: jsonSchema, strict: false } }
+      : { type: "json_object" };
   if (provider === "groq") {
     body.temperature = 0.3;
     // gpt-oss reasoning models: keep reasoning short for chat latency.
@@ -132,14 +148,19 @@ function compatBody(provider: "openai" | "groq", model: string, input: CallInput
   return body;
 }
 
-async function callCompat(provider: "openai" | "groq", input: CallInput, p: ProviderConfig): Promise<RawOut> {
+async function callCompat(
+  provider: "openai" | "groq",
+  input: CallInput,
+  p: ProviderConfig,
+  jsonSchema?: unknown,
+): Promise<RawOut> {
   const model = p.model;
   if (input.file && input.file.mimeType !== "text/plain") throw new ProviderError(`${provider}_file_unsupported`, false);
   const ep = compatEndpoint(provider);
   const res = await fetch(ep.url, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${ep.key}` },
-    body: JSON.stringify(compatBody(provider, model, input, true, false)),
+    body: JSON.stringify(compatBody(provider, model, input, true, false, jsonSchema)),
     signal: AbortSignal.timeout(p.timeoutMs),
   });
   if (!res.ok) throw await httpError(res, provider);
@@ -151,6 +172,32 @@ async function callCompat(provider: "openai" | "groq", input: CallInput, p: Prov
 
 function taskOf(input: CallInput): AITask {
   return input.task ?? taskForOperation(input.operation);
+}
+
+// ---------- circuit breaker ----------
+/**
+ * Skip a model temporarily after failures that will predictably repeat: overloaded/timeouts
+ * (3 min — e.g. Gemini 3.8 "high demand") and exhausted quota / rejected key (10 min).
+ * It re-enters the route automatically afterwards. If every model is cooling down, all are tried.
+ */
+// Process-wide (globalThis): Next bundles server actions per route, so module-level state would not be shared.
+const g = globalThis as typeof globalThis & {
+  __jadarahAiCooldown?: Map<string, number>;
+  __jadarahAiCache?: Map<string, { at: number; value: unknown }>;
+};
+const cooldown = (g.__jadarahAiCooldown ??= new Map<string, number>());
+const COOLDOWN_MS: [RegExp, number][] = [
+  [/_(quota_exhausted|auth_\d+)$/, 10 * 60_000],
+  [/_(overloaded|timeout)$/, 3 * 60_000],
+];
+function noteFailure(p: ProviderConfig, code: string) {
+  const ms = COOLDOWN_MS.find(([re]) => re.test(code))?.[1];
+  if (ms) cooldown.set(`${p.name}:${p.model}`, Date.now() + ms);
+}
+function available(chain: ProviderConfig[]) {
+  const now = Date.now();
+  const live = chain.filter((p) => (cooldown.get(`${p.name}:${p.model}`) ?? 0) < now);
+  return live.length ? live : chain;
 }
 
 // ---------- logging ----------
@@ -179,7 +226,7 @@ async function logCall(row: {
 }
 
 // ---------- per-user response cache ----------
-const cache = new Map<string, { at: number; value: unknown }>();
+const cache = (g.__jadarahAiCache ??= new Map<string, { at: number; value: unknown }>());
 const CACHE_TTL = 10 * 60_000;
 function cacheKey(input: CallInput, model: string) {
   return createHash("sha256")
@@ -219,7 +266,9 @@ export async function generateJSON<T extends z.ZodTypeAny>(
   input: CallInput,
   schema: T,
 ): Promise<{ data: z.infer<T>; provider: ProviderName; model: string; latencyMs: number }> {
-  const chain = routeFor(taskOf(input), { needsFile: Boolean(input.file && input.file.mimeType !== "text/plain") });
+  const chain = available(
+    routeFor(taskOf(input), { needsFile: Boolean(input.file && input.file.mimeType !== "text/plain") }),
+  );
   if (!chain.length) throw new AIUnavailableError("not_configured");
   if (!(await rateLimitUser("ai", input.userId, 20, 60_000))) throw new AIUnavailableError("rate_limited");
 
@@ -269,6 +318,7 @@ export async function generateJSON<T extends z.ZodTypeAny>(
           success: false,
           error_code: err.code,
         });
+        noteFailure(p, err.code);
         if (!err.retryable) break;
         if (err.retryAfterMs) await new Promise((r) => setTimeout(r, Math.min(err.retryAfterMs, MAX_RETRY_WAIT_MS)));
       }
@@ -280,7 +330,7 @@ export async function generateJSON<T extends z.ZodTypeAny>(
 async function callProvider(p: ProviderConfig, input: CallInput, schema: z.ZodTypeAny): Promise<RawOut> {
   try {
     if (p.name === "gemini") return await callGemini(input, p, jsonSchemaFor(schema));
-    return await callCompat(p.name, input, p);
+    return await callCompat(p.name, input, p, jsonSchemaFor(schema));
   } catch (e) {
     throw wrapFetchError(e, p.name);
   }
@@ -341,7 +391,7 @@ async function openStream(p: ProviderConfig, input: CallInput): Promise<Response
  * text is emitted; mid-stream failures end the stream (logged).
  */
 export async function streamText(input: CallInput): Promise<StreamResult> {
-  const chain = routeFor(taskOf(input));
+  const chain = available(routeFor(taskOf(input)));
   if (!chain.length) throw new AIUnavailableError("not_configured");
   if (!(await rateLimitUser("ai", input.userId, 20, 60_000))) throw new AIUnavailableError("rate_limited");
 
@@ -355,6 +405,7 @@ export async function streamText(input: CallInput): Promise<StreamResult> {
     } catch (e) {
       const err = wrapFetchError(e, p.name);
       lastError = err.code;
+      noteFailure(p, err.code);
       void logCall({
         provider: p.name,
         model: p.model,

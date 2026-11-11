@@ -68,7 +68,7 @@ export async function askAssistant(scope: "candidate" | "company", message: stri
   }
 
   try {
-    const { data, provider } = await generateJSON(
+    const { data, provider, model } = await generateJSON(
       {
         operation: `${scope}_assistant`,
         userId: session.userId,
@@ -86,11 +86,12 @@ Return JSON {"reply": string, "suggestions": string[] (max 3 follow-up questions
         company_id: scope === "company" ? (session.activeMembership?.company_id ?? null) : null,
         kind: scope === "candidate" ? "candidate_assistant" : "company_assistant",
         provider,
+        model,
         input_summary: text.slice(0, 200),
         output: { reply: data.reply.slice(0, 500) },
         review_status: "not_required",
       });
-    return { ...data, mode: "ai", provider };
+    return { ...data, mode: "ai", provider: `${provider} · ${model}` };
   } catch (e) {
     if (!(e instanceof AIUnavailableError)) throw e;
     return { ...ruleBased(scope, text, locale), mode: "rule_based", provider: "rule_based" };
