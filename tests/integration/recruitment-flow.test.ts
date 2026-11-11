@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { as, integrationEnabled, userId } from "./helpers";
+import { as, freshJob, integrationEnabled, userId } from "./helpers";
 
 /**
  * Full recruitment journey against the live database, executed as real demo users:
@@ -14,11 +14,8 @@ describe.skipIf(!integrationEnabled)("recruitment business rules (live Supabase)
       .select("company_id")
       .eq("user_id", await userId(recruiter))
       .single();
-    const { data: jobs } = await recruiter
-      .from("jobs")
-      .select("id, company_id")
-      .eq("status", "published")
-      .eq("company_id", membership!.company_id);
+    // A fresh job per call keeps the suite repeatable (seeded candidate/job pairs are finite).
+    const jobs = [{ ...(await freshJob(recruiter, membership!.company_id)), company_id: membership!.company_id }];
     for (let i = 1; i <= 32; i++) {
       const cand = await as(`candidate${String(i).padStart(2, "0")}`);
       const me = await userId(cand);
@@ -272,10 +269,15 @@ describe.skipIf(!integrationEnabled)("recruitment business rules (live Supabase)
     ).toMatch(/invalid status transition/);
   });
 
-  it("blocks unapproved companies from publishing", async () => {
+  it("pending (unprovisioned) organizations get no employer workspace at all", async () => {
     const pendingAdmin = await as("admin.imtidad");
-    const { data: jobs } = await pendingAdmin.from("jobs").select("id").eq("status", "draft").limit(1);
-    const { error } = await pendingAdmin.from("jobs").update({ status: "published" }).eq("id", jobs![0].id);
-    expect(error?.message).toMatch(/approved before publishing/);
+    // No approved organization + active subscription → no employer data is readable or writable.
+    const { data: jobs } = await pendingAdmin.from("jobs").select("id").eq("status", "draft");
+    expect(jobs ?? []).toHaveLength(0);
+    const { data: upd } = await pendingAdmin.from("jobs").update({ status: "published" }).eq("status", "draft").select("id");
+    expect(upd ?? []).toHaveLength(0);
+    // Public self-service company creation is closed.
+    const { error } = await pendingAdmin.rpc("create_company" as never, { p_name_en: "Free Co", p_name_ar: "شركة مجانية" } as never);
+    expect(error).not.toBeNull();
   });
 });

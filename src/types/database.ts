@@ -488,6 +488,253 @@ export type Database = {
           },
         ]
       }
+      company_brand_profiles: {
+        Row: {
+          company_id: string
+          logo_path: string | null
+          logo_source_url: string | null
+          primary_hex: string | null
+          secondary_hex: string | null
+          brand_source: string | null
+          identity_status: string
+          usage_permission: string
+          notes: string | null
+          updated_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          logo_path?: string | null
+          logo_source_url?: string | null
+          primary_hex?: string | null
+          secondary_hex?: string | null
+          brand_source?: string | null
+          identity_status?: string
+          usage_permission?: string
+          notes?: string | null
+          updated_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          logo_path?: string | null
+          logo_source_url?: string | null
+          primary_hex?: string | null
+          secondary_hex?: string | null
+          brand_source?: string | null
+          identity_status?: string
+          usage_permission?: string
+          notes?: string | null
+          updated_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_brand_profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_aliases: {
+        Row: {
+          id: string
+          company_id: string
+          alias: string
+          language: string
+          alias_status: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          alias: string
+          language?: string
+          alias_status?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          alias?: string
+          language?: string
+          alias_status?: string
+        }
+        Relationships: []
+      }
+      company_subscriptions: {
+        Row: {
+          id: string
+          company_id: string
+          plan: string
+          status: string
+          price_sar: number | null
+          billing_period: string | null
+          starts_on: string | null
+          expires_on: string | null
+          assessment_credits: number | null
+          credits_used: number
+          payment_status: string
+          is_demo: boolean
+          commercial_notes: string | null
+          activated_by: string | null
+          activated_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          plan?: string
+          status?: string
+          price_sar?: number | null
+          billing_period?: string | null
+          starts_on?: string | null
+          expires_on?: string | null
+          assessment_credits?: number | null
+          credits_used?: number
+          payment_status?: string
+          is_demo?: boolean
+          commercial_notes?: string | null
+          activated_by?: string | null
+          activated_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          plan?: string
+          status?: string
+          price_sar?: number | null
+          billing_period?: string | null
+          starts_on?: string | null
+          expires_on?: string | null
+          assessment_credits?: number | null
+          credits_used?: number
+          payment_status?: string
+          is_demo?: boolean
+          commercial_notes?: string | null
+          activated_by?: string | null
+          activated_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_subscriptions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_payments: {
+        Row: {
+          id: string
+          company_id: string
+          subscription_id: string | null
+          kind: string
+          amount_sar: number
+          paid_on: string
+          reference: string | null
+          notes: string | null
+          recorded_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          subscription_id?: string | null
+          kind?: string
+          amount_sar: number
+          paid_on: string
+          reference?: string | null
+          notes?: string | null
+          recorded_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          subscription_id?: string | null
+          kind?: string
+          amount_sar?: number
+          paid_on?: string
+          reference?: string | null
+          notes?: string | null
+          recorded_by?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_payments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_access_requests: {
+        Row: {
+          id: string
+          user_id: string
+          company_id: string
+          job_title: string
+          requested_role: Database["public"]["Enums"]["membership_role"]
+          granted_role: Database["public"]["Enums"]["membership_role"] | null
+          status: string
+          decision_note: string | null
+          reviewed_by: string | null
+          reviewed_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          company_id: string
+          job_title: string
+          requested_role: Database["public"]["Enums"]["membership_role"]
+          granted_role?: Database["public"]["Enums"]["membership_role"] | null
+          status?: string
+          decision_note?: string | null
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          company_id?: string
+          job_title?: string
+          requested_role?: Database["public"]["Enums"]["membership_role"]
+          granted_role?: Database["public"]["Enums"]["membership_role"] | null
+          status?: string
+          decision_note?: string | null
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_access_requests_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company_profiles"
+            referencedColumns: ["id"]
+          },
+        
+          {
+            foreignKeyName: "company_access_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_provider_logs: {
         Row: {
           created_at: string
@@ -1983,6 +2230,16 @@ export type Database = {
           status_reason: string | null
           updated_at: string
           website: string | null
+          registry_id: string | null
+          organization_type: string | null
+          sector_en: string | null
+          sector_ar: string | null
+          careers_url: string | null
+          verification_status: string
+          partnership_status: string
+          listed: boolean
+          accepts_access_requests: boolean
+          provenance: Json
         }
         Insert: {
           approved_at?: string | null
@@ -2007,6 +2264,16 @@ export type Database = {
           status_reason?: string | null
           updated_at?: string
           website?: string | null
+          registry_id?: string | null
+          organization_type?: string | null
+          sector_en?: string | null
+          sector_ar?: string | null
+          careers_url?: string | null
+          verification_status?: string
+          partnership_status?: string
+          listed?: boolean
+          accepts_access_requests?: boolean
+          provenance?: Json
         }
         Update: {
           approved_at?: string | null
@@ -2031,6 +2298,16 @@ export type Database = {
           status_reason?: string | null
           updated_at?: string
           website?: string | null
+          registry_id?: string | null
+          organization_type?: string | null
+          sector_en?: string | null
+          sector_ar?: string | null
+          careers_url?: string | null
+          verification_status?: string
+          partnership_status?: string
+          listed?: boolean
+          accepts_access_requests?: boolean
+          provenance?: Json
         }
         Relationships: [
           {
@@ -2678,6 +2955,9 @@ export type Database = {
           title_en: string
           updated_at: string
           work_mode: Database["public"]["Enums"]["work_mode"]
+          listing_type: string
+          source_url: string | null
+          source_checked_on: string | null
         }
         Insert: {
           ai_assisted?: boolean
@@ -2710,6 +2990,9 @@ export type Database = {
           title_en: string
           updated_at?: string
           work_mode?: Database["public"]["Enums"]["work_mode"]
+          listing_type?: string
+          source_url?: string | null
+          source_checked_on?: string | null
         }
         Update: {
           ai_assisted?: boolean
@@ -2742,6 +3025,9 @@ export type Database = {
           title_en?: string
           updated_at?: string
           work_mode?: Database["public"]["Enums"]["work_mode"]
+          listing_type?: string
+          source_url?: string | null
+          source_checked_on?: string | null
         }
         Relationships: [
           {
@@ -3263,6 +3549,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      company_service_active: { Args: { p_company: string }; Returns: boolean }
+      access_request_companies: {
+        Args: Record<PropertyKey, never>
+        Returns: { id: string; name_en: string; name_ar: string; sector_en: string | null; sector_ar: string | null }[]
+      }
+      request_company_access: {
+        Args: { p_company: string; p_job_title: string; p_role: Database["public"]["Enums"]["membership_role"] }
+        Returns: string
+      }
+      review_access_request: {
+        Args: { p_decision: string; p_note?: string; p_request: string; p_role?: Database["public"]["Enums"]["membership_role"] }
+        Returns: undefined
+      }
+      admin_provision_company: {
+        Args: { p_name_ar: string; p_name_en: string; p_organization_type?: string; p_registry_id?: string; p_sector_ar?: string; p_sector_en?: string; p_website?: string }
+        Returns: string
+      }
       decide_final_evaluation: {
         Args: { p_candidate_message?: string; p_decision: string; p_eval: string; p_rationale: string }
         Returns: undefined

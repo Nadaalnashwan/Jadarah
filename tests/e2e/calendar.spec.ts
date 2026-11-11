@@ -18,7 +18,9 @@ async function shortlisted() {
   const recruiter = await api("recruiter.rakeeza");
   const { data: me } = await recruiter.auth.getUser();
   const { data: m } = await recruiter.from("company_memberships").select("company_id").eq("user_id", me.user!.id).single();
-  const { data: jobs } = await recruiter.from("jobs").select("id").eq("status", "published").eq("company_id", m!.company_id);
+  const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  const { data: job } = await recruiter.from("jobs").insert({ company_id: m!.company_id, title_en: `Test role ${stamp}`, title_ar: `وظيفة اختبار ${stamp}`, city: "Riyadh", status: "published", min_years: 0 }).select("id").single();
+  const jobs = [job!];
   for (let i = 1; i <= 32; i++) {
     const local = `candidate${String(i).padStart(2, "0")}`;
     const cand = await api(local);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../src/types/database";
-import { as, integrationEnabled, userId } from "./helpers";
+import { as, freshJob, integrationEnabled, userId } from "./helpers";
 
 type DB = SupabaseClient<Database>;
 
@@ -14,7 +14,7 @@ describe.skipIf(!integrationEnabled)("internal interview calendar (live Supabase
   const companyKey = "rakeeza";
 
   async function shortlistedApplication(recruiter: DB, companyId: string, skipCandidates: Set<string>) {
-    const { data: jobs } = await recruiter.from("jobs").select("id").eq("status", "published").eq("company_id", companyId);
+    const jobs = [await freshJob(recruiter, companyId)];
     for (let i = 32; i >= 1; i--) {
       const local = `candidate${String(i).padStart(2, "0")}`;
       if (skipCandidates.has(local)) continue;
@@ -132,17 +132,17 @@ describe.skipIf(!integrationEnabled)("internal interview calendar (live Supabase
     const interviewer = await as(`interviewer.${companyKey}`);
     const me = await userId(interviewer);
     const { data: m } = await interviewer.from("company_memberships").select("company_id").eq("user_id", me).single();
-    const weekday = Math.floor(Math.random() * 7);
+    const weekday = 6; // Saturday: outside the Sun–Thu preset other tests may have saved
     const ins = await interviewer
       .from("interviewer_availability")
-      .insert({ user_id: me, company_id: m!.company_id, weekday, start_minute: 600, end_minute: 660 })
+      .insert({ user_id: me, company_id: m!.company_id, weekday, start_minute: 1380, end_minute: 1410 })
       .select("id")
       .single();
     expect(ins.error).toBeNull();
     // Overlapping window for the same weekday is rejected (exclusion constraint).
     const overlap = await interviewer
       .from("interviewer_availability")
-      .insert({ user_id: me, company_id: m!.company_id, weekday, start_minute: 630, end_minute: 700 });
+      .insert({ user_id: me, company_id: m!.company_id, weekday, start_minute: 1395, end_minute: 1425 });
     expect(overlap.error).not.toBeNull();
     // Another company's recruiter cannot see it.
     const other = await as("recruiter.nawat");

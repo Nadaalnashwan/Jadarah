@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { as, integrationEnabled, userId } from "./helpers";
+import { as, freshJob, integrationEnabled, userId } from "./helpers";
 
 /** Final Candidate Evaluation rules (migration 0019) against the live database as demo users. */
 describe.skipIf(!integrationEnabled)("final candidate evaluation (live Supabase)", () => {
@@ -7,7 +7,7 @@ describe.skipIf(!integrationEnabled)("final candidate evaluation (live Supabase)
     const recruiter = await as("recruiter.madar");
     const { data: m } = await recruiter.from("company_memberships").select("company_id").eq("user_id", await userId(recruiter)).single();
     const companyId = m!.company_id;
-    const { data: jobs } = await recruiter.from("jobs").select("id").eq("status", "published").eq("company_id", companyId);
+    const jobs = [await freshJob(recruiter, companyId)];
 
     // fresh application (NOT shortlisted) so we can prove hire-without-shortlist through the report
     let appId = "";
