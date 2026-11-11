@@ -91,10 +91,6 @@ export default async function FinalReportPage({ params }: { params: Promise<{ id
       <PageHeader
         eyebrow={L("Final Candidate Evaluation Report", "تقرير التقييم النهائي للمرشح")}
         title={`${r.candidate.name} · ${pick(r.app.job, "title", locale)}`}
-        description={L(
-          "Evidence from the CV, matching, practical assessment and structured interviews — with every source labelled. AI assists; your team decides.",
-          "أدلة من السيرة والمطابقة والتقييم العملي والمقابلات المنظّمة — مع توضيح مصدر كل معلومة. الذكاء الاصطناعي يساعد؛ وفريقكم يقرّر.",
-        )}
         actions={
           <>
             <Button asChild size="sm" variant="ghost" className="print:hidden">
@@ -366,7 +362,7 @@ export default async function FinalReportPage({ params }: { params: Promise<{ id
                     </div>
                   )}
                   <p className="text-subtle text-[11px]">
-                    {fe?.ai_provider} · {fe?.ai_model} · {formatDateTime(fe?.ai_generated_at, locale)} · {fe?.ai_author?.full_name ?? ""}
+                    {formatDateTime(fe?.ai_generated_at, locale)} · {fe?.ai_author?.full_name ?? ""}
                   </p>
                 </>
               )}

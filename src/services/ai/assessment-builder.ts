@@ -90,12 +90,12 @@ export async function retrieveReferences(supabase: ServerSupabase, job: JobInput
     const roleFit = toks(r.role_en).size && [...toks(r.role_en)].every((t) => toks(job.title).has(t)) ? 1 : 0;
     const status = r.validation_status === "validated" ? 1 : r.validation_status === "needs_review" ? 0.6 : 0.3;
     const score = 0.5 * sim + 0.2 * Math.min(1, overlap) + 0.15 * sectorFit + 0.15 * roleFit;
+    // Plain-language reasons (scores are stored separately for audit, not shown).
     const reasons = [
-      `similarity ${sim.toFixed(2)}`,
       roleFit ? "same role" : null,
       sectorFit ? "same sector" : null,
-      overlap > 0 ? `skill overlap ${Math.round(Math.min(1, overlap) * 100)}%` : null,
-      r.validation_status !== "validated" ? r.validation_status : null,
+      overlap > 0 ? "shared skills" : null,
+      !roleFit && !sectorFit && overlap === 0 ? "similar task structure" : null,
     ].filter(Boolean);
     return {
       id: r.id,

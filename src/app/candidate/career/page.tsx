@@ -93,7 +93,7 @@ export default async function CareerPage() {
                         ? (analysis as { summary_ar?: string }).summary_ar
                         : (analysis as { summary_en?: string }).summary_en}
                       <span className="text-subtle mt-1 block text-[11px]">
-                        {L("AI coaching based on your verified gap analysis", "إرشاد آلي مبني على تحليل فجواتك")} · {gap!.provider}
+                        {L("AI coaching based on your verified gap analysis", "إرشاد آلي مبني على تحليل فجواتك")}
                       </span>
                     </p>
                   )}

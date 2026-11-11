@@ -83,7 +83,6 @@ export default async function CompanyOverview() {
       <PageHeader
         eyebrow={pick(s.activeMembership.company, "name", locale)}
         title={L("Recruitment overview", "نظرة على التوظيف")}
-        description={L("Live figures from your workspace.", "أرقام مباشرة من مساحة عملك.")}
       />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card className="p-5">

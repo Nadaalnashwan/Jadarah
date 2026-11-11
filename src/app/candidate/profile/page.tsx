@@ -93,10 +93,6 @@ export default async function ProfilePage() {
       <PageHeader
         eyebrow={t.candidate.nav.profile}
         title={L("Your professional profile", "ملفك المهني")}
-        description={L(
-          "Save anytime — incomplete profiles are kept and you can continue later.",
-          "احفظ في أي وقت — يُحتفظ بالملف غير المكتمل ويمكنك المتابعة لاحقًا.",
-        )}
       />
       <div className="surface-card mb-6 p-5">
         <div className="flex items-center justify-between text-sm font-semibold">

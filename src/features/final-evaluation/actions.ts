@@ -94,7 +94,7 @@ Return JSON {summary, strengths:[{point,evidence,source}], gaps:[{point,evidence
       output: { stance: data.recommendation.stance, confidence: data.recommendation.confidence },
     });
     revalidatePath(`/company/applications/${applicationId}/report`);
-    return { ok: true, message: L(`AI analysis ready (${provider} · ${model}). Review it before deciding.`, `التحليل الآلي جاهز (${provider} · ${model}). راجعه قبل القرار.`) };
+    return { ok: true, message: L("AI analysis ready. Review it before deciding.", "التحليل الآلي جاهز. راجعه قبل القرار.") };
   } catch (e) {
     if (e instanceof AIUnavailableError)
       return { ok: false, error: L("AI analysis is unavailable right now. The evidence report remains usable.", "التحليل الآلي غير متاح الآن، ويبقى تقرير الأدلة صالحًا للاستخدام.") };

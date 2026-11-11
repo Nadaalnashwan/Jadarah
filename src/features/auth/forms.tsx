@@ -1,12 +1,10 @@
 "use client";
 import { useActionState, useState } from "react";
 import Link from "next/link";
-import { motion } from "motion/react";
-import { Building2, Eye, EyeOff, UserRound } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, FormMessage, Input } from "@/components/ui/form";
 import { useI18n } from "@/lib/i18n/client";
-import { cn } from "@/lib/utils";
 import {
   forgotPasswordAction,
   resendConfirmationAction,
@@ -111,7 +109,7 @@ export function ResendForm({ email }: { email: string }) {
 }
 
 export function SignUpForm() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const [state, action, pending] = useActionState<AuthState, FormData>(signUpAction, null);
   const fe = state?.fieldErrors ?? {};
   return (

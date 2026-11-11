@@ -22,10 +22,7 @@ export default async function AvailabilityPage() {
     <>
       <PageHeader
         title={L("My availability", "أوقات توفّري")}
-        description={L(
-          "Set the weekly hours when you can interview. Recruiters see these windows (never your other details) when scheduling, and the system blocks double-booking automatically. With nothing set, Sunday–Thursday 09:00–17:00 is assumed.",
-          "حدّد الساعات الأسبوعية التي يمكنك إجراء المقابلات فيها. يرى مسؤولو التوظيف هذه الفترات فقط عند الجدولة، ويمنع النظام الحجز المزدوج تلقائيًا. إن لم تحدّد شيئًا يُفترض الأحد–الخميس 09:00–17:00.",
-        )}
+        description={L("Weekly interview hours. If none are set, Sunday–Thursday 09:00–17:00 is used.", "ساعات المقابلات الأسبوعية. إن لم تُحدَّد يُعتمد الأحد–الخميس 09:00–17:00.")}
       />
       <AvailabilityEditor
         initial={(data ?? []).map((w) => ({ weekday: w.weekday, start_minute: w.start_minute, end_minute: w.end_minute }))}

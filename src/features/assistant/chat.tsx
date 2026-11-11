@@ -110,7 +110,7 @@ export function AssistantChat({ scope, starters }: { scope: "candidate" | "compa
                 {m.meta && (
                   <Badge tone={m.meta.mode === "ai" ? "progress" : "neutral"} className="mt-2">
                     {m.meta.mode === "ai"
-                      ? `${t.common.aiGenerated} · ${m.meta.provider}`
+                      ? t.common.aiGenerated
                       : t.common.ruleBased}
                   </Badge>
                 )}

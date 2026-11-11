@@ -10,6 +10,26 @@ import { AIQuestions, PublishControls, QuestionBuilder, RubricEditor } from "./b
 import { ApproveButton, MaterialLink, RegenerateButtons, ScenarioEditor, TaskEditor } from "./generated-client";
 import type { GeneratedDraft } from "@/services/ai/assessment-builder";
 
+const CHECK_LABELS: Record<string, [string, string]> = {
+  skill_coverage: ["Skill coverage", "تغطية المهارات"],
+  task_count: ["Number of tasks", "عدد المهام"],
+  deliverable_clarity: ["Clear deliverables", "وضوح المخرجات"],
+  time_feasibility: ["Realistic timing", "واقعية الوقت"],
+  input_availability: ["Required inputs provided", "توفر المدخلات"],
+  rubric_alignment: ["Rubric matches tasks", "مواءمة المعايير مع المهام"],
+  scoring_consistency: ["Consistent scoring", "اتساق الدرجات"],
+  originality: ["Original content", "أصالة المحتوى"],
+  no_assessor_leakage: ["No answer leakage", "عدم تسريب الإجابات"],
+  no_legacy_branding: ["Branding", "الهوية"],
+  dataset_validity: ["Valid data files", "سلامة ملفات البيانات"],
+};
+const REASON_LABELS: Record<string, [string, string]> = {
+  "same role": ["same role", "الدور نفسه"],
+  "same sector": ["same sector", "القطاع نفسه"],
+  "shared skills": ["shared skills", "مهارات مشتركة"],
+  "similar task structure": ["similar task structure", "بنية مهام مشابهة"],
+};
+
 export default async function AssessmentBuilder({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const s = await requireCompanyMember(["company_admin", "recruiter"]);
@@ -114,7 +134,10 @@ export default async function AssessmentBuilder({ params }: { params: Promise<{ 
                   {checks.map((c) => (
                     <li key={c.check} className="flex items-start gap-2">
                       <span className={c.passed ? "text-success" : "text-danger"}>{c.passed ? "✓" : "✕"}</span>
-                      <span><span className="font-semibold">{c.check.replace(/_/g, " ")}</span> — <span className="text-muted">{c.detail}</span></span>
+                      <span>
+                        <span className="font-semibold">{CHECK_LABELS[c.check] ? L(...CHECK_LABELS[c.check]) : c.check}</span>
+                        {!c.passed && <span className="text-muted"> — {c.detail}</span>}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -139,7 +162,10 @@ export default async function AssessmentBuilder({ params }: { params: Promise<{ 
                   {refsUsed.length === 0 && <li className="text-muted">—</li>}
                   {refsUsed.map((r, i) => (
                     <li key={i}>
-                      <span className="font-semibold">{r.role}</span> <span className="text-subtle">· {r.reason}</span>
+                      <span className="font-semibold">{r.role}</span>{" "}
+                      <span className="text-subtle">
+                        · {r.reason.split(" · ").map((x) => (REASON_LABELS[x] ? L(...REASON_LABELS[x]) : x)).join(" · ")}
+                      </span>
                     </li>
                   ))}
                 </ul>

@@ -454,8 +454,8 @@ Create 5 questions: 3 objective (multiple_choice/true_false/multiple_select) and
       ok: true,
       message:
         locale === "ar"
-          ? `أُضيفت أسئلة مقترحة${rubricReplaced ? " ومعايير مخصّصة للوظيفة" : ""} إلى المسودة (${provider} · ${model}). راجعها قبل النشر.`
-          : `Draft questions${rubricReplaced ? " and a job-tailored rubric" : ""} added (${provider} · ${model}). Review before publishing.`,
+          ? `أُضيفت أسئلة مقترحة${rubricReplaced ? " ومعايير مخصّصة للوظيفة" : ""} إلى المسودة. راجعها قبل النشر.`
+          : `Draft questions${rubricReplaced ? " and a job-tailored rubric" : ""} added. Review before publishing.`,
     };
   } catch (e) {
     if (e instanceof AIUnavailableError)

@@ -146,7 +146,6 @@ export default async function CandidateOverview() {
         <Card>
           <CardHeader
             title={t.candidate.recentActivity}
-            description={L("Select a stage to filter your applications.", "اختر مرحلة لتصفية طلباتك.")}
           />
           <CardBody>
             {statusRows.length ? (
@@ -166,10 +165,6 @@ export default async function CandidateOverview() {
         <Card>
           <CardHeader
             title={t.candidate.recommendedJobs}
-            description={L(
-              "Ranked by transparent evidence match — open a job to see why.",
-              "مرتّبة حسب مطابقة الأدلة الشفافة — افتح الوظيفة لترى السبب.",
-            )}
           />
           <CardBody>
             {recommended.length === 0 ? (

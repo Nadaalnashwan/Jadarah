@@ -139,10 +139,6 @@ export default async function CompanyApplicationDetail({ params }: { params: Pro
           <Card>
             <CardHeader
               title={L("Evidence match", "مطابقة الأدلة")}
-              description={L(
-                "Recomputed from the candidate's current profile.",
-                "مُعاد احتسابها من ملف المرشح الحالي.",
-              )}
               action={
                 <Link
                   href={`/company/compare?ids=${id}`}

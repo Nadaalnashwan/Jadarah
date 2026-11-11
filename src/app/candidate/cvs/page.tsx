@@ -51,8 +51,8 @@ export default async function CvsPage() {
             description={
               ai.configured
                 ? L(
-                    `Parsing uses ${ai.provider} — you review every extracted field.`,
-                    `يستخدم التحليل ${ai.provider} — وتراجع كل حقل مستخرج.`,
+                    "You review every extracted field.",
+                    "تراجع كل حقل مستخرج.",
                   )
                 : t.common.ruleBased
             }

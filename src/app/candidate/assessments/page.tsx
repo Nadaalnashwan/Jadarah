@@ -33,10 +33,6 @@ export default async function AssessmentsPage() {
       <PageHeader
         eyebrow={t.candidate.nav.assessments}
         title={L("Practical assessments", "التقييمات العملية")}
-        description={L(
-          "Show what you can do. Objective items are scored instantly; open work is reviewed by people against a published rubric.",
-          "أظهر ما تستطيع فعله. البنود الموضوعية تُصحَّح فورًا، والأعمال المفتوحة يراجعها أشخاص وفق معايير معلنة.",
-        )}
       />
       {rows.length === 0 ? (
         <Card>

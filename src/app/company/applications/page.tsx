@@ -49,10 +49,6 @@ export default async function CompanyApplications({ searchParams }: { searchPara
     <>
       <PageHeader
         title={t.company.nav.applications}
-        description={L(
-          "Match scores are transparent and rule-based. Decisions are always made by your team.",
-          "درجات المطابقة شفافة ومبنية على قواعد. القرارات يتخذها فريقك دائمًا.",
-        )}
       />
       <form className="surface-card mb-4 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-5" role="search">
         <Input

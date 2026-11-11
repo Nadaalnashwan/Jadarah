@@ -276,7 +276,7 @@ function ReviewPanel({ docId, parsed, onDone }: { docId: string; parsed: ParsedC
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="font-bold">{L("Review extracted information", "راجِع المعلومات المستخرجة")}</h3>
         <Badge tone={parsed.method === "ai" ? "progress" : "neutral"}>
-          {parsed.method === "ai" ? `${t.common.aiGenerated} · ${parsed.provider}` : t.common.ruleBased}
+          {parsed.method === "ai" ? t.common.aiGenerated : t.common.ruleBased}
         </Badge>
       </div>
       <p className="text-muted mt-1 text-xs">

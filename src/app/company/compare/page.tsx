@@ -101,10 +101,6 @@ export default async function ComparePage({ searchParams }: { searchParams: Prom
       <PageHeader
         eyebrow={L("Compare candidates", "مقارنة المرشحين")}
         title={pick(apps[0].job, "title", locale)}
-        description={L(
-          "Requirement-by-requirement evidence. Use it to inform — not replace — your team's judgement.",
-          "أدلة متطلبًا بمتطلب. استخدمها لدعم قرار فريقك لا لاستبداله.",
-        )}
       />
       {sameJob.length < apps.length && (
         <p className="text-warning mb-4 text-sm">

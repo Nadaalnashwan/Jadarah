@@ -221,7 +221,7 @@ export function EvaluateAnswerForm({
         </Button>
         {ai && (
           <span className="bg-accent-soft rounded-full px-2.5 py-1 text-[11px] font-semibold">
-            {L("AI suggestion — you decide", "اقتراح آلي — القرار لك")} · {ai.provider}
+            {L("AI suggestion — you decide", "اقتراح آلي — القرار لك")}
           </span>
         )}
       </div>

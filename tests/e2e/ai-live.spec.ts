@@ -48,7 +48,7 @@ test("candidate: CV upload → real AI extraction with evidence", async ({ page 
   await expect(row).toBeVisible({ timeout: 90_000 });
   const started = Date.now();
   await row.getByRole("button", { name: "Extract" }).click();
-  const badge = page.getByText(/AI generated — review before use · (gemini|groq|openai)/);
+  const badge = page.getByText("AI generated — review before use", { exact: true }).first();
   await expect(badge).toBeVisible({ timeout: 60_000 });
   console.log(`cv_parse UI round-trip ${Date.now() - started} ms · ${await badge.textContent()}`);
   await expect(page.getByText("SQL", { exact: false }).first()).toBeVisible();
@@ -60,7 +60,7 @@ test("candidate: assistant answers with real AI (Groq)", async ({ page }) => {
   await page.getByLabel("Message").fill("Which of my skills should I strengthen first for my target role? One sentence.");
   const started = Date.now();
   await page.getByLabel("Message").press("Enter");
-  const badge = page.getByText(/AI generated — review before use · groq/);
+  const badge = page.getByText("AI generated — review before use", { exact: true }).first();
   await expect(badge).toBeVisible({ timeout: 45_000 });
   console.log(`candidate_assistant UI round-trip ${Date.now() - started} ms · ${await badge.textContent()}`);
 });
@@ -69,8 +69,8 @@ test("candidate: job detail shows semantic similarity as labelled AI inference",
   await signIn(page, "candidate01");
   await page.goto("/candidate/jobs");
   await page.locator('a[href^="/candidate/jobs/"]').first().click();
-  await expect(page.getByText("Semantic profile ↔ job similarity")).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText(/AI inference \(gemini-embedding-2\)/)).toBeVisible();
+  await expect(page.getByText("Overall fit with the role")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText("AI inference — context only, not part of the score.")).toBeVisible();
 });
 
 test("company: AI job draft (Gemini) fills the form for human review", async ({ page }) => {
@@ -79,7 +79,7 @@ test("company: AI job draft (Gemini) fills the form for human review", async ({ 
   await page.locator("#title_en").fill("Data Analyst");
   const started = Date.now();
   await page.getByRole("button", { name: "Draft with AI" }).click();
-  const badge = page.getByText(/AI generated — review before use · (gemini|groq|openai)/);
+  const badge = page.getByText("AI generated — review before use", { exact: true }).first();
   await expect(badge).toBeVisible({ timeout: 60_000 });
   console.log(`job_description UI round-trip ${Date.now() - started} ms · ${await badge.textContent()}`);
   await expect(page.locator("#description_en")).not.toHaveValue("");
@@ -90,7 +90,7 @@ test("company: assistant and interview question suggestions use real AI", async 
   await page.goto("/company/assistant");
   await page.getByLabel("Message").fill("Which of our open jobs has the most demanding skill set? One sentence.");
   await page.getByLabel("Message").press("Enter");
-  await expect(page.getByText(/AI generated — review before use · groq/)).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByText("AI generated — review before use", { exact: true }).first()).toBeVisible({ timeout: 45_000 });
 
   await page.goto("/company/interviews");
   await page.locator('a[href^="/company/interviews/"]').first().click();
@@ -107,7 +107,7 @@ test("company: rubric-assisted evaluation suggests scores for a human reviewer",
   await page.goto("/company/applications/4bbec4b2-0c73-4fc3-a9ba-f0b481f31bf7");
   const started = Date.now();
   await page.getByRole("button", { name: "Suggest rubric scores with AI" }).first().click();
-  const badge = page.getByText(/AI suggestion — you decide · (gemini|groq|openai)/).first();
+  const badge = page.getByText("AI suggestion — you decide", { exact: true }).first();
   await expect(badge).toBeVisible({ timeout: 90_000 });
   console.log(`assessment_evaluation UI round-trip ${Date.now() - started} ms · ${await badge.textContent()}`);
   // Suggested scores are pre-filled but NOT saved until the reviewer submits.
@@ -124,7 +124,7 @@ test("company: job → AI-generated assessment with a job-tailored, editable rub
   await page.getByLabel("Base on a job").selectOption({ index: 1 });
   const started = Date.now();
   await page.getByRole("button", { name: "Generate draft questions" }).click();
-  await expect(page.getByText(/job-tailored rubric added \((gemini|groq|openai) · /)).toBeVisible({ timeout: 90_000 });
+  await expect(page.getByText(/job-tailored rubric added/)).toBeVisible({ timeout: 90_000 });
   console.log(`assessment_generation UI round-trip ${Date.now() - started} ms`);
   // Rubric is reviewable and editable before publishing.
   await expect(page.getByRole("button", { name: "Save rubric" })).toBeVisible();
@@ -164,7 +164,7 @@ test("company: Final Candidate Evaluation Report with AI-assisted recommendation
   const started = Date.now();
   await page.getByRole("button", { name: /Generate AI-assisted analysis|Regenerate AI analysis/ }).click();
   // Fresh result: wait for this run's confirmation (the previous report may already be on screen).
-  await expect(page.getByText(/AI analysis ready \((gemini|groq|openai) · /)).toBeVisible({ timeout: 120_000 });
+  await expect(page.getByText("AI analysis ready. Review it before deciding.")).toBeVisible({ timeout: 120_000 });
   await expect(page.getByText("AI recommendation")).toBeVisible();
   console.log(`final_evaluation UI round-trip ${Date.now() - started} ms`);
   await expect(page.getByText(/Strengths \(evidence-backed\)/)).toBeVisible();

@@ -17,8 +17,8 @@ export default async function CompanyAssistant() {
         description={
           ai.configured
             ? L(
-                `Powered by ${ai.provider}. Uses only your company's data. Suggestions only — your team decides.`,
-                `يعمل بواسطة ${ai.provider}. يستخدم بيانات شركتك فقط. اقتراحات فقط — والقرار لفريقك.`,
+                "Uses only your organization's data. Your team decides.",
+                "يستخدم بيانات جهتك فقط. والقرار لفريقك.",
               )
             : t.common.ruleBased
         }

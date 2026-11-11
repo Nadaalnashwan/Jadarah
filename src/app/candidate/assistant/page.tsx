@@ -18,8 +18,8 @@ export default async function AssistantPage() {
         description={
           ai.configured
             ? L(
-                `Powered by ${ai.provider}. It only sees your own profile data and never decides for you.`,
-                `يعمل بواسطة ${ai.provider}. يرى بيانات ملفك فقط ولا يقرر نيابةً عنك.`,
+                "Uses only your profile data. You decide.",
+                "يستخدم بيانات ملفك فقط. والقرار لك.",
               )
             : t.common.ruleBased
         }

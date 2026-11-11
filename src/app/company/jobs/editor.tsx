@@ -154,7 +154,7 @@ export function JobEditor({
           </Button>
           {aiState.provider && (
             <Badge tone="progress">
-              {t.common.aiGenerated} · {aiState.provider}
+              {t.common.aiGenerated}
             </Badge>
           )}
           <AnimatePresence>

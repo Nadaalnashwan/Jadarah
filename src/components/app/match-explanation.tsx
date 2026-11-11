@@ -65,11 +65,10 @@ export function MatchExplanation({
           <div className="flex items-center justify-between gap-3">
             <p className="flex items-center gap-1.5 text-xs font-bold">
               <Sparkles className="text-primary dark:text-lavender size-3.5" aria-hidden />
-              {locale === "ar" ? "التقارب الدلالي بين الملف والوظيفة" : "Semantic profile ↔ job similarity"}
+              {locale === "ar" ? "التوافق العام مع الوظيفة" : "Overall fit with the role"}
             </p>
             <span className="text-sm font-extrabold">
-              {semanticLabel(match.semantic.fit, locale)}{" "}
-              <span className="ltr-nums text-subtle text-xs font-semibold">{match.semantic.fit.toFixed(2)}</span>
+              {semanticLabel(match.semantic.fit, locale)}
             </span>
           </div>
           <div className="bg-surface mt-2 h-1.5 overflow-hidden rounded-full" aria-hidden>
@@ -80,8 +79,8 @@ export function MatchExplanation({
           </div>
           <p className="text-subtle mt-1.5 text-[11px] leading-snug">
             {locale === "ar"
-              ? `استنتاج ذكاء اصطناعي (${match.semantic.model}) — للاستئناس فقط ولا يدخل في الدرجة.`
-              : `AI inference (${match.semantic.model}) — context only, not part of the score.`}
+              ? "استنتاج آلي — للاستئناس فقط ولا يدخل في الدرجة."
+              : "AI inference — context only, not part of the score."}
           </p>
         </div>
       )}
@@ -119,8 +118,7 @@ export function MatchExplanation({
                   <Sparkles className="size-3 shrink-0" aria-hidden />
                   <span>
                     {locale === "ar" ? "مهارة قريبة لدى المرشح: " : "Related skill the candidate has: "}
-                    <strong>{r.related.name}</strong>{" "}
-                    <span className="ltr-nums text-subtle">({r.related.similarity.toFixed(2)})</span>
+                    <strong>{r.related.name}</strong>
                     {locale === "ar" ? " · استنتاج آلي، يحتاج تحققًا" : " · AI inference, verify"}
                   </span>
                 </p>
