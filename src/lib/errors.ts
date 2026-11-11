@@ -111,6 +111,21 @@ const KNOWN: [RegExp, string, string][] = [
     "هذه الدعوة غير صالحة لحسابك.",
   ],
   [
+    /candidate already has an interview/i,
+    "The candidate already has an interview at that time. Choose another slot.",
+    "لدى المرشح مقابلة أخرى في هذا الوقت. اختر موعدًا آخر.",
+  ],
+  [
+    /interview_participants_no_overlap|23P01|conflicting key value violates exclusion/i,
+    "An interviewer is already booked at that time. Pick a free slot.",
+    "أحد المُقابِلين محجوز في هذا الوقت. اختر موعدًا متاحًا.",
+  ],
+  [/interviewer_availability.*exclu|exclusion constraint/i, "Time ranges overlap.", "الفترات الزمنية متداخلة."],
+  [/must be in the future/i, "The interview time must be in the future.", "يجب أن يكون موعد المقابلة في المستقبل."],
+  [/duration must be between/i, "Duration must be between 15 and 240 minutes.", "يجب أن تكون المدة بين 15 و240 دقيقة."],
+  [/unknown time zone/i, "Unknown time zone.", "منطقة زمنية غير معروفة."],
+  [/can no longer be confirmed/i, "This interview can no longer be confirmed.", "لم يعد بالإمكان تأكيد هذه المقابلة."],
+  [
     /permission|not authorized|super admin only|42501/i,
     "You don't have permission to do that.",
     "لا تملك صلاحية تنفيذ ذلك.",

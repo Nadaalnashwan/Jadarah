@@ -30,6 +30,8 @@ export default async function CompanyLayout({ children }: { children: React.Reac
       roles: ["company_admin", "recruiter"],
     },
     { href: "/company/interviews", label: n.interviews, icon: "CalendarClock" },
+    { href: "/company/calendar", label: n.calendar, icon: "CalendarDays" },
+    { href: "/company/availability", label: n.availability, icon: "Clock" },
     { href: "/company/team", label: n.team, icon: "ShieldCheck", roles: ["company_admin"] },
     {
       href: "/company/analytics",

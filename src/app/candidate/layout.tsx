@@ -15,6 +15,7 @@ export default async function CandidateLayout({ children }: { children: React.Re
     { href: "/candidate/cvs", label: n.cvs, icon: "FileText" },
     { href: "/candidate/jobs", label: n.jobs, icon: "Search" },
     { href: "/candidate/applications", label: n.applications, icon: "Send" },
+    { href: "/candidate/interviews", label: n.interviews, icon: "CalendarClock" },
     { href: "/candidate/assessments", label: n.assessments, icon: "ClipboardCheck" },
     { href: "/candidate/skills", label: n.skills, icon: "Sparkles" },
     { href: "/candidate/career", label: n.career, icon: "Route" },

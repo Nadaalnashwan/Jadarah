@@ -2,7 +2,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { FileText, Sparkles } from "lucide-react";
+import { CalendarSearch, FileText, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, FormMessage, Input, Select, Textarea } from "@/components/ui/form";
 import {
@@ -15,10 +15,13 @@ import {
 } from "@/features/company/actions";
 import { getApplicationCvUrl } from "@/features/company/document-actions";
 import { suggestRubricScores, type RubricSuggestion } from "@/features/assessments/ai-evaluation-actions";
+import { getSchedulingSlots } from "@/features/calendar/actions";
+import type { Slot } from "@/lib/domain/calendar";
 import type { ApplicationStatus } from "@/lib/domain/application-status";
 import type { ActionResult } from "@/lib/errors";
 import { useI18n } from "@/lib/i18n/client";
 import { tx } from "@/lib/i18n/config";
+import { cn } from "@/lib/utils";
 
 function useToastResult(state: ActionResult | null, onOk?: () => void) {
   const router = useRouter();
@@ -360,6 +363,21 @@ export function InterviewForm({
     scheduleInterview.bind(null, applicationId),
     null,
   );
+  const [duration, setDuration] = useState(45);
+  const [tz, setTz] = useState("Asia/Riyadh");
+  const [at, setAt] = useState("");
+  const [picked, setPicked] = useState<string[]>([]);
+  const [day, setDay] = useState("");
+  const [slots, setSlots] = useState<Slot[] | null>(null);
+  const [finding, setFinding] = useState(false);
+  async function findSlots() {
+    if (!day || !picked.length) return toast.error(L("Choose interviewers and a date first.", "اختر المُقابِلين والتاريخ أولًا."));
+    setFinding(true);
+    const r = await getSchedulingSlots({ date: day, duration, interviewers: picked, timezone: tz });
+    setFinding(false);
+    if (!r.ok) return toast.error(r.error);
+    setSlots(r.data!.slots);
+  }
   if (!open)
     return (
       <Button size="sm" onClick={() => setOpen(true)}>
@@ -371,6 +389,23 @@ export function InterviewForm({
       <Field label={L("Title", "العنوان")} htmlFor="iv-title" required>
         <Input id="iv-title" name="title" required defaultValue={L("Technical interview", "مقابلة تقنية")} />
       </Field>
+      <fieldset className="flex flex-col gap-2">
+        <legend className="mb-1 text-sm font-semibold">{L("Interviewers", "المُقابِلون")}</legend>
+        {members.map((m) => (
+          <label key={m.id} className="flex items-center gap-2 text-sm">
+            <Checkbox
+              name="interviewers"
+              value={m.id}
+              checked={picked.includes(m.id)}
+              onChange={(e) => {
+                setSlots(null);
+                setPicked((p) => (e.target.checked ? [...p, m.id] : p.filter((x) => x !== m.id)));
+              }}
+            />{" "}
+            {m.name}
+          </label>
+        ))}
+      </fieldset>
       <div className="grid grid-cols-2 gap-3">
         <Field label={L("Type", "النوع")} htmlFor="iv-type">
           <Select id="iv-type" name="type" defaultValue="video">
@@ -382,19 +417,88 @@ export function InterviewForm({
           </Select>
         </Field>
         <Field label={L("Duration (min)", "المدة (دقيقة)")} htmlFor="iv-dur">
-          <Input id="iv-dur" name="duration" type="number" min={10} max={480} defaultValue={45} />
-        </Field>
-        <Field label={L("Date & time", "التاريخ والوقت")} htmlFor="iv-at" required>
-          <Input id="iv-at" name="scheduled_at" type="datetime-local" required />
+          <Select
+            id="iv-dur"
+            name="duration"
+            value={duration}
+            onChange={(e) => {
+              setSlots(null);
+              setDuration(Number(e.target.value));
+            }}
+          >
+            {[15, 30, 45, 60, 90, 120].map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
+          </Select>
         </Field>
         <Field label={L("Time zone", "المنطقة الزمنية")} htmlFor="iv-tz">
-          <Select id="iv-tz" name="timezone" defaultValue="Asia/Riyadh">
+          <Select
+            id="iv-tz"
+            name="timezone"
+            value={tz}
+            onChange={(e) => {
+              setSlots(null);
+              setTz(e.target.value);
+            }}
+          >
             {["Asia/Riyadh", "Asia/Dubai", "Europe/London", "UTC"].map((z) => (
               <option key={z}>{z}</option>
             ))}
           </Select>
         </Field>
+        <Field label={L("Find a free slot on", "ابحث عن موعد متاح في")} htmlFor="iv-day">
+          <Input
+            id="iv-day"
+            type="date"
+            value={day}
+            onChange={(e) => {
+              setSlots(null);
+              setDay(e.target.value);
+            }}
+          />
+        </Field>
       </div>
+      <div className="bg-sky-soft flex flex-col gap-2 rounded-2xl p-3">
+        <Button type="button" size="sm" variant="soft" onClick={findSlots} loading={finding} className="self-start">
+          <CalendarSearch /> {L("Show free slots for all selected interviewers", "اعرض المواعيد المتاحة لكل المُقابِلين المختارين")}
+        </Button>
+        {slots && (
+          slots.length === 0 ? (
+            <p className="text-muted text-sm">{L("No common free slot on this day.", "لا يوجد موعد مشترك متاح في هذا اليوم.")}</p>
+          ) : (
+            <div className="flex flex-wrap gap-1.5" role="listbox" aria-label={L("Free slots", "المواعيد المتاحة")}>
+              {slots.map((sl) => {
+                const local = `${day}T${sl.label}`;
+                return (
+                  <button
+                    key={sl.startUtc}
+                    type="button"
+                    role="option"
+                    aria-selected={at === local}
+                    onClick={() => setAt(local)}
+                    className={cn(
+                      "ltr-nums rounded-full border px-3 py-1 text-xs font-semibold transition",
+                      at === local ? "bg-primary border-primary text-white" : "bg-surface hover:border-primary/60",
+                    )}
+                  >
+                    {sl.label}
+                  </button>
+                );
+              })}
+            </div>
+          )
+        )}
+      </div>
+      <Field
+        label={L("Date & time", "التاريخ والوقت")}
+        htmlFor="iv-at"
+        required
+        hint={L("Double-booking is blocked automatically.", "يُمنع الحجز المزدوج تلقائيًا.")}
+      >
+        <Input id="iv-at" name="scheduled_at" type="datetime-local" required value={at} onChange={(e) => setAt(e.target.value)} />
+      </Field>
       <Field label={L("Meeting link", "رابط الاجتماع")} htmlFor="iv-url">
         <Input id="iv-url" name="meeting_url" type="url" dir="ltr" placeholder="https://" />
       </Field>
@@ -404,14 +508,6 @@ export function InterviewForm({
       <Field label={L("Instructions for the candidate", "تعليمات للمرشح")} htmlFor="iv-ins">
         <Textarea id="iv-ins" name="instructions" rows={2} />
       </Field>
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-sm font-semibold">{L("Interviewers", "المُقابِلون")}</legend>
-        {members.map((m) => (
-          <label key={m.id} className="flex items-center gap-2 text-sm">
-            <Checkbox name="interviewers" value={m.id} /> {m.name}
-          </label>
-        ))}
-      </fieldset>
       {state && !state.ok && <FormMessage>{state.error}</FormMessage>}
       <div className="flex gap-2">
         <Button type="submit" size="sm" loading={pending}>
