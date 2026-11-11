@@ -10,9 +10,17 @@ export async function setLocale(page: Page, locale: "ar" | "en") {
 
 export async function signIn(page: Page, local: string) {
   await setLocale(page, "en");
-  await page.goto("/sign-in");
-  await page.locator("#email").fill(`${local}@jadarah-demo.test`);
-  await page.locator("#password").fill(DEMO_PASSWORD);
-  await page.getByRole("button", { name: "Sign in" }).click();
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await page.goto("/sign-in");
+    await page.locator("#email").fill(`${local}@jadarah-demo.test`);
+    await page.locator("#password").fill(DEMO_PASSWORD);
+    await page.getByRole("button", { name: "Sign in" }).click();
+    await page.waitForURL((u) => !u.pathname.startsWith("/sign-in"), { timeout: 8_000 }).catch(() => undefined);
+    if (!new URL(page.url()).pathname.startsWith("/sign-in")) return;
+    // The app limits sign-in to 10/min per IP (security control). A long suite can hit it from
+    // localhost: wait out the window once instead of weakening the limit.
+    if (attempt === 0 && (await page.getByText(/too many|rate/i).count())) await page.waitForTimeout(61_000);
+    else break;
+  }
   await expect(page).not.toHaveURL(/sign-in/);
 }

@@ -37,3 +37,13 @@
 - interviewer: interviews visible, applications area blocked
 - super admin: control center, pending approval queue, audit log
 - access control: candidate cannot open company/admin areas
+
+## 2026-11-11 (new Mac) — verified
+| Suite | Result |
+|---|---|
+| Vitest unit + live integration (`npx vitest run`) | **51/51** — adds calendar slots/zones (9), final-evaluation scoring (5), `'use server'` export guard, calendar conflicts (live), final evaluation rules (live), assessments + semantic RLS (live) |
+| Playwright standard (`npx playwright test`) | **17/17** (desktop + Pixel 7 public; journeys; calendar availability → slot finder → candidate confirms; assistant API access control) |
+| Live AI (`RUN_LIVE_AI=1 npx playwright test tests/e2e/ai-live.spec.ts --project=desktop`) | **9/9** — CV extraction, both assistants (streaming), semantic panel, AI job draft, interview questions, rubric-assisted evaluation, job → assessment + rubric, career plan, final evaluation report |
+| Live video (`RUN_LIVE_VIDEO=1 npx playwright test tests/e2e/video.spec.ts`) | **1/1** — real two-person Daily call in a private room; outsiders refused |
+
+Notes: the app limits sign-in to 10/min per IP; the E2E `signIn` helper waits out the window once instead of weakening the control. Live suites cost provider credits and create demo artifacts (draft assessments, CV versions, cancelled interviews).

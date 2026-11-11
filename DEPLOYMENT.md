@@ -6,7 +6,8 @@ Status: **not deployed**. The app builds (`npm run build`) and is Vercel-compati
 2. Environment variables (Production + Preview):
    - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SITE_URL=https://<your-domain>`
    - `JADARAH_ENV=production` (Preview: `demo`)
-   - Optional AI: `AI_PROVIDER`, `GEMINI_API_KEY`/`OPENAI_API_KEY`, model names, `AI_TIMEOUT_MS`
+   - AI: `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_FALLBACK_MODEL`, `GEMINI_THINKING_LEVEL`, `GROQ_API_KEY`, `GROQ_MODEL`, `OPENAI_API_KEY`, `OPENAI_MODEL`, `EMBEDDING_*`, `AI_TIMEOUT_MS`, `AI_PRIMARY_TIMEOUT_MS`
+   - Video: `DAILY_API_KEY` (server only)
    - Do **not** add `SUPABASE_SERVICE_ROLE_KEY`, `DEMO_USER_PASSWORD` or `SUPABASE_DB_URL` to the web app.
 3. Supabase Dashboard → Authentication → URL configuration: set **Site URL** to the production domain and add `https://<domain>/auth/callback` (and preview URLs) to **Redirect URLs**.
 4. Supabase → Authentication → SMTP: configure a custom SMTP provider (required for real volumes).

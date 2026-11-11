@@ -5,7 +5,8 @@
  * (never the rule-based fallback). The provider may differ from the preferred one when it is overloaded. Nothing is saved: drafts and extractions are left unconfirmed.
  */
 import { expect, test } from "@playwright/test";
-import { signIn } from "./helpers";
+import { createClient } from "@supabase/supabase-js";
+import { DEMO_PASSWORD, signIn } from "./helpers";
 
 test.skip(process.env.RUN_LIVE_AI !== "1", "set RUN_LIVE_AI=1 to call real AI providers");
 test.setTimeout(120_000);
@@ -140,9 +141,16 @@ test("candidate: career goal → AI-personalised development plan from the verif
   await signIn(page, "candidate30");
   await page.goto("/candidate/career");
   const started = Date.now();
+  const since = new Date().toISOString();
   await page.getByRole("button", { name: "Set as my goal" }).first().click();
   await expect(page.getByText("AI coaching based on your verified gap analysis")).toBeVisible({ timeout: 90_000 });
-  console.log(`career_plan UI round-trip ${Date.now() - started} ms`);
+  // Prove the plan is fresh (not left over from a previous run): a new AI gap analysis row exists.
+  const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, { auth: { persistSession: false } });
+  await db.auth.signInWithPassword({ email: "candidate30@jadarah-demo.test", password: DEMO_PASSWORD });
+  await expect
+    .poll(async () => (await db.from("skill_gap_analyses").select("method").gte("created_at", since)).data?.[0]?.method, { timeout: 90_000 })
+    .toBe("ai");
+  console.log(`career_plan round-trip ${Date.now() - started} ms`);
   await expect(page.getByText(/AI generated — review before use/).first()).toBeVisible();
 });
 
@@ -155,7 +163,9 @@ test("company: Final Candidate Evaluation Report with AI-assisted recommendation
   await expect(page.getByText("D · Structured interview evaluation")).toBeVisible();
   const started = Date.now();
   await page.getByRole("button", { name: /Generate AI-assisted analysis|Regenerate AI analysis/ }).click();
-  await expect(page.getByText("AI recommendation")).toBeVisible({ timeout: 120_000 });
+  // Fresh result: wait for this run's confirmation (the previous report may already be on screen).
+  await expect(page.getByText(/AI analysis ready \((gemini|groq|openai) · /)).toBeVisible({ timeout: 120_000 });
+  await expect(page.getByText("AI recommendation")).toBeVisible();
   console.log(`final_evaluation UI round-trip ${Date.now() - started} ms`);
   await expect(page.getByText(/Strengths \(evidence-backed\)/)).toBeVisible();
   // The decision stays human: the report is still a draft with the decision form available.

@@ -16,6 +16,13 @@ Supabase project ref: `qqvvlornhvfykusaxaid`. All schema changes are versioned i
 | 0010 | table_grants | least-privilege table grants (project grants nothing by default) |
 | 0011 | function_grants | EXECUTE for authenticated; internal helpers revoked |
 | 0012 | fix_submit_assessment | enum cast fix found by live integration tests |
+| 0013 | semantic_embeddings | pgvector: skill/candidate/job embeddings (768d, model-keyed), related_skills, semantic_fit, semantic_job_ranking |
+| 0014 | ai_record_kinds | new AI analysis/generation record kinds |
+| 0015 | fix_assessment_insert_returning | companies can create/clone assessments (row-based SELECT policy) |
+| 0016 | internal_calendar | ends_at, attendance confirmation, participant booking windows + exclusion constraint, availability, free/busy, reminders (pg_cron) |
+| 0017 | fix_interview_double_booking | conflicts raise instead of being swallowed |
+| 0018 | video_interviews | Daily room columns, access RPC, attach/detach, attendance |
+| 0019 | final_evaluation | interview rubric, final evaluations (draft/finalized), comments, decision + feedback RPCs |
 
 Applying: migrations were applied through the Supabase MCP connection. For a fresh project use the Supabase CLI (`supabase db push`) or run the files in order.
 

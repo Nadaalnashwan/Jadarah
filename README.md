@@ -29,7 +29,13 @@ npm run dev                  # http://localhost:3000
 | `JADARAH_ENV` | server | `local` / `demo` / `production` guard |
 | `INITIAL_ADMIN_EMAIL`, `INITIAL_ADMIN_PASSWORD` | scripts only | First Super Admin |
 | `DEMO_USER_PASSWORD` | scripts/tests only | Shared password of demo identities |
-| `AI_PROVIDER`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `OPENAI_API_KEY`, `OPENAI_MODEL`, `AI_TIMEOUT_MS` | server | Optional AI provider |
+| `AI_PROVIDER`, `AI_TIMEOUT_MS`, `AI_PRIMARY_TIMEOUT_MS`, `AI_STRICT_ROUTING` | server | AI routing (fast → Groq, structured → Gemini, deep → OpenAI) |
+| `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_FALLBACK_MODEL`, `GEMINI_THINKING_LEVEL` | server | Gemini (structured extraction/generation) |
+| `GROQ_API_KEY`, `GROQ_MODEL` | server | Groq (assistants, fast tasks; streaming) |
+| `OPENAI_API_KEY`, `OPENAI_MODEL` | server | OpenAI (deep evaluation) |
+| `EMBEDDING_PROVIDER`, `EMBEDDING_MODEL`, `EMBEDDING_DIMENSIONS`, `SEMANTIC_RELATED_MIN` | server | Gemini embeddings + pgvector semantic matching |
+| `DAILY_API_KEY`, `DAILY_WEBHOOK_SECRET` | server | Daily.co private video interviews |
+| `RESEND_API_KEY` | — | Future work (lowest priority), not integrated |
 
 Never prefix secrets with `NEXT_PUBLIC_`.
 
@@ -44,6 +50,9 @@ Never prefix secrets with `NEXT_PUBLIC_`.
 | `npm run seed:generate` | Regenerate `supabase/seed/demo_seed.sql` from typed demo data |
 | `npm run demo:seed` / `demo:reset -- --yes` | Seed / remove demo data (refuses in production) |
 | `npm run admin:provision` | Idempotently create the first Super Admin |
+| `npm run ai:verify` | Verify AI/Daily keys, exact model IDs, real requests, latency |
+| `npm run ai:embed-skills` / `ai:embed-profiles` | Backfill pgvector embeddings (idempotent, content-hashed) |
+| `npm run demo:rotate-password -- --yes` | Rotate the shared password of `@jadarah-demo.test` identities only |
 
 ## Documentation
 [ARCHITECTURE](ARCHITECTURE.md) · [DATABASE](DATABASE.md) · [SECURITY](SECURITY.md) · [TESTING](TESTING.md) · [DEPLOYMENT](DEPLOYMENT.md) · [DEMO_ACCOUNTS](DEMO_ACCOUNTS.md) · [Handoff](docs/handoffs/JADARAH_HANDOFF.md)

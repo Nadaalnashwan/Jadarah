@@ -25,3 +25,12 @@ Candidate A cannot read B's records; companies are isolated; interviewers see on
 - Replace in-memory rate limiting with a shared store before horizontal scaling.
 - Add a Content-Security-Policy once third-party origins are finalised.
 - The `http` Postgres extension was enabled to load the demo seed from a pinned commit; drop it (`drop extension http;`) if not needed.
+
+## 2026-11-11 additions
+- **AI:** keys server-only; task routing with visible fallback (badge + `ai_provider_logs`), no prompts logged; candidate answers/CVs treated as untrusted data (prompt-injection guard); the final-evaluation AI receives a de-identified evidence pack; AI never changes statuses.
+- **Semantic data:** embeddings tables under RLS (candidates write only their own; companies only their jobs); similarity RPCs are security-invoker.
+- **Calendar:** interviewer double-booking prevented by a Postgres exclusion constraint; free/busy exposes times only to recruiters; attendance confirmation candidate-only.
+- **Video:** Daily rooms private; `interview_video_access()` admits only the candidate and assigned interviewers; short-lived room-scoped tokens minted server-side; camera/mic allowed by Permissions-Policy only on `/meet/*`; no recording.
+- **Final evaluation:** company-internal (RLS); workflow columns writable only via RPCs; finalized reports locked; candidates see only explicitly shared feedback via a candidate-scoped RPC.
+- Found/fixed: `'use server'` non-function export broke CV upload (now guarded by a unit test); companies could not create assessments (RLS on INSERT…RETURNING, 0015); `ON CONFLICT DO NOTHING` swallowed double-booking (0017).
+- Owner to-dos: enable leaked-password protection; custom SMTP; MFA for Super Admins.
