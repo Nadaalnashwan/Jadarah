@@ -39,6 +39,14 @@ Note: `gemini-2.5-flash` (old default) is retired for new users.
 | Company assistant + interview question suggestions | ✓ Groq ~0.6 s / ~1.4 s |
 Regression: lint ✓, typecheck ✓, vitest 30/30 ✓, existing Playwright 13 passed (1 skipped by design) ✓.
 
+**Phase 3 progress (2026-11-11)**
+- ✓ Rubric-assisted evaluation: "Suggest rubric scores with AI" on the company application page (deep task; per-criterion scores clamped, evidence quotes verified against the answer, prompt-injection guard). Suggestions only — reviewer edits and submits. Live E2E ✓.
+- ✓ Job → AI assessment: Assessment Builder can base generation on a company job; AI drafts questions + a job-tailored rubric; new **RubricEditor** (edit on drafts, read-only when published). Live E2E ✓.
+- ✓ Migration 0014 (new AI record kinds) and **0015 (bug fix: companies could never create/clone assessments — INSERT…RETURNING failed RLS)** applied.
+- Tests: vitest **33/33** (new `tests/integration/assessments-and-semantic.test.ts`), live AI E2E **7/7**.
+- Test artifacts: live E2E creates draft assessments titled `E2E live AI assessment <timestamp>` in Nawat, and `e2e-live-ai-cv.pdf` CV versions for candidate01 (harmless demo data).
+- ☐ Remaining Phase 3: AI career/development plan from a career goal (currently rule-based gap analysis + templates).
+
 **Bug fixed:** CV upload was broken — `cv-actions.ts` exported a constant from a `"use server"` module (Next 16 rejects it → 500 on every CV page action). Pre-existing; previous E2E never uploaded.
 
 **AI reliability behaviour:** Groq/OpenAI use `json_schema` structured outputs; quota/auth errors are not retried; a process-wide circuit breaker skips overloaded/timed-out models for 3 min and quota/auth failures for 10 min. On 2026-11-11 Google reported both Gemini 3.8 and 3.5 Flash as overloaded intermittently — structured tasks then ran on Groq (visible in badges + `ai_provider_logs`).
@@ -46,7 +54,7 @@ Regression: lint ✓, typecheck ✓, vitest 30/30 ✓, existing Playwright 13 pa
 **Exact next steps**
 1. Owner: add OpenAI credits (deep evaluation currently skipped as `openai_quota_exhausted`).
 2. ~~Streaming assistants~~ — done: `/api/assistant` streams Groq tokens (first token 0.5–0.7 s); access tests in `tests/e2e/api-security.spec.ts`.
-3. Phase 3: AI Assessment Builder (questions + rubric generation), deep rubric-assisted evaluation, career plan generation.
+3. Phase 3 remainder: AI career/development plan generation (career goal → plan; structured task, human-editable).
 4. Phase 4–6: internal calendar (availability, conflict-safe booking via DB exclusion constraint, notifications + reminders via pg_cron), Daily rooms/tokens, Final Candidate Evaluation Report.
 5. Phase 7: Playwright E2E, Vercel preview deploy.
 
@@ -57,7 +65,7 @@ Regression: lint ✓, typecheck ✓, vitest 30/30 ✓, existing Playwright 13 pa
 
 ## Supabase
 - Project ref `qqvvlornhvfykusaxaid` (dashboard name "maknon Project"; confirmed by the owner as the new JADARAH project).
-- Migrations 0001–0013 in `supabase/migrations/` — **all applied** (0013 on 2026-11-11 via MCP) (0009 and 0012 were applied by fetching the pinned commit file through the `http` extension; content identical to the repo files).
+- Migrations 0001–0015 in `supabase/migrations/` — **all applied** (0013–0015 on 2026-11-11 via MCP) (0009 and 0012 were applied by fetching the pinned commit file through the `http` extension; content identical to the repo files).
 - RLS on every public table; least-privilege grants (this project grants nothing to API roles by default — migrations 0010/0011 add explicit grants; **any new table/function needs explicit grants**).
 - Storage: 6 private buckets with object policies.
 - Demo seed applied: 61 Auth identities, 10 companies (9 approved, Imtidad pending), 30 jobs (24 published), 32 candidates, 15 assessments/75 questions, 51 resources, 10 plan templates, 12 personal plans, 82+ applications, 28+ interviews. `platform_settings.environment = 'demo'`.
