@@ -47,6 +47,12 @@ Regression: lint ✓, typecheck ✓, vitest 30/30 ✓, existing Playwright 13 pa
 - Test artifacts: live E2E creates draft assessments titled `E2E live AI assessment <timestamp>` in Nawat, and `e2e-live-ai-cv.pdf` CV versions for candidate01 (harmless demo data).
 - ✓ AI career plan: setting a career goal personalises milestones from the deterministic gap analysis (only verified library resources / required skills accepted; template fallback labelled rule-based). Live E2E ✓. **Phase 3 complete.** Live AI E2E total: 8/8.
 
+**Phase 4 progress — internal calendar (2026-11-11)**
+- ✓ Backend (migrations 0016–0017 applied): `interviews.ends_at`, `candidate_confirmed_at`; participant booking windows with **EXCLUDE USING gist** (no interviewer double-booking, DB-enforced); candidate double-booking rejected (23P01); `interviewer_availability` (weekly, RLS); `interviewer_busy()` free/busy RPC; `confirm_interview_attendance()`; reschedule/cancel notify candidate **and** interviewers; **pg_cron** job `jadarah-interview-reminders` every 5 min (24 h / 1 h / evaluation-due, idempotent `interview_reminders` ledger).
+- ✓ `tests/integration/calendar.test.ts` 2/2 (live). Found + fixed: `ON CONFLICT DO NOTHING` swallowed exclusion violations (0017).
+- ☐ Calendar UI (month/week/day), availability editor, scheduling form with free/busy slots, candidate interviews page with confirm button.
+- Dashboard to-dos for owner: enable leaked-password protection (Auth); `public.rls_auto_enable()` is a Supabase-created function flagged by the advisor.
+
 **Bug fixed:** CV upload was broken — `cv-actions.ts` exported a constant from a `"use server"` module (Next 16 rejects it → 500 on every CV page action). Pre-existing; previous E2E never uploaded.
 
 **AI reliability behaviour:** Groq/OpenAI use `json_schema` structured outputs; quota/auth errors are not retried; a process-wide circuit breaker skips overloaded/timed-out models for 3 min and quota/auth failures for 10 min. On 2026-11-11 Google reported both Gemini 3.8 and 3.5 Flash as overloaded intermittently — structured tasks then ran on Groq (visible in badges + `ai_provider_logs`).
@@ -64,7 +70,7 @@ Regression: lint ✓, typecheck ✓, vitest 30/30 ✓, existing Playwright 13 pa
 
 ## Supabase
 - Project ref `qqvvlornhvfykusaxaid` (dashboard name "maknon Project"; confirmed by the owner as the new JADARAH project).
-- Migrations 0001–0015 in `supabase/migrations/` — **all applied** (0013–0015 on 2026-11-11 via MCP) (0009 and 0012 were applied by fetching the pinned commit file through the `http` extension; content identical to the repo files).
+- Migrations 0001–0017 in `supabase/migrations/` — **all applied** (0013–0017 on 2026-11-11 via MCP) (0009 and 0012 were applied by fetching the pinned commit file through the `http` extension; content identical to the repo files).
 - RLS on every public table; least-privilege grants (this project grants nothing to API roles by default — migrations 0010/0011 add explicit grants; **any new table/function needs explicit grants**).
 - Storage: 6 private buckets with object policies.
 - Demo seed applied: 61 Auth identities, 10 companies (9 approved, Imtidad pending), 30 jobs (24 published), 32 candidates, 15 assessments/75 questions, 51 resources, 10 plan templates, 12 personal plans, 82+ applications, 28+ interviews. `platform_settings.environment = 'demo'`.
