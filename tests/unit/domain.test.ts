@@ -15,7 +15,8 @@ import { safeNext } from "@/features/auth/schemas";
 
 describe("application status machine", () => {
   it("terminal statuses have no outgoing transitions", () => {
-    for (const s of TERMINAL_STATUSES) for (const t of APPLICATION_STATUSES) expect(canTransition(s, t)).toBe(false);
+    for (const s of TERMINAL_STATUSES)
+      for (const t of APPLICATION_STATUSES) expect(canTransition(s, t)).toBe(false);
   });
   it("interview scheduling requires shortlisting first", () => {
     expect(canTransition("under_review", "interview_scheduled")).toBe(false);
@@ -31,7 +32,8 @@ describe("application status machine", () => {
     expect(canCreateInterview({ status: "hired", was_shortlisted: true })).toBe(false);
   });
   it("a company can hire without prior shortlisting", () => {
-    for (const s of ["submitted", "under_review", "assessment_pending", "assessment_completed"] as const) expect(canHire(s)).toBe(true);
+    for (const s of ["submitted", "under_review", "assessment_pending", "assessment_completed"] as const)
+      expect(canHire(s)).toBe(true);
     expect(canHire("rejected")).toBe(false);
   });
   it("recruiters cannot pick workflow-only statuses manually", () => {
@@ -81,7 +83,9 @@ describe("explainable matching", () => {
     expect(classifyRequirement(req, { skill_id: "s", level: 2, source: "cv" })).toBe("partial");
     expect(classifyRequirement(req, { skill_id: "s", level: 4, source: "self" })).toBe("unverified");
     expect(classifyRequirement(req, { skill_id: "s", level: 3, source: "assessment" })).toBe("matched");
-    expect(classifyRequirement(req, { skill_id: "s", level: 3, source: "self", evidence: "Built a warehouse" })).toBe("matched");
+    expect(
+      classifyRequirement(req, { skill_id: "s", level: 3, source: "self", evidence: "Built a warehouse" }),
+    ).toBe("matched");
   });
   it("never invents skills and weights required over preferred", () => {
     const r = computeMatch(
@@ -101,20 +105,52 @@ describe("explainable matching", () => {
 
 describe("career intelligence", () => {
   it("analyses gaps", () => {
-    const g = analyzeSkillGap(["sql", "python", "power-bi"], [
-      { slug: "sql", level: 4, source: "cv" },
-      { slug: "python", level: 2, source: "self" },
-    ]);
+    const g = analyzeSkillGap(
+      ["sql", "python", "power-bi"],
+      [
+        { slug: "sql", level: 4, source: "cv" },
+        { slug: "python", level: 2, source: "self" },
+      ],
+    );
     expect(g).toEqual({ strong: ["sql"], developing: ["python"], missing: ["power-bi"], coverage: 0.33 });
   });
   it("computes weighted plan progress", () => {
     expect(planProgress([])).toBe(0);
-    expect(planProgress([{ status: "completed", estimated_hours: 10 }, { status: "not_started", estimated_hours: 10 }])).toBe(50);
+    expect(
+      planProgress([
+        { status: "completed", estimated_hours: 10 },
+        { status: "not_started", estimated_hours: 10 },
+      ]),
+    ).toBe(50);
     expect(planProgress([{ status: "in_progress" }, { status: "completed" }])).toBe(75);
   });
   it("computes profile completion", () => {
-    expect(profileCompletion({ education: 0, experience: 0, skills: 0, projects: 0, certifications: 0, languages: 0, cvs: 0 })).toBe(0);
-    expect(profileCompletion({ full_name: "x", headline: "x", summary: "x", city: "x", education: 1, experience: 1, skills: 1, projects: 1, certifications: 1, languages: 1, cvs: 1 })).toBe(100);
+    expect(
+      profileCompletion({
+        education: 0,
+        experience: 0,
+        skills: 0,
+        projects: 0,
+        certifications: 0,
+        languages: 0,
+        cvs: 0,
+      }),
+    ).toBe(0);
+    expect(
+      profileCompletion({
+        full_name: "x",
+        headline: "x",
+        summary: "x",
+        city: "x",
+        education: 1,
+        experience: 1,
+        skills: 1,
+        projects: 1,
+        certifications: 1,
+        languages: 1,
+        cvs: 1,
+      }),
+    ).toBe(100);
   });
 });
 

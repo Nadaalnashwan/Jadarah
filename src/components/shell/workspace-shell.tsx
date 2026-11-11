@@ -13,6 +13,7 @@ export async function WorkspaceShell({
   session,
   nav,
   area,
+  contextMark,
   contextLabel,
   notificationsHref,
   banner,
@@ -21,31 +22,44 @@ export async function WorkspaceShell({
   session: SessionContext;
   nav: NavItem[];
   area: string;
+  /** Organization identity mark shown beside the context label (employer workspace). */
+  contextMark?: React.ReactNode;
   contextLabel?: string;
-  notificationsHref: string;
+  /** Omit to hide the notification bell (candidate and employer workspaces do not show one). */
+  notificationsHref?: string;
   banner?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const { t } = await getI18n();
-  const supabase = await createClient();
-  const { count } = await supabase
-    .from("notifications")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", session.userId)
-    .is("read_at", null);
-  const unread = count ?? 0;
+  let unread = 0;
+  if (notificationsHref) {
+    const supabase = await createClient();
+    const { count } = await supabase
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", session.userId)
+      .is("read_at", null);
+    unread = count ?? 0;
+  }
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[17rem_1fr]">
-      <aside className="sticky top-0 hidden h-dvh flex-col border-e bg-surface lg:flex">
+      <aside className="bg-sidebar border-border sticky top-0 hidden h-dvh flex-col border-e lg:flex">
         <div className="flex h-20 items-center px-6">
           <Link href="/" aria-label="JADARAH home">
             <Logo />
           </Link>
         </div>
         <div className="px-6 pb-4">
-          <p className="text-[0.7rem] font-bold uppercase tracking-[0.16em] text-subtle rtl:tracking-normal">{area}</p>
-          {contextLabel && <p className="mt-1 truncate text-sm font-semibold">{contextLabel}</p>}
+          <p className="text-subtle text-[0.7rem] font-bold tracking-[0.16em] uppercase rtl:tracking-normal">
+            {area}
+          </p>
+          {contextLabel && (
+            <div className="mt-2 flex items-center gap-2.5">
+              {contextMark}
+              <p className="min-w-0 truncate text-sm font-semibold">{contextLabel}</p>
+            </div>
+          )}
         </div>
         <WorkspaceNav items={nav} />
         <div className="mt-auto border-t p-4">
@@ -53,12 +67,15 @@ export async function WorkspaceShell({
             <Avatar name={session.profile.full_name || session.email} />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold">{session.profile.full_name || session.email}</p>
-              <p className="truncate text-xs text-subtle" dir="ltr">
+              <p className="text-subtle truncate text-xs" dir="ltr">
                 {session.email}
               </p>
             </div>
             <form action={signOutAction}>
-              <button className="flex size-9 items-center justify-center rounded-full text-subtle hover:bg-surface-2 hover:text-foreground" aria-label={t.common.signOut}>
+              <button
+                className="text-subtle hover:bg-surface-2 hover:text-foreground flex size-9 items-center justify-center rounded-full"
+                aria-label={t.common.signOut}
+              >
                 <LogOut className="size-4 rtl:rotate-180" />
               </button>
             </form>
@@ -67,7 +84,7 @@ export async function WorkspaceShell({
       </aside>
 
       <div className="flex min-w-0 flex-col">
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-3 border-b bg-background/85 px-4 backdrop-blur-xl sm:px-6">
+        <header className="bg-background/95 sticky top-0 z-40 flex h-16 items-center justify-between gap-3 border-b px-4 backdrop-blur-xl sm:px-6">
           <div className="flex items-center gap-2 lg:hidden">
             <WorkspaceNav items={nav} mobile />
             <Link href="/" aria-label="JADARAH home">
@@ -80,20 +97,25 @@ export async function WorkspaceShell({
           <div className="flex items-center gap-1">
             <LanguageSwitcher />
             <ThemeToggle />
-            <Link
-              href={notificationsHref}
-              className="relative flex size-9 items-center justify-center rounded-full hover:bg-surface-2"
-              aria-label={`${t.common.notifications}${unread ? ` (${unread})` : ""}`}
-            >
-              <Bell className="size-4" />
-              {unread > 0 && (
-                <span className="ltr-nums absolute -end-0.5 -top-0.5 flex min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[0.6rem] font-bold text-white">
-                  {unread > 99 ? "99+" : unread}
-                </span>
-              )}
-            </Link>
+            {notificationsHref && (
+              <Link
+                href={notificationsHref}
+                className="hover:bg-surface-2 relative flex size-9 items-center justify-center rounded-full"
+                aria-label={`${t.common.notifications}${unread ? ` (${unread})` : ""}`}
+              >
+                <Bell className="size-4" />
+                {unread > 0 && (
+                  <span className="ltr-nums bg-primary text-primary-foreground absolute -end-0.5 -top-0.5 flex min-w-4 items-center justify-center rounded-full px-1 text-[0.6rem] font-bold">
+                    {unread > 99 ? "99+" : unread}
+                  </span>
+                )}
+              </Link>
+            )}
             <form action={signOutAction} className="lg:hidden">
-              <button className="flex size-9 items-center justify-center rounded-full hover:bg-surface-2" aria-label={t.common.signOut}>
+              <button
+                className="hover:bg-surface-2 flex size-9 items-center justify-center rounded-full"
+                aria-label={t.common.signOut}
+              >
                 <LogOut className="size-4 rtl:rotate-180" />
               </button>
             </form>

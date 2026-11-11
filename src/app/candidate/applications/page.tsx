@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GroupTabs } from "@/components/shell/group-tabs";
 import { StatusBadge } from "@/components/app/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, EmptyState, PageHeader } from "@/components/ui/primitives";
@@ -15,20 +16,37 @@ export default async function ApplicationsPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("applications")
-    .select("id, status, submitted_at, updated_at, job:jobs(id, title_en, title_ar, city, company:company_profiles(name_en, name_ar))")
+    .select(
+      "id, status, submitted_at, updated_at, job:jobs(id, title_en, title_ar, city, company:company_profiles(name_en, name_ar))",
+    )
     .eq("candidate_id", session.userId)
     .order("updated_at", { ascending: false });
   const apps = data ?? [];
   return (
     <>
-      <PageHeader eyebrow={t.candidate.nav.applications} title={L("Your applications", "طلباتك")} description={L("Every status change is recorded. Feedback appears here only when a company chooses to share it.", "كل تغيير في الحالة مُسجَّل. تظهر الملاحظات هنا فقط عندما تختار الشركة مشاركتها.")} />
+      <GroupTabs group="candidate-applications" />
+      <PageHeader
+        eyebrow={t.candidate.nav.applications}
+        title={L("Your applications", "طلباتك")}
+        description={L(
+          "Every status change is recorded. Feedback appears here only when a company chooses to share it.",
+          "كل تغيير في الحالة مُسجَّل. تظهر الملاحظات هنا فقط عندما تختار الشركة مشاركتها.",
+        )}
+      />
       <Card>
         {apps.length === 0 ? (
-          <EmptyState title={t.candidate.noApplications} action={<Button asChild><Link href="/candidate/jobs">{t.candidate.browseJobs}</Link></Button>} />
+          <EmptyState
+            title={t.candidate.noApplications}
+            action={
+              <Button asChild>
+                <Link href="/candidate/jobs">{t.candidate.browseJobs}</Link>
+              </Button>
+            }
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[40rem] text-sm">
-              <thead className="text-xs text-subtle">
+              <thead className="text-subtle text-xs">
                 <tr className="border-b">
                   <th className="p-4 text-start font-semibold">{L("Role", "الوظيفة")}</th>
                   <th className="p-4 text-start font-semibold">{L("Company", "الشركة")}</th>
@@ -39,12 +57,21 @@ export default async function ApplicationsPage() {
               </thead>
               <tbody>
                 {apps.map((a) => (
-                  <tr key={a.id} className="border-b last:border-0 hover:bg-surface-2/60">
-                    <td className="p-4 font-semibold"><Link href={`/candidate/applications/${a.id}`} className="hover:text-primary dark:hover:text-lavender">{pick(a.job, "title", locale)}</Link></td>
-                    <td className="p-4 text-muted">{pick(a.job?.company, "name", locale)}</td>
-                    <td className="p-4"><StatusBadge status={a.status as ApplicationStatus} t={t} /></td>
-                    <td className="p-4 text-muted">{formatDate(a.submitted_at, locale)}</td>
-                    <td className="p-4 text-muted">{formatDate(a.updated_at, locale)}</td>
+                  <tr key={a.id} className="hover:bg-surface-2/60 border-b last:border-0">
+                    <td className="p-4 font-semibold">
+                      <Link
+                        href={`/candidate/applications/${a.id}`}
+                        className="hover:text-primary dark:hover:text-lavender"
+                      >
+                        {pick(a.job, "title", locale)}
+                      </Link>
+                    </td>
+                    <td className="text-muted p-4">{pick(a.job?.company, "name", locale)}</td>
+                    <td className="p-4">
+                      <StatusBadge status={a.status as ApplicationStatus} t={t} />
+                    </td>
+                    <td className="text-muted p-4">{formatDate(a.submitted_at, locale)}</td>
+                    <td className="text-muted p-4">{formatDate(a.updated_at, locale)}</td>
                   </tr>
                 ))}
               </tbody>

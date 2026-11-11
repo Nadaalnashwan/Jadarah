@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PROTECTED_PREFIXES = ["/candidate", "/company", "/admin", "/onboarding", "/invitations", "/settings"];
+const PROTECTED_PREFIXES = ["/candidate", "/company", "/admin", "/onboarding", "/invitations", "/settings", "/meet", "/workspace-paused"];
 
 /**
  * Refreshes the Supabase session cookie on every request and performs a fast
@@ -41,5 +41,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon.svg|brand/|.*\\.(?:svg|png|jpg|jpeg|webp|ico)$).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|icon.svg|brand/|.*\\.(?:svg|png|jpg|jpeg|webp|ico)$).*)",
+  ],
 };

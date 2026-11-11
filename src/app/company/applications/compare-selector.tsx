@@ -23,10 +23,19 @@ export function CompareSelector({ children }: { children: React.ReactNode }) {
       {children}
       <AnimatePresence>
         {ids.length >= 2 && (
-          <motion.div initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }} className="fixed inset-x-0 bottom-6 z-40 flex justify-center px-4">
-            <div className="flex items-center gap-3 rounded-full bg-navy px-5 py-3 text-ivory shadow-2xl">
-              <span className="ltr-nums text-sm">{ids.length} {L("selected", "محدد")}</span>
-              <Button size="sm" onClick={() => router.push(`/company/compare?ids=${ids.join(",")}`)}><GitCompareArrows /> {L("Compare", "قارن")}</Button>
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            className="fixed inset-x-0 bottom-6 z-40 flex justify-center px-4"
+          >
+            <div className="bg-navy text-ivory flex items-center gap-3 rounded-full px-5 py-3 shadow-2xl">
+              <span className="ltr-nums text-sm">
+                {ids.length} {L("selected", "محدد")}
+              </span>
+              <Button size="sm" onClick={() => router.push(`/company/compare?ids=${ids.join(",")}`)}>
+                <GitCompareArrows /> {L("Compare", "قارن")}
+              </Button>
             </div>
           </motion.div>
         )}

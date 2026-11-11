@@ -22,11 +22,11 @@ export function SiteHeader({ dashboardHref }: { dashboardHref?: string | null })
   }, []);
 
   const links = [
-    { href: "/#product", label: t.nav.product },
+    { href: "/companies", label: t.nav.companies },
+    { href: "/jobs", label: t.nav.opportunities },
     { href: "/how-it-works", label: t.nav.howItWorks },
     { href: "/for-companies", label: t.nav.forCompanies },
     { href: "/for-candidates", label: t.nav.forCandidates },
-    { href: "/about", label: t.nav.about },
   ];
 
   return (
@@ -47,10 +47,10 @@ export function SiteHeader({ dashboardHref }: { dashboardHref?: string | null })
             <li key={l.href}>
               <Link
                 href={l.href}
-                className="group relative rounded-full px-3.5 py-2 text-sm font-semibold text-muted transition hover:text-foreground"
+                className="group text-muted hover:text-foreground relative rounded-full px-3.5 py-2 text-sm font-semibold transition"
               >
                 {l.label}
-                <span className="absolute inset-x-3.5 -bottom-0.5 h-px origin-center scale-x-0 bg-primary transition-transform duration-300 group-hover:scale-x-100" />
+                <span className="bg-primary absolute inset-x-3.5 -bottom-0.5 h-px origin-center scale-x-0 transition-transform duration-300 group-hover:scale-x-100" />
               </Link>
             </li>
           ))}
@@ -74,7 +74,7 @@ export function SiteHeader({ dashboardHref }: { dashboardHref?: string | null })
           )}
         </div>
         <button
-          className="inline-flex size-10 items-center justify-center rounded-full hover:bg-surface-2 lg:hidden"
+          className="hover:bg-surface-2 inline-flex size-10 items-center justify-center rounded-full lg:hidden"
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
           aria-controls="mobile-nav"
@@ -95,7 +95,12 @@ export function SiteHeader({ dashboardHref }: { dashboardHref?: string | null })
           >
             <div className="flex flex-col gap-1 px-4 py-4">
               {links.map((l) => (
-                <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="rounded-xl px-3 py-3 text-base font-semibold hover:bg-surface-2">
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  onClick={() => setOpen(false)}
+                  className="hover:bg-surface-2 rounded-xl px-3 py-3 text-base font-semibold"
+                >
                   {l.label}
                 </Link>
               ))}

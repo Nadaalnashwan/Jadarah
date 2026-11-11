@@ -14,6 +14,194 @@ export type Database = {
   }
   public: {
     Tables: {
+      assessment_answer_files: {
+        Row: {
+          id: string
+          submission_id: string
+          question_id: string
+          candidate_id: string
+          storage_path: string
+          file_name: string
+          mime_type: string
+          size_bytes: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          submission_id: string
+          question_id: string
+          candidate_id: string
+          storage_path: string
+          file_name: string
+          mime_type: string
+          size_bytes: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          submission_id?: string
+          question_id?: string
+          candidate_id?: string
+          storage_path?: string
+          file_name?: string
+          mime_type?: string
+          size_bytes?: number
+          created_at?: string
+        }
+        Relationships: []
+      }
+      interview_attachments: {
+        Row: {
+          id: string
+          interview_id: string
+          company_id: string
+          uploaded_by: string | null
+          uploader_role: string
+          storage_path: string
+          file_name: string
+          mime_type: string
+          size_bytes: number
+          shared_with_candidate: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          interview_id: string
+          company_id: string
+          uploaded_by?: string | null
+          uploader_role: string
+          storage_path: string
+          file_name: string
+          mime_type: string
+          size_bytes: number
+          shared_with_candidate?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          interview_id?: string
+          company_id?: string
+          uploaded_by?: string | null
+          uploader_role?: string
+          storage_path?: string
+          file_name?: string
+          mime_type?: string
+          size_bytes?: number
+          shared_with_candidate?: boolean
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_outbox: {
+        Row: {
+          id: string
+          idempotency_key: string
+          template: string
+          recipient_user: string | null
+          recipient_email: string
+          locale: string
+          payload: Json
+          notification_id: string | null
+          invitation_id: string | null
+          status: string
+          attempts: number
+          max_attempts: number
+          next_attempt_at: string
+          locked_until: string | null
+          provider: string | null
+          provider_message_id: string | null
+          last_error: string | null
+          created_at: string
+          updated_at: string
+          sent_at: string | null
+        }
+        Insert: {
+          id?: string
+          idempotency_key: string
+          template: string
+          recipient_user?: string | null
+          recipient_email: string
+          locale?: string
+          payload?: Json
+          notification_id?: string | null
+          invitation_id?: string | null
+          status?: string
+          attempts?: number
+          max_attempts?: number
+          next_attempt_at?: string
+          locked_until?: string | null
+          provider?: string | null
+          provider_message_id?: string | null
+          last_error?: string | null
+          created_at?: string
+          updated_at?: string
+          sent_at?: string | null
+        }
+        Update: {
+          id?: string
+          idempotency_key?: string
+          template?: string
+          recipient_user?: string | null
+          recipient_email?: string
+          locale?: string
+          payload?: Json
+          notification_id?: string | null
+          invitation_id?: string | null
+          status?: string
+          attempts?: number
+          max_attempts?: number
+          next_attempt_at?: string
+          locked_until?: string | null
+          provider?: string | null
+          provider_message_id?: string | null
+          last_error?: string | null
+          created_at?: string
+          updated_at?: string
+          sent_at?: string | null
+        }
+        Relationships: []
+      }
+      video_webhook_events: {
+        Row: {
+          dedupe_key: string
+          event_id: string | null
+          event_type: string
+          room_name: string | null
+          interview_id: string | null
+          occurred_at: string | null
+          received_at: string
+          outcome: string | null
+        }
+        Insert: {
+          dedupe_key: string
+          event_id?: string | null
+          event_type: string
+          room_name?: string | null
+          interview_id?: string | null
+          occurred_at?: string | null
+          received_at?: string
+          outcome?: string | null
+        }
+        Update: {
+          dedupe_key?: string
+          event_id?: string | null
+          event_type?: string
+          room_name?: string | null
+          interview_id?: string | null
+          occurred_at?: string | null
+          received_at?: string
+          outcome?: string | null
+        }
+        Relationships: []
+      }
       ai_analysis_records: {
         Row: {
           company_id: string | null
@@ -146,6 +334,1035 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      candidate_embeddings: {
+        Row: {
+          content_hash: string
+          dims: number
+          embedding: string
+          model: string
+          updated_at: string
+          candidate_id: string
+        }
+        Insert: {
+          content_hash: string
+          dims: number
+          embedding: string
+          model: string
+          updated_at?: string
+          candidate_id: string
+        }
+        Update: {
+          content_hash?: string
+          dims?: number
+          embedding?: string
+          model?: string
+          updated_at?: string
+          candidate_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_embeddings_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exploration_attempts: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          feedback: Json | null
+          id: string
+          response: string
+          status: string
+          submitted_at: string | null
+          task_id: string
+          updated_at: string
+        }
+        Insert: {
+          candidate_id?: string
+          created_at?: string
+          feedback?: Json | null
+          id?: string
+          response?: string
+          status?: string
+          submitted_at?: string | null
+          task_id: string
+          updated_at?: string
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          feedback?: Json | null
+          id?: string
+          response?: string
+          status?: string
+          submitted_at?: string | null
+          task_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exploration_attempts_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "exploration_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exploration_tasks: {
+        Row: {
+          active: boolean
+          category_id: string
+          created_at: string
+          criteria: Json
+          daily_ar: string[]
+          daily_en: string[]
+          deliverable_ar: string
+          deliverable_en: string
+          id: string
+          minutes: number
+          next_steps_ar: string[]
+          next_steps_en: string[]
+          role_ar: string
+          role_en: string
+          scenario_ar: string
+          scenario_en: string
+          slug: string
+          title_ar: string
+          title_en: string
+        }
+        Insert: {
+          active?: boolean
+          category_id: string
+          created_at?: string
+          criteria?: Json
+          daily_ar?: string[]
+          daily_en?: string[]
+          deliverable_ar: string
+          deliverable_en: string
+          id?: string
+          minutes?: number
+          next_steps_ar?: string[]
+          next_steps_en?: string[]
+          role_ar: string
+          role_en: string
+          scenario_ar: string
+          scenario_en: string
+          slug: string
+          title_ar: string
+          title_en: string
+        }
+        Update: {
+          active?: boolean
+          category_id?: string
+          created_at?: string
+          criteria?: Json
+          daily_ar?: string[]
+          daily_en?: string[]
+          deliverable_ar?: string
+          deliverable_en?: string
+          id?: string
+          minutes?: number
+          next_steps_ar?: string[]
+          next_steps_en?: string[]
+          role_ar?: string
+          role_en?: string
+          scenario_ar?: string
+          scenario_en?: string
+          slug?: string
+          title_ar?: string
+          title_en?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exploration_tasks_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "job_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_embeddings: {
+        Row: {
+          content_hash: string
+          dims: number
+          embedding: string
+          model: string
+          updated_at: string
+          job_id: string
+        }
+        Insert: {
+          content_hash: string
+          dims: number
+          embedding: string
+          model: string
+          updated_at?: string
+          job_id: string
+        }
+        Update: {
+          content_hash?: string
+          dims?: number
+          embedding?: string
+          model?: string
+          updated_at?: string
+          job_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_embeddings_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      skill_embeddings: {
+        Row: {
+          content_hash: string
+          dims: number
+          embedding: string
+          model: string
+          updated_at: string
+          skill_id: string
+        }
+        Insert: {
+          content_hash: string
+          dims: number
+          embedding: string
+          model: string
+          updated_at?: string
+          skill_id: string
+        }
+        Update: {
+          content_hash?: string
+          dims?: number
+          embedding?: string
+          model?: string
+          updated_at?: string
+          skill_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "skill_embeddings_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      interviewer_availability: {
+        Row: {
+          company_id: string
+          created_at: string
+          end_minute: number
+          id: string
+          start_minute: number
+          timezone: string
+          user_id: string
+          weekday: number
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          end_minute: number
+          id?: string
+          start_minute: number
+          timezone?: string
+          user_id: string
+          weekday: number
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          end_minute?: number
+          id?: string
+          start_minute?: number
+          timezone?: string
+          user_id?: string
+          weekday?: number
+        }
+        Relationships: []
+      }
+      final_evaluations: {
+        Row: {
+          id: string
+          application_id: string
+          company_id: string
+          status: string
+          ai_report: Json | null
+          ai_provider: string | null
+          ai_model: string | null
+          ai_generated_at: string | null
+          ai_generated_by: string | null
+          summary: string | null
+          decision: string | null
+          decision_rationale: string | null
+          decided_by: string | null
+          decided_at: string | null
+          finalized_by: string | null
+          finalized_at: string | null
+          candidate_feedback: string | null
+          feedback_shared_at: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          application_id: string
+          company_id: string
+          status?: string
+          ai_report?: Json | null
+          ai_provider?: string | null
+          ai_model?: string | null
+          ai_generated_at?: string | null
+          ai_generated_by?: string | null
+          summary?: string | null
+          decision?: string | null
+          decision_rationale?: string | null
+          decided_by?: string | null
+          decided_at?: string | null
+          finalized_by?: string | null
+          finalized_at?: string | null
+          candidate_feedback?: string | null
+          feedback_shared_at?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          application_id?: string
+          company_id?: string
+          status?: string
+          ai_report?: Json | null
+          ai_provider?: string | null
+          ai_model?: string | null
+          ai_generated_at?: string | null
+          ai_generated_by?: string | null
+          summary?: string | null
+          decision?: string | null
+          decision_rationale?: string | null
+          decided_by?: string | null
+          decided_at?: string | null
+          finalized_by?: string | null
+          finalized_at?: string | null
+          candidate_feedback?: string | null
+          feedback_shared_at?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "final_evaluations_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "final_evaluations_ai_generated_by_fkey"
+            columns: ["ai_generated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "final_evaluations_finalized_by_fkey"
+            columns: ["finalized_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "final_evaluations_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      final_evaluation_comments: {
+        Row: {
+          id: string
+          final_evaluation_id: string
+          author_id: string
+          body: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          final_evaluation_id: string
+          author_id?: string
+          body: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          final_evaluation_id?: string
+          author_id?: string
+          body?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "final_evaluation_comments_final_evaluation_id_fkey"
+            columns: ["final_evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "final_evaluations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "final_evaluation_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      interview_rubrics: {
+        Row: {
+          company_id: string
+          criteria: Json
+          updated_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          criteria: Json
+          updated_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          criteria?: Json
+          updated_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      interview_attendance: {
+        Row: {
+          id: string
+          interview_id: string
+          user_id: string
+          role: string
+          joined_at: string
+          left_at: string | null
+          source: string
+          daily_session_id: string | null
+        }
+        Insert: {
+          id?: string
+          interview_id: string
+          user_id: string
+          role: string
+          joined_at?: string
+          left_at?: string | null
+          source?: string
+          daily_session_id?: string | null
+        }
+        Update: {
+          id?: string
+          interview_id?: string
+          user_id?: string
+          role?: string
+          joined_at?: string
+          left_at?: string | null
+          source?: string
+          daily_session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_attendance_interview_id_fkey"
+            columns: ["interview_id"]
+            isOneToOne: false
+            referencedRelation: "interviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interview_attendance_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_identity: {
+        Row: {
+          accent_hex: string | null
+          company_id: string
+          cover_path: string | null
+          logo_path: string | null
+          primary_hex: string | null
+          secondary_hex: string | null
+          tagline_ar: string | null
+          tagline_en: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          accent_hex?: string | null
+          company_id: string
+          cover_path?: string | null
+          logo_path?: string | null
+          primary_hex?: string | null
+          secondary_hex?: string | null
+          tagline_ar?: string | null
+          tagline_en?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          accent_hex?: string | null
+          company_id?: string
+          cover_path?: string | null
+          logo_path?: string | null
+          primary_hex?: string | null
+          secondary_hex?: string | null
+          tagline_ar?: string | null
+          tagline_en?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_identity_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "company_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_brand_profiles: {
+        Row: {
+          company_id: string
+          logo_path: string | null
+          logo_source_url: string | null
+          primary_hex: string | null
+          secondary_hex: string | null
+          brand_source: string | null
+          identity_status: string
+          usage_permission: string
+          notes: string | null
+          updated_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          logo_path?: string | null
+          logo_source_url?: string | null
+          primary_hex?: string | null
+          secondary_hex?: string | null
+          brand_source?: string | null
+          identity_status?: string
+          usage_permission?: string
+          notes?: string | null
+          updated_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          logo_path?: string | null
+          logo_source_url?: string | null
+          primary_hex?: string | null
+          secondary_hex?: string | null
+          brand_source?: string | null
+          identity_status?: string
+          usage_permission?: string
+          notes?: string | null
+          updated_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_brand_profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_aliases: {
+        Row: {
+          id: string
+          company_id: string
+          alias: string
+          language: string
+          alias_status: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          alias: string
+          language?: string
+          alias_status?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          alias?: string
+          language?: string
+          alias_status?: string
+        }
+        Relationships: []
+      }
+      company_subscriptions: {
+        Row: {
+          id: string
+          company_id: string
+          plan: string
+          status: string
+          price_sar: number | null
+          billing_period: string | null
+          starts_on: string | null
+          expires_on: string | null
+          assessment_credits: number | null
+          credits_used: number
+          payment_status: string
+          is_demo: boolean
+          commercial_notes: string | null
+          activated_by: string | null
+          activated_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          plan?: string
+          status?: string
+          price_sar?: number | null
+          billing_period?: string | null
+          starts_on?: string | null
+          expires_on?: string | null
+          assessment_credits?: number | null
+          credits_used?: number
+          payment_status?: string
+          is_demo?: boolean
+          commercial_notes?: string | null
+          activated_by?: string | null
+          activated_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          plan?: string
+          status?: string
+          price_sar?: number | null
+          billing_period?: string | null
+          starts_on?: string | null
+          expires_on?: string | null
+          assessment_credits?: number | null
+          credits_used?: number
+          payment_status?: string
+          is_demo?: boolean
+          commercial_notes?: string | null
+          activated_by?: string | null
+          activated_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_subscriptions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_payments: {
+        Row: {
+          id: string
+          company_id: string
+          subscription_id: string | null
+          kind: string
+          amount_sar: number
+          paid_on: string
+          reference: string | null
+          notes: string | null
+          recorded_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          subscription_id?: string | null
+          kind?: string
+          amount_sar: number
+          paid_on: string
+          reference?: string | null
+          notes?: string | null
+          recorded_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          subscription_id?: string | null
+          kind?: string
+          amount_sar?: number
+          paid_on?: string
+          reference?: string | null
+          notes?: string | null
+          recorded_by?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_payments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_access_requests: {
+        Row: {
+          id: string
+          user_id: string
+          company_id: string
+          job_title: string
+          requested_role: Database["public"]["Enums"]["membership_role"]
+          granted_role: Database["public"]["Enums"]["membership_role"] | null
+          status: string
+          decision_note: string | null
+          reviewed_by: string | null
+          reviewed_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          company_id: string
+          job_title: string
+          requested_role: Database["public"]["Enums"]["membership_role"]
+          granted_role?: Database["public"]["Enums"]["membership_role"] | null
+          status?: string
+          decision_note?: string | null
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          company_id?: string
+          job_title?: string
+          requested_role?: Database["public"]["Enums"]["membership_role"]
+          granted_role?: Database["public"]["Enums"]["membership_role"] | null
+          status?: string
+          decision_note?: string | null
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_access_requests_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company_profiles"
+            referencedColumns: ["id"]
+          },
+        
+          {
+            foreignKeyName: "company_access_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sector_skills: {
+        Row: {
+          id: string
+          sector_key: string
+          kind: string
+          name_ar: string
+          description_ar: string | null
+          source_sha256: string
+        }
+        Insert: {
+          id?: string
+          sector_key: string
+          kind: string
+          name_ar: string
+          description_ar?: string | null
+          source_sha256: string
+        }
+        Update: {
+          id?: string
+          sector_key?: string
+          kind?: string
+          name_ar?: string
+          description_ar?: string | null
+          source_sha256?: string
+        }
+        Relationships: []
+      }
+      reference_assessments: {
+        Row: {
+          id: string
+          ref_key: string
+          role_en: string
+          role_ar: string | null
+          sector_key: string | null
+          seniority: string | null
+          skills: string[]
+          scenario: string | null
+          objectives: string[]
+          instructions: string | null
+          deliverables: Json
+          input_assets: Json
+          time_limit_minutes: number | null
+          tools: string[]
+          completeness: string
+          validation_status: string
+          validation_notes: string | null
+          source_files: Json
+          extracted_by: string | null
+          extracted_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          ref_key: string
+          role_en: string
+          role_ar?: string | null
+          sector_key?: string | null
+          seniority?: string | null
+          skills?: string[]
+          scenario?: string | null
+          objectives?: string[]
+          instructions?: string | null
+          deliverables?: Json
+          input_assets?: Json
+          time_limit_minutes?: number | null
+          tools?: string[]
+          completeness: string
+          validation_status: string
+          validation_notes?: string | null
+          source_files?: Json
+          extracted_by?: string | null
+          extracted_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          ref_key?: string
+          role_en?: string
+          role_ar?: string | null
+          sector_key?: string | null
+          seniority?: string | null
+          skills?: string[]
+          scenario?: string | null
+          objectives?: string[]
+          instructions?: string | null
+          deliverables?: Json
+          input_assets?: Json
+          time_limit_minutes?: number | null
+          tools?: string[]
+          completeness?: string
+          validation_status?: string
+          validation_notes?: string | null
+          source_files?: Json
+          extracted_by?: string | null
+          extracted_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reference_assessment_assessor: {
+        Row: {
+          reference_id: string
+          rubric: Json
+          assessor_guidance: string | null
+          answer_expectations: string | null
+          source_files: Json
+        }
+        Insert: {
+          reference_id: string
+          rubric?: Json
+          assessor_guidance?: string | null
+          answer_expectations?: string | null
+          source_files?: Json
+        }
+        Update: {
+          reference_id?: string
+          rubric?: Json
+          assessor_guidance?: string | null
+          answer_expectations?: string | null
+          source_files?: Json
+        }
+        Relationships: []
+      }
+      reference_embeddings: {
+        Row: {
+          reference_id: string
+          model: string
+          dims: number
+          content_hash: string
+          embedding: string
+        }
+        Insert: {
+          reference_id: string
+          model: string
+          dims: number
+          content_hash: string
+          embedding: string
+        }
+        Update: {
+          reference_id?: string
+          model?: string
+          dims?: number
+          content_hash?: string
+          embedding?: string
+        }
+        Relationships: []
+      }
+      assessment_generations: {
+        Row: {
+          id: string
+          assessment_id: string
+          company_id: string
+          job_id: string | null
+          job_snapshot: Json
+          references_used: Json
+          output: Json | null
+          validation: Json | null
+          status: string
+          provider: string | null
+          model: string | null
+          created_by: string | null
+          approved_by: string | null
+          approved_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          assessment_id: string
+          company_id: string
+          job_id?: string | null
+          job_snapshot: Json
+          references_used?: Json
+          output?: Json | null
+          validation?: Json | null
+          status?: string
+          provider?: string | null
+          model?: string | null
+          created_by?: string | null
+          approved_by?: string | null
+          approved_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          assessment_id?: string
+          company_id?: string
+          job_id?: string | null
+          job_snapshot?: Json
+          references_used?: Json
+          output?: Json | null
+          validation?: Json | null
+          status?: string
+          provider?: string | null
+          model?: string | null
+          created_by?: string | null
+          approved_by?: string | null
+          approved_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      assessment_assessor_guides: {
+        Row: {
+          assessment_id: string
+          company_id: string
+          guide: Json
+          updated_at: string
+        }
+        Insert: {
+          assessment_id: string
+          company_id: string
+          guide: Json
+          updated_at?: string
+        }
+        Update: {
+          assessment_id?: string
+          company_id?: string
+          guide?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      assessment_materials: {
+        Row: {
+          id: string
+          assessment_id: string
+          company_id: string
+          audience: string
+          file_name: string
+          storage_path: string
+          mime_type: string
+          description: string | null
+          rows: number | null
+          columns: string[] | null
+          sha256: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          assessment_id: string
+          company_id: string
+          audience: string
+          file_name: string
+          storage_path: string
+          mime_type: string
+          description?: string | null
+          rows?: number | null
+          columns?: string[] | null
+          sha256?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          assessment_id?: string
+          company_id?: string
+          audience?: string
+          file_name?: string
+          storage_path?: string
+          mime_type?: string
+          description?: string | null
+          rows?: number | null
+          columns?: string[] | null
+          sha256?: string | null
+          created_at?: string
+        }
+        Relationships: []
       }
       ai_provider_logs: {
         Row: {
@@ -361,6 +1578,9 @@ export type Database = {
       }
       applications: {
         Row: {
+          completed_at: string | null
+          requires_task: boolean
+          task_assignment_id: string | null
           candidate_id: string
           company_id: string
           cover_letter: string | null
@@ -376,6 +1596,9 @@ export type Database = {
           was_shortlisted: boolean
         }
         Insert: {
+          completed_at?: string | null
+          requires_task?: boolean
+          task_assignment_id?: string | null
           candidate_id: string
           company_id: string
           cover_letter?: string | null
@@ -391,6 +1614,9 @@ export type Database = {
           was_shortlisted?: boolean
         }
         Update: {
+          completed_at?: string | null
+          requires_task?: boolean
+          task_assignment_id?: string | null
           candidate_id?: string
           company_id?: string
           cover_letter?: string | null
@@ -895,6 +2121,8 @@ export type Database = {
       }
       assessments: {
         Row: {
+          creation_key: string | null
+          job_id: string | null
           ai_generated: boolean
           category: string
           company_id: string | null
@@ -916,6 +2144,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          creation_key?: string | null
+          job_id?: string | null
           ai_generated?: boolean
           category?: string
           company_id?: string | null
@@ -937,6 +2167,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          creation_key?: string | null
+          job_id?: string | null
           ai_generated?: boolean
           category?: string
           company_id?: string | null
@@ -1642,6 +2874,16 @@ export type Database = {
           status_reason: string | null
           updated_at: string
           website: string | null
+          registry_id: string | null
+          organization_type: string | null
+          sector_en: string | null
+          sector_ar: string | null
+          careers_url: string | null
+          verification_status: string
+          partnership_status: string
+          listed: boolean
+          accepts_access_requests: boolean
+          provenance: Json
         }
         Insert: {
           approved_at?: string | null
@@ -1666,6 +2908,16 @@ export type Database = {
           status_reason?: string | null
           updated_at?: string
           website?: string | null
+          registry_id?: string | null
+          organization_type?: string | null
+          sector_en?: string | null
+          sector_ar?: string | null
+          careers_url?: string | null
+          verification_status?: string
+          partnership_status?: string
+          listed?: boolean
+          accepts_access_requests?: boolean
+          provenance?: Json
         }
         Update: {
           approved_at?: string | null
@@ -1690,6 +2942,16 @@ export type Database = {
           status_reason?: string | null
           updated_at?: string
           website?: string | null
+          registry_id?: string | null
+          organization_type?: string | null
+          sector_en?: string | null
+          sector_ar?: string | null
+          careers_url?: string | null
+          verification_status?: string
+          partnership_status?: string
+          listed?: boolean
+          accepts_access_requests?: boolean
+          provenance?: Json
         }
         Relationships: [
           {
@@ -2086,7 +3348,13 @@ export type Database = {
       }
       interviews: {
         Row: {
+          video_started_at: string | null
+          video_ended_at: string | null
           application_id: string
+          candidate_confirmed_at: string | null
+          video_room_name: string | null
+          video_room_url: string | null
+          ends_at: string
           company_id: string
           created_at: string
           created_by: string | null
@@ -2104,6 +3372,10 @@ export type Database = {
         }
         Insert: {
           application_id: string
+          candidate_confirmed_at?: string | null
+          video_room_name?: string | null
+          video_room_url?: string | null
+          ends_at?: string
           company_id: string
           created_at?: string
           created_by?: string | null
@@ -2121,6 +3393,10 @@ export type Database = {
         }
         Update: {
           application_id?: string
+          candidate_confirmed_at?: string | null
+          video_room_name?: string | null
+          video_room_url?: string | null
+          ends_at?: string
           company_id?: string
           created_at?: string
           created_by?: string | null
@@ -2325,6 +3601,9 @@ export type Database = {
           title_en: string
           updated_at: string
           work_mode: Database["public"]["Enums"]["work_mode"]
+          listing_type: string
+          source_url: string | null
+          source_checked_on: string | null
         }
         Insert: {
           ai_assisted?: boolean
@@ -2357,6 +3636,9 @@ export type Database = {
           title_en: string
           updated_at?: string
           work_mode?: Database["public"]["Enums"]["work_mode"]
+          listing_type?: string
+          source_url?: string | null
+          source_checked_on?: string | null
         }
         Update: {
           ai_assisted?: boolean
@@ -2389,6 +3671,9 @@ export type Database = {
           title_en?: string
           updated_at?: string
           work_mode?: Database["public"]["Enums"]["work_mode"]
+          listing_type?: string
+          source_url?: string | null
+          source_checked_on?: string | null
         }
         Relationships: [
           {
@@ -2910,6 +4195,149 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      register_assessment_file: { Args: { p_assignment: string; p_question: string; p_path: string; p_name: string; p_mime: string; p_size: number }; Returns: string }
+      remove_assessment_file: { Args: { p_file: string }; Returns: string }
+      register_interview_attachment: { Args: { p_interview: string; p_path: string; p_name: string; p_mime: string; p_size: number; p_share?: boolean }; Returns: string }
+      set_interview_attachment_shared: { Args: { p_attachment: string; p_share: boolean }; Returns: undefined }
+      remove_interview_attachment: { Args: { p_attachment: string }; Returns: string }
+      interview_access_role: { Args: { p_interview: string }; Returns: string | null }
+      can_review_submission: { Args: { p_submission: string }; Returns: boolean }
+      accept_company_invitation_by_token: { Args: { p_token: string }; Returns: string }
+      invitation_preview: {
+        Args: { p_token: string }
+        Returns: {
+          company_name_en: string
+          company_name_ar: string
+          role: Database["public"]["Enums"]["membership_role"]
+          state: string
+          email_masked: string
+          for_current_user: boolean
+          expires_at: string
+        }[]
+      }
+      revoke_company_invitation: { Args: { p_invitation: string }; Returns: undefined }
+      resend_company_invitation: { Args: { p_invitation: string }; Returns: undefined }
+      company_invitation_delivery: {
+        Args: { p_company: string }
+        Returns: { invitation_id: string; status: string; attempts: number; last_attempt: string }[]
+      }
+      admin_retry_email: { Args: { p_id: string }; Returns: undefined }
+      assessment_in_use_for_manager: { Args: { p_assessment: string }; Returns: boolean | null }
+      health_ping: { Args: Record<PropertyKey, never>; Returns: Json }
+      internal_rate_limit: { Args: { p_service_key: string; p_key: string; p_limit: number; p_window_seconds: number }; Returns: boolean }
+      internal_ai_cooldowns: { Args: { p_service_key: string }; Returns: { key: string; until: string }[] }
+      internal_ai_cooldown_note: { Args: { p_service_key: string; p_key: string; p_seconds: number; p_reason: string }; Returns: undefined }
+      internal_claim_emails: {
+        Args: { p_service_key: string; p_limit?: number }
+        Returns: Database["public"]["Tables"]["email_outbox"]["Row"][]
+      }
+      internal_complete_email: {
+        Args: { p_service_key: string; p_id: string; p_ok: boolean; p_provider: string; p_message_id: string | null; p_error: string | null; p_retryable: boolean }
+        Returns: string
+      }
+      internal_ingest_daily_event: {
+        Args: {
+          p_service_key: string
+          p_event_id: string
+          p_type: string
+          p_occurred_at: string
+          p_room: string | null
+          p_session_id: string | null
+          p_user_id: string | null
+          p_joined_at: string | null
+          p_duration_seconds: number | null
+        }
+        Returns: string
+      }
+      attach_job_task: {
+        Args: { p_assessment: string | null; p_job: string }
+        Returns: undefined
+      }
+      assessment_is_in_use: {
+        Args: { p_assessment: string }
+        Returns: boolean
+      }
+      job_task_preview: {
+        Args: { p_job: string }
+        Returns: Json
+      }
+      update_company_identity: {
+        Args: {
+          p_accent: string
+          p_company: string
+          p_cover_path: string
+          p_logo_path: string
+          p_primary: string
+          p_secondary: string
+          p_tagline_ar: string
+          p_tagline_en: string
+        }
+        Returns: undefined
+      }
+      is_active_recruiter: { Args: Record<PropertyKey, never>; Returns: boolean }
+      match_reference_assessments: { Args: { p_embedding: string; p_limit?: number; p_model: string }; Returns: { reference_id: string; similarity: number }[] }
+      reference_rubrics_for_builder: { Args: { p_ids: string[] }; Returns: { reference_id: string; rubric: Json }[] }
+      company_service_active: { Args: { p_company: string }; Returns: boolean }
+      access_request_companies: {
+        Args: Record<PropertyKey, never>
+        Returns: { id: string; name_en: string; name_ar: string; sector_en: string | null; sector_ar: string | null }[]
+      }
+      request_company_access: {
+        Args: { p_company: string; p_job_title: string; p_role: Database["public"]["Enums"]["membership_role"] }
+        Returns: string
+      }
+      review_access_request: {
+        Args: { p_decision: string; p_note?: string; p_request: string; p_role?: Database["public"]["Enums"]["membership_role"] }
+        Returns: undefined
+      }
+      admin_provision_company: {
+        Args: { p_name_ar: string; p_name_en: string; p_organization_type?: string; p_registry_id?: string; p_sector_ar?: string; p_sector_en?: string; p_website?: string }
+        Returns: string
+      }
+      decide_final_evaluation: {
+        Args: { p_candidate_message?: string; p_decision: string; p_eval: string; p_rationale: string }
+        Returns: undefined
+      }
+      share_final_feedback: { Args: { p_eval: string; p_feedback: string }; Returns: undefined }
+      get_shared_final_feedback: { Args: { p_app: string }; Returns: { feedback: string; shared_at: string }[] }
+      interview_video_access: {
+        Args: { p_interview: string }
+        Returns: {
+          access_role: string
+          title: string
+          status: Database["public"]["Enums"]["interview_status"]
+          scheduled_at: string
+          ends_at: string
+          timezone: string
+          room_name: string | null
+          room_url: string | null
+          display_name: string
+          company_name_en: string
+          company_name_ar: string
+          job_title_en: string
+          job_title_ar: string
+        }[]
+      }
+      attach_video_room: { Args: { p_interview: string; p_name: string; p_url: string }; Returns: undefined }
+      detach_video_room: { Args: { p_interview: string }; Returns: undefined }
+      record_interview_presence: { Args: { p_event: string; p_interview: string }; Returns: undefined }
+      interviewer_busy: {
+        Args: { p_company: string; p_from: string; p_to: string; p_users: string[] }
+        Returns: { ends_at: string; starts_at: string; user_id: string }[]
+      }
+      confirm_interview_attendance: { Args: { p_interview: string }; Returns: undefined }
+      related_skills: {
+        Args: { p_have: string[]; p_min?: number; p_model: string; p_required: string[] }
+        Returns: { related_skill_id: string; required_skill_id: string; similarity: number }[]
+      }
+      semantic_fit: {
+        Args: { p_candidate: string; p_job: string; p_model: string }
+        Returns: number
+      }
+      semantic_job_ranking: {
+        Args: { p_limit?: number; p_model: string }
+        Returns: { job_id: string; similarity: number }[]
+      }
       _transition_application: {
         Args: {
           p_app: string

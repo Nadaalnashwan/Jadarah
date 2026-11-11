@@ -8,8 +8,11 @@ type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type Membership = Database["public"]["Tables"]["company_memberships"]["Row"] & {
   company: Pick<
     Database["public"]["Tables"]["company_profiles"]["Row"],
-    "id" | "name_en" | "name_ar" | "status" | "slug" | "status_reason"
-  > | null;
+    "id" | "name_en" | "name_ar" | "status" | "slug" | "status_reason" | "sector_en" | "sector_ar" | "organization_type"
+  > & {
+    company_brand_profiles?: { identity_status: string; usage_permission: string; logo_source_url: string | null; primary_hex: string | null } | null;
+    company_identity?: { logo_path: string | null; primary_hex: string | null; secondary_hex: string | null; accent_hex: string | null } | null;
+  } | null;
 };
 
 export interface SessionContext {
@@ -22,6 +25,8 @@ export interface SessionContext {
   isCandidate: boolean;
   memberships: Membership[];
   activeMembership: Membership | null;
+  /** Active membership's organization is approved AND has an active, in-date subscription. */
+  serviceActive: boolean;
 }
 
 /** Resolve the signed-in user with roles from the database (never from client claims). Cached per request. */
@@ -36,7 +41,9 @@ export const getSession = cache(async (): Promise<SessionContext | null> => {
     supabase.from("user_roles").select("role").eq("user_id", user.id),
     supabase
       .from("company_memberships")
-      .select("*, company:company_profiles(id, name_en, name_ar, status, slug, status_reason)")
+      .select(
+        "*, company:company_profiles(id, name_en, name_ar, status, slug, status_reason, sector_en, sector_ar, organization_type, company_brand_profiles(identity_status, usage_permission, logo_source_url, primary_hex), company_identity(logo_path, primary_hex, secondary_hex, accent_hex))",
+      )
       .eq("user_id", user.id)
       .eq("status", "active"),
   ]);
@@ -44,6 +51,9 @@ export const getSession = cache(async (): Promise<SessionContext | null> => {
 
   const roleList = (roles ?? []).map((r) => r.role as string);
   const ms = (memberships ?? []) as unknown as Membership[];
+  const serviceActive = ms[0]
+    ? Boolean((await supabase.rpc("company_service_active", { p_company: ms[0].company_id })).data)
+    : false;
   return {
     userId: user.id,
     email: user.email ?? profile.email,
@@ -54,6 +64,7 @@ export const getSession = cache(async (): Promise<SessionContext | null> => {
     isCandidate: roleList.includes("candidate"),
     memberships: ms,
     activeMembership: ms[0] ?? null,
+    serviceActive,
   };
 });
 
@@ -79,6 +90,9 @@ export async function requireCompanyMember(
     if (session.profile.account_type === "company") redirect("/onboarding/company");
     redirect(homeFor(session));
   }
+  // Paid employer services need an approved organization with an active subscription
+  // (also enforced in the database for every employer query and RPC).
+  if (!session.serviceActive) redirect("/workspace-paused");
   if (roles && !roles.includes(m.role)) redirect("/company");
   return session as SessionContext & { activeMembership: Membership };
 }
@@ -91,9 +105,10 @@ export async function requireSuperAdmin(): Promise<SessionContext> {
 
 export function homeFor(session: SessionContext): string {
   if (session.isSuperAdmin) return "/admin";
-  if (session.activeMembership) return "/company";
+  if (session.activeMembership) return session.serviceActive ? "/company" : "/workspace-paused";
   if (session.profile.account_type === "company") return "/onboarding/company";
-  if (session.isCandidate) return session.profile.onboarding_completed ? "/candidate" : "/onboarding/candidate";
+  if (session.isCandidate)
+    return session.profile.onboarding_completed ? "/candidate" : "/onboarding/candidate";
   return "/";
 }
 

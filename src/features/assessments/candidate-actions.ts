@@ -1,4 +1,5 @@
 "use server";
+import { kickEmailDispatch } from "@/services/email/dispatch";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireCandidate } from "@/lib/auth/session";
@@ -9,12 +10,25 @@ import { createClient } from "@/lib/supabase/server";
 export interface AttemptQuestion {
   id: string;
   section_id: string | null;
-  type: "multiple_choice" | "multiple_select" | "true_false" | "short_answer" | "long_answer" | "coding" | "sql" | "case_study" | "file_upload";
+  type:
+    | "multiple_choice"
+    | "multiple_select"
+    | "true_false"
+    | "short_answer"
+    | "long_answer"
+    | "coding"
+    | "sql"
+    | "case_study"
+    | "file_upload";
   prompt_en: string;
   prompt_ar: string;
   points: number;
   config: Record<string, unknown>;
-  rubric: { title_en: string; title_ar: string; criteria: { key: string; name_en: string; name_ar: string; max_points: number }[] } | null;
+  rubric: {
+    title_en: string;
+    title_ar: string;
+    criteria: { key: string; name_en: string; name_ar: string; max_points: number }[];
+  } | null;
   options: { id: string; label_en: string; label_ar: string }[];
   answer: { selected_option_ids: string[]; text_answer: string | null; file_path: string | null } | null;
 }
@@ -25,7 +39,15 @@ export interface Attempt {
   started_at: string;
   ends_at: string;
   due_at: string | null;
-  assessment: { id: string; title_en: string; title_ar: string; description_en: string | null; description_ar: string | null; duration_minutes: number; passing_score: number };
+  assessment: {
+    id: string;
+    title_en: string;
+    title_ar: string;
+    description_en: string | null;
+    description_ar: string | null;
+    duration_minutes: number;
+    passing_score: number;
+  };
   questions: AttemptQuestion[];
 }
 
@@ -44,7 +66,9 @@ const saveSchema = z.object({
   selected: z.array(z.string().uuid()).max(20),
   text: z.string().max(20000).nullable(),
 });
-export async function saveAnswer(input: z.infer<typeof saveSchema>): Promise<ActionResult<{ savedAt: string }>> {
+export async function saveAnswer(
+  input: z.infer<typeof saveSchema>,
+): Promise<ActionResult<{ savedAt: string }>> {
   await requireCandidate();
   const { locale } = await getI18n();
   const parsed = saveSchema.safeParse(input);
@@ -66,6 +90,7 @@ export async function submitAttempt(assignmentId: string): Promise<ActionResult>
   const supabase = await createClient();
   const { error } = await supabase.rpc("submit_assessment", { p_assignment: assignmentId });
   if (error) return { ok: false, error: localizeError(error, locale) };
+  kickEmailDispatch();
   revalidatePath("/candidate", "layout");
   return { ok: true };
 }

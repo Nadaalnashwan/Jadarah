@@ -1,4 +1,5 @@
 import { Card, CardBody, CardHeader, PageHeader } from "@/components/ui/primitives";
+import { GroupTabs } from "@/components/shell/group-tabs";
 import { requireCandidate } from "@/lib/auth/session";
 import { pick, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
@@ -13,18 +14,52 @@ export default async function SkillsPage() {
   const supabase = await createClient();
   const [skills, { data: taxonomy }, { data: goal }] = await Promise.all([
     getCandidateSkills(supabase, session.userId),
-    supabase.from("skills").select("id, slug, name_en, name_ar, category:skill_categories(slug, name_en, name_ar)").order("name_en"),
-    supabase.from("development_plans").select("required_skill_slugs, title_en, title_ar").eq("candidate_id", session.userId).eq("status", "active").maybeSingle(),
+    supabase
+      .from("skills")
+      .select("id, slug, name_en, name_ar, category:skill_categories(slug, name_en, name_ar)")
+      .order("name_en"),
+    supabase
+      .from("development_plans")
+      .select("required_skill_slugs, title_en, title_ar")
+      .eq("candidate_id", session.userId)
+      .eq("status", "active")
+      .maybeSingle(),
   ]);
   return (
     <>
-      <PageHeader eyebrow={t.candidate.nav.skills} title={L("Your skill intelligence", "ذكاء مهاراتك")} description={L("Each skill shows where its evidence comes from. Assessments and reviewed CV extraction carry more weight than self-declarations.", "تُظهر كل مهارة مصدر دليلها. التقييمات واستخراج السيرة المراجَع أثقل وزنًا من التصريح الذاتي.")} />
-      <Card>
-        <CardHeader title={L("Skill map", "خريطة المهارات")} description={goal ? `${L("Compared with your target:", "مقارنةً بهدفك:")} ${pick(goal, "title", locale)}` : undefined} />
+      <GroupTabs group="candidate-profile" />
+      <PageHeader
+        eyebrow={t.candidate.nav.skills}
+        title={L("My skills", "مهاراتي")}
+        description={L(
+          "Grouped by evidence: demonstrated skills count most, CV and self-declared skills are claims until shown.",
+          "مجمّعة حسب الدليل: المهارات المُثبتة هي الأقوى، ومهارات السيرة والتصريح الذاتي ادعاءات حتى تُثبت.",
+        )}
+      />
+      <Card tone="mist">
+        {goal && (
+          <CardHeader title={`${L("Target role:", "الدور المستهدف:")} ${pick(goal, "title", locale)}`} />
+        )}
         <CardBody>
           <SkillsExplorer
-            skills={skills.filter((s) => s.skill).map((s) => ({ id: s.id, skill_id: s.skill!.id, slug: s.skill!.slug, name: pick(s.skill, "name", locale), category: pick(s.skill!.category, "name", locale) || "—", level: s.level, source: s.source as "self", evidence: s.evidence }))}
-            taxonomy={(taxonomy ?? []).map((s) => ({ id: s.id, slug: s.slug, name: pick(s, "name", locale), category: pick(s.category, "name", locale) }))}
+            skills={skills
+              .filter((s) => s.skill)
+              .map((s) => ({
+                id: s.id,
+                skill_id: s.skill!.id,
+                slug: s.skill!.slug,
+                name: pick(s.skill, "name", locale),
+                category: pick(s.skill!.category, "name", locale) || "—",
+                level: s.level,
+                source: s.source as "self",
+                evidence: s.evidence,
+              }))}
+            taxonomy={(taxonomy ?? []).map((s) => ({
+              id: s.id,
+              slug: s.slug,
+              name: pick(s, "name", locale),
+              category: pick(s.category, "name", locale),
+            }))}
             targetSlugs={goal?.required_skill_slugs ?? []}
           />
         </CardBody>

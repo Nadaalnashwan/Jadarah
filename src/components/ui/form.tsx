@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 const fieldBase =
-  "w-full rounded-xl border border-border-strong bg-surface px-3.5 text-sm text-foreground placeholder:text-subtle shadow-[inset_0_1px_0_rgb(var(--shadow-color)/0.03)] transition-[border,box-shadow] duration-150 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-60 aria-[invalid=true]:border-danger aria-[invalid=true]:ring-danger/15";
+  "w-full rounded-xl border border-border-strong bg-input px-3.5 text-sm text-foreground placeholder:text-subtle shadow-[inset_0_1px_0_rgb(var(--shadow-color)/0.03)] transition-[border,box-shadow] duration-150 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-60 aria-[invalid=true]:border-danger aria-[invalid=true]:ring-danger/15";
 
 export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cn(fieldBase, "h-11", className)} {...props} />;
@@ -17,15 +17,26 @@ export function Select({ className, children, ...props }: React.SelectHTMLAttrib
       <select className={cn(fieldBase, "h-11 w-full appearance-none pe-9")} {...props}>
         {children}
       </select>
-      <svg viewBox="0 0 16 16" className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-subtle" aria-hidden>
-        <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <svg
+        viewBox="0 0 16 16"
+        className="text-subtle pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2"
+        aria-hidden
+      >
+        <path
+          d="M4 6l4 4 4-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </svg>
     </div>
   );
 }
 
 export function Label({ className, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) {
-  return <label className={cn("text-sm font-semibold text-foreground", className)} {...props} />;
+  return <label className={cn("text-foreground text-sm font-semibold", className)} {...props} />;
 }
 
 export function Field({
@@ -50,18 +61,18 @@ export function Field({
       <Label htmlFor={htmlFor}>
         {label}
         {required && (
-          <span className="ms-0.5 text-danger" aria-hidden>
+          <span className="text-danger ms-0.5" aria-hidden>
             *
           </span>
         )}
       </Label>
       {children}
       {error ? (
-        <p id={`${htmlFor}-error`} role="alert" className="text-xs font-medium text-danger">
+        <p id={`${htmlFor}-error`} role="alert" className="text-danger text-xs font-medium">
           {error}
         </p>
       ) : hint ? (
-        <p id={`${htmlFor}-hint`} className="text-xs text-subtle">
+        <p id={`${htmlFor}-hint`} className="text-subtle text-xs">
           {hint}
         </p>
       ) : null}
@@ -73,20 +84,29 @@ export function Checkbox({ className, ...props }: React.InputHTMLAttributes<HTML
   return (
     <input
       type="checkbox"
-      className={cn("size-4 shrink-0 rounded border-border-strong accent-[var(--royal)]", className)}
+      className={cn("border-border-strong size-4 shrink-0 rounded accent-[var(--royal)]", className)}
       {...props}
     />
   );
 }
 
-export function FormMessage({ tone = "danger", children }: { tone?: "danger" | "success" | "info"; children: React.ReactNode }) {
+export function FormMessage({
+  tone = "danger",
+  children,
+}: {
+  tone?: "danger" | "success" | "info";
+  children: React.ReactNode;
+}) {
   const tones = {
     danger: "bg-danger-soft text-danger",
     success: "bg-success-soft text-success",
     info: "bg-sky-soft text-foreground",
   };
   return (
-    <div role={tone === "danger" ? "alert" : "status"} className={cn("rounded-xl px-4 py-3 text-sm font-medium", tones[tone])}>
+    <div
+      role={tone === "danger" ? "alert" : "status"}
+      className={cn("rounded-xl px-4 py-3 text-sm font-medium", tones[tone])}
+    >
       {children}
     </div>
   );

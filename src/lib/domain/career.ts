@@ -12,7 +12,10 @@ export interface GapAnalysis {
   coverage: number; // 0..1 share of required skills present at level >= 3
 }
 
-export function analyzeSkillGap(required: readonly string[], skills: readonly CandidateSkillLite[]): GapAnalysis {
+export function analyzeSkillGap(
+  required: readonly string[],
+  skills: readonly CandidateSkillLite[],
+): GapAnalysis {
   const map = new Map(skills.map((s) => [s.slug, s]));
   const strong: string[] = [];
   const developing: string[] = [];

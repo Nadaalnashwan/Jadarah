@@ -64,7 +64,16 @@ export const DEGREE_BY_ROLE: Record<string, string> = {
 };
 
 /** Fictional previous employers (generic, not real companies). */
-export const PAST_EMPLOYERS = ["Bayan Systems", "Masar Digital", "Qimma Tech Studio", "Athar Analytics", "Sahab Cloud Services", "Tamkeen Labs", "Diyar Retail Group", "Nukhba Consulting"];
+export const PAST_EMPLOYERS = [
+  "Bayan Systems",
+  "Masar Digital",
+  "Qimma Tech Studio",
+  "Athar Analytics",
+  "Sahab Cloud Services",
+  "Tamkeen Labs",
+  "Diyar Retail Group",
+  "Nukhba Consulting",
+];
 
 /** Company staff (beyond the company admin): recruiter + interviewer per approved company. */
 export const STAFF_NAMES: Record<string, [string, string, string]> = {

@@ -14,30 +14,59 @@ export default async function VerificationPage() {
   const cid = s.activeMembership.company_id;
   const [{ data: company }, { data: requests }] = await Promise.all([
     supabase.from("company_profiles").select("status, status_reason").eq("id", cid).single(),
-    supabase.from("company_verification_requests").select("*").eq("company_id", cid).order("created_at", { ascending: false }),
+    supabase
+      .from("company_verification_requests")
+      .select("*")
+      .eq("company_id", cid)
+      .order("created_at", { ascending: false }),
   ]);
   const status = company?.status ?? "pending";
   return (
     <>
-      <PageHeader title={L("Company verification", "التحقق من الشركة")} actions={<CompanyStatusBadge status={status} t={t} />} description={company?.status_reason ? `${L("Reviewer note", "ملاحظة المراجِع")}: ${company.status_reason}` : undefined} />
+      <PageHeader
+        title={L("Company verification", "التحقق من الشركة")}
+        actions={<CompanyStatusBadge status={status} t={t} />}
+        description={
+          company?.status_reason
+            ? `${L("Reviewer note", "ملاحظة المراجِع")}: ${company.status_reason}`
+            : undefined
+        }
+      />
       <div className="grid gap-6 lg:grid-cols-2">
         {status !== "approved" && status !== "suspended" && (
           <Card>
-            <CardHeader title={L("Submit verification", "إرسال طلب التحقق")} description={L("Commercial registration and supporting documents (PDF or image, private).", "السجل التجاري والمستندات الداعمة (PDF أو صورة، خاصة).")} />
-            <CardBody><VerificationForm companyId={cid} /></CardBody>
+            <CardHeader
+              title={L("Submit verification", "إرسال طلب التحقق")}
+              description={L(
+                "Commercial registration and supporting documents (PDF or image, private).",
+                "السجل التجاري والمستندات الداعمة (PDF أو صورة، خاصة).",
+              )}
+            />
+            <CardBody>
+              <VerificationForm companyId={cid} />
+            </CardBody>
           </Card>
         )}
         <Card>
           <CardHeader title={L("History", "السجل")} />
           <CardBody>
-            {(requests ?? []).length === 0 ? <p className="text-sm text-subtle">{L("No submissions yet.", "لا توجد طلبات بعد.")}</p> : (
+            {(requests ?? []).length === 0 ? (
+              <p className="text-subtle text-sm">{L("No submissions yet.", "لا توجد طلبات بعد.")}</p>
+            ) : (
               <ul className="flex flex-col gap-3">
                 {requests!.map((r) => (
                   <li key={r.id} className="rounded-xl border p-3 text-sm">
-                    <div className="flex justify-between"><span className="font-semibold">{r.status}</span><span className="text-xs text-subtle">{formatDate(r.created_at, locale)}</span></div>
-                    {r.commercial_registration && <p className="ltr-nums mt-1 text-muted">CR: {r.commercial_registration}</p>}
-                    <p className="ltr-nums text-xs text-subtle">{r.document_paths.length} {L("documents", "مستندات")}</p>
-                    {r.reviewer_notes && <p className="mt-1 text-muted">{r.reviewer_notes}</p>}
+                    <div className="flex justify-between">
+                      <span className="font-semibold">{r.status}</span>
+                      <span className="text-subtle text-xs">{formatDate(r.created_at, locale)}</span>
+                    </div>
+                    {r.commercial_registration && (
+                      <p className="ltr-nums text-muted mt-1">CR: {r.commercial_registration}</p>
+                    )}
+                    <p className="ltr-nums text-subtle text-xs">
+                      {r.document_paths.length} {L("documents", "مستندات")}
+                    </p>
+                    {r.reviewer_notes && <p className="text-muted mt-1">{r.reviewer_notes}</p>}
                   </li>
                 ))}
               </ul>

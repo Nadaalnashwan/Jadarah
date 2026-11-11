@@ -21,7 +21,7 @@ export function LanguageSwitcher({ className }: { className?: string }) {
       }
       disabled={pending}
       className={cn(
-        "inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-foreground transition hover:bg-surface-2 disabled:opacity-60",
+        "text-foreground hover:bg-surface-2 inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-semibold transition disabled:opacity-60",
         className,
       )}
       aria-label={t.common.language}
@@ -53,7 +53,10 @@ export function ThemeToggle({ className }: { className?: string }) {
       type="button"
       onClick={toggle}
       disabled={pending}
-      className={cn("inline-flex size-9 items-center justify-center rounded-full transition hover:bg-surface-2", className)}
+      className={cn(
+        "hover:bg-surface-2 inline-flex size-9 items-center justify-center rounded-full transition",
+        className,
+      )}
       aria-label={locale === "ar" ? "تبديل المظهر" : "Toggle theme"}
     >
       <Sun className="size-4 [:root[data-theme=dark]_&]:hidden" aria-hidden />

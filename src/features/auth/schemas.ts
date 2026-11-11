@@ -14,7 +14,7 @@ export const signInSchema = z.object({
 
 export const signUpSchema = z
   .object({
-    accountType: z.enum(["candidate", "company"]),
+    accountType: z.literal("candidate"), // employers use the access-request flow
     fullName: z.string().trim().min(2).max(120),
     email: z.string().trim().toLowerCase().email().max(254),
     password: passwordSchema,
@@ -22,6 +22,26 @@ export const signUpSchema = z
     consent: z.literal("on"),
   })
   .refine((v) => v.password === v.confirmPassword, { path: ["confirmPassword"], message: "mismatch" });
+
+/** Employer access request: creates an employer account; access needs Super Admin approval. */
+export const employerAccessSchema = z
+  .object({
+    fullName: z.string().trim().min(2).max(120),
+    email: z.string().trim().toLowerCase().email().max(254),
+    password: passwordSchema,
+    confirmPassword: z.string(),
+    companyId: z.string().uuid(),
+    jobTitle: z.string().trim().min(2).max(120),
+    role: z.enum(["recruiter", "interviewer", "company_admin"]),
+    consent: z.literal("on"),
+  })
+  .refine((v) => v.password === v.confirmPassword, { path: ["confirmPassword"], message: "mismatch" });
+
+export const accessRequestSchema = z.object({
+  companyId: z.string().uuid(),
+  jobTitle: z.string().trim().min(2).max(120),
+  role: z.enum(["recruiter", "interviewer", "company_admin"]),
+});
 
 export const emailOnlySchema = z.object({ email: z.string().trim().toLowerCase().email().max(254) });
 

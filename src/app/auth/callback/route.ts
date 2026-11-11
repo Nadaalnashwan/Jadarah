@@ -7,6 +7,9 @@ import { safeNext } from "@/features/auth/schemas";
  * Handles Supabase email links:
  *  - PKCE:        ?code=...                       (default for @supabase/ssr)
  *  - token hash:  ?token_hash=...&type=signup|recovery|email_change|invite
+ *  - implicit:    #access_token=...  (links generated outside a browser session, e.g. admin-triggered
+ *                 recovery). Fragments never reach the server, so those go to /auth/confirm, a client
+ *                 page that reads the fragment; browsers carry the fragment across the redirect.
  * On failure the user lands on /sign-in with an explanatory flag — never a fake success.
  */
 export async function GET(request: NextRequest) {
@@ -28,6 +31,11 @@ export async function GET(request: NextRequest) {
 
   const target = url.clone();
   target.search = "";
+  if (!code && !tokenHash && !url.searchParams.get("error_code")) {
+    target.pathname = "/auth/confirm";
+    target.searchParams.set("next", next);
+    return NextResponse.redirect(target);
+  }
   if (ok) {
     target.pathname = next;
     return NextResponse.redirect(target);
@@ -35,6 +43,9 @@ export async function GET(request: NextRequest) {
   // The email may already be confirmed by Supabase even if the code exchange failed
   // (e.g. link opened in a different browser): ask the user to sign in.
   target.pathname = "/sign-in";
-  target.searchParams.set("link", url.searchParams.get("error_code") === "otp_expired" ? "expired" : "invalid");
+  target.searchParams.set(
+    "link",
+    url.searchParams.get("error_code") === "otp_expired" ? "expired" : "invalid",
+  );
   return NextResponse.redirect(target);
 }

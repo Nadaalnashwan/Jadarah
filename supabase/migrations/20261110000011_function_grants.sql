@@ -7,8 +7,16 @@ revoke execute on function public.notify(uuid, text, text, text, text, text, tex
 revoke execute on function public.write_audit(text, text, uuid, uuid, jsonb) from authenticated;
 revoke execute on function public.notify_company_recruiters(uuid, text, text, text, text, text, text) from authenticated;
 revoke execute on function public._transition_application(uuid, public.application_status, text, text) from authenticated;
-revoke execute on function public._demo_user(uuid, text, text, text, text) from authenticated;
-revoke execute on function public.seed_demo(text) from authenticated;
+-- Seed tooling exists only where the demo seed was loaded (the seed file revokes these itself too);
+-- conditional so a fresh project can apply the migrations in order.
+do $$ begin
+  if to_regprocedure('public._demo_user(uuid, text, text, text, text)') is not null then
+    revoke execute on function public._demo_user(uuid, text, text, text, text) from authenticated;
+  end if;
+  if to_regprocedure('public.seed_demo(text)') is not null then
+    revoke execute on function public.seed_demo(text) from authenticated;
+  end if;
+end $$;
 revoke execute on function public.handle_new_user() from authenticated;
 revoke execute on function public.protect_profile_columns() from authenticated;
 revoke execute on function public.protect_company_columns() from authenticated;

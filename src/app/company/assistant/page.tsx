@@ -12,8 +12,25 @@ export default async function CompanyAssistant() {
   const ai = aiStatus();
   return (
     <>
-      <PageHeader title={L("Recruiting assistant", "مساعد التوظيف")} description={ai.configured ? L(`Powered by ${ai.provider}. Uses only your company's data. Suggestions only — your team decides.`, `يعمل بواسطة ${ai.provider}. يستخدم بيانات شركتك فقط. اقتراحات فقط — والقرار لفريقك.`) : t.common.ruleBased} />
-      <AssistantChat scope="company" starters={[L("How should I write a strong job description?", "كيف أكتب وصف وظيفة قويًا؟"), L("How do I structure interviews?", "كيف أنظّم المقابلات؟"), L("How do I compare candidates fairly?", "كيف أقارن المرشحين بإنصاف؟")]} />
+      <PageHeader
+        title={L("Recruiting assistant", "مساعد التوظيف")}
+        description={
+          ai.configured
+            ? L(
+                "Uses only your organization's data. Your team decides.",
+                "يستخدم بيانات جهتك فقط. والقرار لفريقك.",
+              )
+            : t.common.ruleBased
+        }
+      />
+      <AssistantChat
+        scope="company"
+        starters={[
+          L("How should I write a strong job description?", "كيف أكتب وصف وظيفة قويًا؟"),
+          L("How do I structure interviews?", "كيف أنظّم المقابلات؟"),
+          L("How do I compare candidates fairly?", "كيف أقارن المرشحين بإنصاف؟"),
+        ]}
+      />
     </>
   );
 }

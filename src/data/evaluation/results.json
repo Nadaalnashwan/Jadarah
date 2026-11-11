@@ -1,0 +1,200 @@
+{
+  "generated_at": "2026-11-11T15:09:39.555Z",
+  "evaluations": [
+    {
+      "key": "cv_skill_extraction_rule_based",
+      "title_en": "CV skill extraction — rule-based fallback",
+      "title_ar": "استخراج المهارات من السيرة — الوضع القائم على القواعد",
+      "model": "rule_based (taxonomy name + alias matching; no AI)",
+      "dataset": {
+        "name": "jadarah-cv-skills-v1",
+        "cases": 20,
+        "labelled_skills": 80,
+        "description": "Synthetic, fictional CV excerpts (no real people) hand-labelled with the taxonomy skills a reviewer would accept as claimed by the candidate. Includes negations, ambiguous words and aliases on purpose.",
+        "labelled_by": "JADARAH engineering (single annotator)"
+      },
+      "metrics": {
+        "precision": 0.927536231884058,
+        "recall": 0.8,
+        "f1": 0.8590604026845639,
+        "unsupported_claims": 5,
+        "evidence_quote_validity": 1,
+        "schema_validity": 1,
+        "negation_cases": 3,
+        "negation_cases_with_false_positive": 3
+      },
+      "definitions_en": [
+        "Precision = correctly extracted skills / all extracted skills (micro-averaged over every case).",
+        "Recall = correctly extracted skills / all labelled skills.",
+        "Unsupported claims = extracted skills the label set does not contain (false positives).",
+        "Evidence validity = extracted quotes that appear verbatim in the CV text.",
+        "Schema validity = outputs that parse against the CV extraction schema."
+      ],
+      "methodology_en": "Each synthetic CV excerpt is run through the same rule-based extractor the app uses. Outputs are compared with hand labels by exact taxonomy skill name.",
+      "limitations_en": [
+        "Small synthetic benchmark (20 English excerpts) labelled by one annotator — not representative of real CVs, Arabic CVs or PDF parsing errors.",
+        "Rule matching cannot understand negation or context; such cases are included on purpose.",
+        "Results describe extraction only; they say nothing about candidate competence."
+      ],
+      "per_case": [
+        {
+          "id": "c01",
+          "tp": 5,
+          "fp": [],
+          "fn": [
+            "Data Visualization"
+          ]
+        },
+        {
+          "id": "c02",
+          "tp": 5,
+          "fp": [],
+          "fn": [
+            "Automated Testing"
+          ]
+        },
+        {
+          "id": "c03",
+          "tp": 6,
+          "fp": [],
+          "fn": []
+        },
+        {
+          "id": "c04",
+          "tp": 2,
+          "fp": [
+            "Python"
+          ],
+          "fn": []
+        },
+        {
+          "id": "c05",
+          "tp": 2,
+          "fp": [],
+          "fn": [
+            "Project Management"
+          ]
+        },
+        {
+          "id": "c06",
+          "tp": 1,
+          "fp": [
+            "Go",
+            "React"
+          ],
+          "fn": []
+        },
+        {
+          "id": "c07",
+          "tp": 3,
+          "fp": [],
+          "fn": [
+            "Web Application Security (OWASP)"
+          ]
+        },
+        {
+          "id": "c08",
+          "tp": 5,
+          "fp": [],
+          "fn": []
+        },
+        {
+          "id": "c09",
+          "tp": 4,
+          "fp": [],
+          "fn": []
+        },
+        {
+          "id": "c10",
+          "tp": 3,
+          "fp": [],
+          "fn": []
+        },
+        {
+          "id": "c11",
+          "tp": 3,
+          "fp": [
+            "Tableau"
+          ],
+          "fn": [
+            "Apache Airflow"
+          ]
+        },
+        {
+          "id": "c12",
+          "tp": 3,
+          "fp": [],
+          "fn": [
+            "Statistical Quality Control"
+          ]
+        },
+        {
+          "id": "c13",
+          "tp": 2,
+          "fp": [],
+          "fn": [
+            "Roadmapping",
+            "Requirements Engineering"
+          ]
+        },
+        {
+          "id": "c14",
+          "tp": 4,
+          "fp": [],
+          "fn": [
+            "Microsoft Azure"
+          ]
+        },
+        {
+          "id": "c15",
+          "tp": 3,
+          "fp": [],
+          "fn": []
+        },
+        {
+          "id": "c16",
+          "tp": 4,
+          "fp": [],
+          "fn": [
+            "Data Structures & Algorithms"
+          ]
+        },
+        {
+          "id": "c17",
+          "tp": 3,
+          "fp": [],
+          "fn": []
+        },
+        {
+          "id": "c18",
+          "tp": 2,
+          "fp": [
+            "JavaScript"
+          ],
+          "fn": [
+            "UI Design",
+            "Prototyping"
+          ]
+        },
+        {
+          "id": "c19",
+          "tp": 2,
+          "fp": [],
+          "fn": [
+            "Process Modeling (BPMN)"
+          ]
+        },
+        {
+          "id": "c20",
+          "tp": 2,
+          "fp": [],
+          "fn": [
+            "LLM Application Development",
+            "Identity & Access Management",
+            "Microsoft Azure"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -38,6 +38,18 @@ export interface RequirementResult {
   candidate_level: number | null;
   source: SkillSource | null;
   evidence: string | null;
+  /**
+   * Semantic relation (AI inference, never counted in the score): for a missing or partial
+   * requirement, the closest skill the candidate does have, by embedding similarity.
+   */
+  related?: { skill_id: string; name: string; similarity: number } | null;
+}
+
+export interface SemanticInfo {
+  /** Cosine similarity of candidate profile vs job (0..1), or null if not yet embedded. */
+  fit: number | null;
+  model: string;
+  relatedThreshold: number;
 }
 
 export interface MatchResult {
@@ -46,6 +58,8 @@ export interface MatchResult {
   counts: Record<MatchStatus, number>;
   experience: { required: number; candidate: number | null; meets: boolean | null };
   method: "rule_based";
+  /** Present when semantic matching ran; informational, shown separately from the evidence score. */
+  semantic?: SemanticInfo;
 }
 
 const STATUS_CREDIT: Record<MatchStatus, number> = { matched: 1, unverified: 0.6, partial: 0.5, missing: 0 };
@@ -55,7 +69,10 @@ export function hasEvidence(skill: CandidateSkillRecord): boolean {
   return skill.source !== "self" || Boolean(skill.evidence && skill.evidence.trim().length > 0);
 }
 
-export function classifyRequirement(req: JobSkillRequirement, skill: CandidateSkillRecord | undefined): MatchStatus {
+export function classifyRequirement(
+  req: JobSkillRequirement,
+  skill: CandidateSkillRecord | undefined,
+): MatchStatus {
   if (!skill) return "missing";
   if (skill.level < req.min_level) return "partial";
   return hasEvidence(skill) ? "matched" : "unverified";
@@ -95,7 +112,9 @@ export function computeMatch(
   const meets = experience.candidate === null ? null : experience.candidate >= experience.required;
   if (experience.required > 0) {
     const expRatio =
-      experience.candidate === null ? 0 : Math.min(1, experience.candidate / Math.max(1, experience.required));
+      experience.candidate === null
+        ? 0
+        : Math.min(1, experience.candidate / Math.max(1, experience.required));
     score = possible > 0 ? score * 0.85 + expRatio * 15 : expRatio * 100;
   }
 
