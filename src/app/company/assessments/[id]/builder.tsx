@@ -2,13 +2,14 @@
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Sparkles } from "lucide-react";
+import { Plus, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, FormMessage, Input, Select, Textarea } from "@/components/ui/form";
 import {
   addQuestion,
   generateQuestionsWithAI,
   setAssessmentStatus,
+  updateRubric,
 } from "@/features/assessments/company-actions";
 import type { ActionResult } from "@/lib/errors";
 import { useI18n } from "@/lib/i18n/client";
@@ -139,14 +140,31 @@ export function QuestionBuilder({ assessmentId }: { assessmentId: string }) {
   );
 }
 
-export function AIQuestions({ assessmentId }: { assessmentId: string }) {
+export function AIQuestions({
+  assessmentId,
+  jobs = [],
+}: {
+  assessmentId: string;
+  jobs?: { id: string; title: string }[];
+}) {
   const { locale } = useI18n();
   const L = tx(locale);
   const router = useRouter();
   const [topic, setTopic] = useState("");
+  const [jobId, setJobId] = useState("");
   const [busy, setBusy] = useState(false);
   return (
     <div className="flex flex-col gap-3">
+      {jobs.length > 0 && (
+        <Select value={jobId} onChange={(e) => setJobId(e.target.value)} aria-label={L("Base on a job", "بناءً على وظيفة")}>
+          <option value="">{L("Base on a job (optional)", "بناءً على وظيفة (اختياري)")}</option>
+          {jobs.map((j) => (
+            <option key={j.id} value={j.id}>
+              {j.title}
+            </option>
+          ))}
+        </Select>
+      )}
       <Input
         value={topic}
         onChange={(e) => setTopic(e.target.value)}
@@ -156,10 +174,10 @@ export function AIQuestions({ assessmentId }: { assessmentId: string }) {
       <Button
         variant="soft"
         loading={busy}
-        disabled={!topic.trim()}
+        disabled={!topic.trim() && !jobId}
         onClick={async () => {
           setBusy(true);
-          const r = await generateQuestionsWithAI(assessmentId, topic);
+          const r = await generateQuestionsWithAI(assessmentId, topic, jobId || undefined);
           setBusy(false);
           if (r.ok) {
             toast.success(r.message);
@@ -201,5 +219,130 @@ export function PublishControls({ id, status }: { id: string; status: "draft" | 
     <Button size="sm" variant="outline" disabled={pending} onClick={() => go("draft")}>
       {L("Restore", "استعادة")}
     </Button>
+  );
+}
+
+type Criterion = {
+  key: string;
+  name_en: string;
+  name_ar: string;
+  description_en?: string;
+  description_ar?: string;
+  max_points: number;
+};
+
+/** Open-answer rubric: editable on drafts (review AI-generated or default criteria), read-only otherwise. */
+export function RubricEditor({
+  assessmentId,
+  initial,
+  editable,
+}: {
+  assessmentId: string;
+  initial: Criterion[];
+  editable: boolean;
+}) {
+  const { locale } = useI18n();
+  const L = tx(locale);
+  const router = useRouter();
+  const [rows, setRows] = useState<Criterion[]>(initial);
+  const [pending, start] = useTransition();
+  const total = rows.reduce((a, c) => a + (Number(c.max_points) || 0), 0);
+  const set = (i: number, patch: Partial<Criterion>) => setRows((r) => r.map((c, j) => (j === i ? { ...c, ...patch } : c)));
+  if (!editable)
+    return (
+      <ul className="divide-y rounded-2xl border text-sm">
+        {rows.map((c) => (
+          <li key={c.key} className="flex items-start justify-between gap-3 p-3">
+            <div>
+              <p className="font-semibold">{locale === "ar" ? c.name_ar : c.name_en}</p>
+              <p className="text-muted text-xs">{locale === "ar" ? c.description_ar : c.description_en}</p>
+            </div>
+            <span className="ltr-nums text-subtle text-xs font-bold">/{c.max_points}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  return (
+    <div className="flex flex-col gap-3">
+      {rows.map((c, i) => (
+        <div key={i} className="grid gap-2 rounded-2xl border p-3 sm:grid-cols-[1fr_1fr_5rem_auto]">
+          <Input
+            value={c.name_en}
+            onChange={(e) =>
+              set(i, {
+                name_en: e.target.value,
+                key: c.key || e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 30) || `c${i + 1}`,
+              })
+            }
+            aria-label={L("Criterion (English)", "المعيار (إنجليزي)")}
+            placeholder="Criterion"
+          />
+          <Input
+            value={c.name_ar}
+            onChange={(e) => set(i, { name_ar: e.target.value })}
+            dir="rtl"
+            aria-label={L("Criterion (Arabic)", "المعيار (عربي)")}
+            placeholder="المعيار"
+          />
+          <Input
+            type="number"
+            min={1}
+            max={10}
+            value={c.max_points}
+            onChange={(e) => set(i, { max_points: Number(e.target.value) })}
+            aria-label={L("Max points", "الحد الأقصى")}
+          />
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() => setRows((r) => r.filter((_, j) => j !== i))}
+            disabled={rows.length <= 1}
+            aria-label={L("Remove criterion", "حذف المعيار")}
+          >
+            <Trash2 />
+          </Button>
+          <Textarea
+            className="sm:col-span-4"
+            rows={1}
+            value={(locale === "ar" ? c.description_ar : c.description_en) ?? ""}
+            onChange={(e) => set(i, locale === "ar" ? { description_ar: e.target.value } : { description_en: e.target.value })}
+            aria-label={L("What a strong answer shows", "ما تُظهره الإجابة القوية")}
+            placeholder={L("What a strong answer shows", "ما تُظهره الإجابة القوية")}
+          />
+        </div>
+      ))}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          size="sm"
+          variant="soft"
+          disabled={rows.length >= 8}
+          onClick={() => setRows((r) => [...r, { key: `criterion_${r.length + 1}`, name_en: "", name_ar: "", max_points: 3 }])}
+        >
+          <Plus /> {L("Add criterion", "إضافة معيار")}
+        </Button>
+        <span className="text-subtle ltr-nums text-xs">
+          {L("Total", "المجموع")}: {total}
+        </span>
+        <Button
+          type="button"
+          size="sm"
+          className="ms-auto"
+          loading={pending}
+          onClick={() =>
+            start(async () => {
+              const r = await updateRubric(assessmentId, rows);
+              if (r.ok) {
+                toast.success(r.message);
+                router.refresh();
+              } else toast.error(r.error);
+            })
+          }
+        >
+          {L("Save rubric", "حفظ المعايير")}
+        </Button>
+      </div>
+    </div>
   );
 }

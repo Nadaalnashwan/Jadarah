@@ -112,3 +112,26 @@ test("company: rubric-assisted evaluation suggests scores for a human reviewer",
   // Suggested scores are pre-filled but NOT saved until the reviewer submits.
   await expect(page.locator('input[name^="rubric_"]').first()).not.toHaveValue("");
 });
+
+test("company: job → AI-generated assessment with a job-tailored, editable rubric", async ({ page }) => {
+  await signIn(page, "recruiter.nawat");
+  await page.goto("/company/assessments");
+  await page.locator("#na-en").fill(`E2E live AI assessment ${Date.now()}`);
+  await page.locator("#na-ar").fill("تقييم آلي للاختبار");
+  await page.locator("form").filter({ has: page.locator("#na-en") }).getByRole("button").last().click();
+  await expect(page).toHaveURL(/\/company\/assessments\/[0-9a-f-]{36}$/);
+  await page.getByLabel("Base on a job").selectOption({ index: 1 });
+  const started = Date.now();
+  await page.getByRole("button", { name: "Generate draft questions" }).click();
+  await expect(page.getByText(/job-tailored rubric added \((gemini|groq|openai) · /)).toBeVisible({ timeout: 90_000 });
+  console.log(`assessment_generation UI round-trip ${Date.now() - started} ms`);
+  // Rubric is reviewable and editable before publishing.
+  await expect(page.getByRole("button", { name: "Save rubric" })).toBeVisible();
+  const firstCriterion = page.getByLabel("Criterion (English)").first();
+  await expect(firstCriterion).not.toHaveValue("");
+  await firstCriterion.fill("Technical accuracy (edited)");
+  await page.getByRole("button", { name: "Save rubric" }).click();
+  await expect(page.getByText("Rubric saved.")).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel("Criterion (English)").first()).toHaveValue("Technical accuracy (edited)");
+});

@@ -281,19 +281,96 @@ const aiQuestionsSchema = z.object({
       }),
     )
     .max(8),
+  /** Job-tailored rubric for open answers (only requested when a job is selected). */
+  rubric: z
+    .array(
+      z.object({
+        key: z.string().regex(/^[a-z][a-z0-9_]{1,30}$/),
+        name_en: z.string().max(60),
+        name_ar: z.string().max(60),
+        description_en: z.string().max(240),
+        description_ar: z.string().max(240),
+        max_points: z.number().int().min(1).max(10),
+      }),
+    )
+    .max(6)
+    .optional(),
 });
 
-/** AI-drafted questions are inserted into a DRAFT assessment only; publication requires a human. */
-export async function generateQuestionsWithAI(assessmentId: string, topic: string): Promise<ActionResult> {
+const rubricSchema = z
+  .array(
+    z.object({
+      key: z.string().regex(/^[a-z][a-z0-9_]{1,30}$/),
+      name_en: z.string().trim().min(2).max(60),
+      name_ar: z.string().trim().min(2).max(60),
+      description_en: z.string().trim().max(240).optional().default(""),
+      description_ar: z.string().trim().max(240).optional().default(""),
+      max_points: z.number().int().min(1).max(10),
+    }),
+  )
+  .min(1)
+  .max(8);
+
+/** Edit the open-answer rubric of a DRAFT assessment (human review of AI or default criteria). */
+export async function updateRubric(assessmentId: string, criteria: unknown): Promise<ActionResult> {
+  const { supabase, locale } = await ctx();
+  const L = (en: string, ar: string) => (locale === "ar" ? ar : en);
+  const parsed = rubricSchema.safeParse(criteria);
+  if (!parsed.success) return { ok: false, error: L("Check each criterion (name, 1–10 points).", "تحقق من كل معيار (الاسم، 1–10 نقاط).") };
+  if (new Set(parsed.data.map((c) => c.key)).size !== parsed.data.length)
+    return { ok: false, error: L("Criteria must be unique.", "يجب ألا تتكرر المعايير.") };
+  const { data: a } = await supabase.from("assessments").select("status").eq("id", assessmentId).single();
+  if (a?.status !== "draft") return { ok: false, error: L("Only drafts can be edited.", "يمكن تعديل المسودات فقط.") };
+  const { data: rub } = await supabase.from("assessment_rubrics").select("id").eq("assessment_id", assessmentId).limit(1).maybeSingle();
+  const { error } = rub
+    ? await supabase.from("assessment_rubrics").update({ criteria: parsed.data }).eq("id", rub.id)
+    : await supabase.from("assessment_rubrics").insert({
+        assessment_id: assessmentId,
+        title_en: "Open response rubric",
+        title_ar: "معايير الإجابات المفتوحة",
+        criteria: parsed.data,
+      });
+  if (error) return { ok: false, error: localizeError(error, locale) };
+  revalidatePath(`/company/assessments/${assessmentId}`);
+  return { ok: true, message: L("Rubric saved.", "حُفظت المعايير.") };
+}
+
+/**
+ * AI-drafted questions are inserted into a DRAFT assessment only; publication requires a human.
+ * With a job selected, questions target that job's required skills and level, and a job-tailored
+ * rubric replaces the draft's rubric (editable before publishing).
+ */
+export async function generateQuestionsWithAI(
+  assessmentId: string,
+  topic: string,
+  jobId?: string,
+): Promise<ActionResult> {
   const { s, cid, supabase, locale } = await ctx();
+  let jobBrief = "";
+  if (jobId) {
+    const { data: job } = await supabase
+      .from("jobs")
+      .select("title_en, experience_level, min_years, responsibilities_en, job_skills(importance, min_level, skill:skills(name_en))")
+      .eq("id", jobId)
+      .eq("company_id", cid)
+      .maybeSingle();
+    if (!job) return { ok: false, error: locale === "ar" ? "الوظيفة غير موجودة." : "Job not found." };
+    jobBrief = `Job: ${job.title_en} (${job.experience_level}, ${job.min_years}+ years).
+Required skills: ${job.job_skills.filter((x) => x.importance === "required").map((x) => `${x.skill?.name_en} (level ${x.min_level}/5)`).join(", ")}.
+Preferred skills: ${job.job_skills.filter((x) => x.importance !== "required").map((x) => x.skill?.name_en).join(", ") || "none"}.
+Responsibilities: ${(job.responsibilities_en ?? []).slice(0, 6).join("; ")}.`;
+  }
   try {
-    const { data, provider } = await generateJSON(
+    const { data, provider, model } = await generateJSON(
       {
         operation: "assessment_generation",
         userId: s.userId,
-        system:
-          "You write fair, practical bilingual (English + Arabic) assessment questions for hiring. Objective questions need exactly-specified correct options. Return JSON {questions:[...]}.",
-        prompt: `Topic: ${topic.slice(0, 200)}. Create 5 questions: 3 objective (multiple_choice/true_false/multiple_select) and 2 open (long_answer or case_study) with points.`,
+        system: `You write fair, practical bilingual (English + Modern Standard Arabic) hiring assessments.
+Objective questions need exactly-specified correct options. Open questions must be realistic work tasks for the role, not trivia.
+Avoid questions about protected characteristics. ${jobId ? "Also return a rubric (3-5 criteria, snake_case keys, max_points 1-10 each) for grading the open answers for THIS job." : ""}
+Return JSON {questions:[...]${jobId ? ", rubric:[...]" : ""}}.`,
+        prompt: `${jobBrief}${topic.trim() ? `\nFocus: ${topic.slice(0, 200)}` : ""}
+Create 5 questions: 3 objective (multiple_choice/true_false/multiple_select) and 2 open (long_answer or case_study) with points.`,
       },
       aiQuestionsSchema,
     );
@@ -341,6 +418,24 @@ export async function generateQuestionsWithAI(assessmentId: string, topic: strin
             })),
           );
     }
+    let rubricReplaced = false;
+    if (jobId && data.rubric?.length) {
+      const ok = rubricSchema.safeParse(data.rubric);
+      if (ok.success && new Set(ok.data.map((c) => c.key)).size === ok.data.length) {
+        if (rub) await supabase.from("assessment_rubrics").update({ criteria: ok.data }).eq("id", rub.id);
+        rubricReplaced = Boolean(rub);
+        await supabase.from("ai_generation_records").insert({
+          user_id: s.userId,
+          company_id: cid,
+          kind: "rubric",
+          provider,
+          model,
+          input_summary: jobBrief.slice(0, 200),
+          output: { criteria: ok.data },
+          review_status: "pending_review",
+        });
+      }
+    }
     await supabase.from("assessments").update({ ai_generated: true }).eq("id", assessmentId);
     await supabase
       .from("ai_generation_records")
@@ -349,6 +444,7 @@ export async function generateQuestionsWithAI(assessmentId: string, topic: strin
         company_id: cid,
         kind: "assessment",
         provider,
+        model,
         input_summary: topic.slice(0, 200),
         output: data,
         review_status: "pending_review",
@@ -358,8 +454,8 @@ export async function generateQuestionsWithAI(assessmentId: string, topic: strin
       ok: true,
       message:
         locale === "ar"
-          ? "أُضيفت أسئلة مقترحة إلى المسودة. راجعها قبل النشر."
-          : "Draft questions added. Review them before publishing.",
+          ? `أُضيفت أسئلة مقترحة${rubricReplaced ? " ومعايير مخصّصة للوظيفة" : ""} إلى المسودة (${provider} · ${model}). راجعها قبل النشر.`
+          : `Draft questions${rubricReplaced ? " and a job-tailored rubric" : ""} added (${provider} · ${model}). Review before publishing.`,
     };
   } catch (e) {
     if (e instanceof AIUnavailableError)

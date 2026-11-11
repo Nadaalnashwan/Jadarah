@@ -6,7 +6,7 @@ import { requireCompanyMember } from "@/lib/auth/session";
 import { pick, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
-import { AIQuestions, PublishControls, QuestionBuilder } from "./builder";
+import { AIQuestions, PublishControls, QuestionBuilder, RubricEditor } from "./builder";
 
 export default async function AssessmentBuilder({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -16,7 +16,7 @@ export default async function AssessmentBuilder({ params }: { params: Promise<{ 
   const supabase = await createClient();
   const { data: a } = await supabase
     .from("assessments")
-    .select("*, assessment_questions(*, assessment_options(*))")
+    .select("*, assessment_questions(*, assessment_options(*)), assessment_rubrics(id, criteria)")
     .eq("id", id)
     .eq("company_id", s.activeMembership.company_id)
     .maybeSingle();
@@ -24,6 +24,23 @@ export default async function AssessmentBuilder({ params }: { params: Promise<{ 
   const qs = [...a.assessment_questions].sort((x, y) => x.position - y.position);
   const draft = a.status === "draft";
   const total = qs.reduce((n, q) => n + q.points, 0);
+  const rubric = (a.assessment_rubrics?.[0]?.criteria ?? []) as {
+    key: string;
+    name_en: string;
+    name_ar: string;
+    description_en?: string;
+    description_ar?: string;
+    max_points: number;
+  }[];
+  const { data: jobs } = draft
+    ? await supabase
+        .from("jobs")
+        .select("id, title_en, title_ar")
+        .eq("company_id", s.activeMembership.company_id)
+        .in("status", ["draft", "published", "paused"])
+        .order("created_at", { ascending: false })
+        .limit(50)
+    : { data: [] };
   return (
     <>
       <PageHeader
@@ -125,10 +142,31 @@ export default async function AssessmentBuilder({ params }: { params: Promise<{ 
                 )}
               />
               <CardBody>
-                <AIQuestions assessmentId={a.id} />
+                <AIQuestions
+                  assessmentId={a.id}
+                  jobs={(jobs ?? []).map((j) => ({ id: j.id, title: pick(j, "title", locale) }))}
+                />
               </CardBody>
             </Card>
           </div>
+        )}
+        {rubric.length > 0 && (
+          <Card className="xl:col-span-2">
+            <CardHeader
+              title={L("Open-answer rubric", "معايير الإجابات المفتوحة")}
+              description={
+                draft
+                  ? L(
+                      "Reviewers score open answers with these criteria. Edit AI-drafted criteria before publishing.",
+                      "يقيّم المراجعون الإجابات المفتوحة بهذه المعايير. عدّل المعايير المقترحة آليًا قبل النشر.",
+                    )
+                  : L("Locked after publishing.", "مقفلة بعد النشر.")
+              }
+            />
+            <CardBody>
+              <RubricEditor key={JSON.stringify(rubric)} assessmentId={a.id} initial={rubric} editable={draft} />
+            </CardBody>
+          </Card>
         )}
       </div>
     </>
