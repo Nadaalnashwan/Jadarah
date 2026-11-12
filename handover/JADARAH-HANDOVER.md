@@ -1,6 +1,7 @@
 # JADARAH — Master handover
 
-Prepared on 2026-11-12. This document describes the project as it is in the archive `JADARAH-FULL-HANDOVER.zip`. It is
+Prepared on 2026-11-12 and updated the same day after the continuation session (see section 0.1 and
+`CHANGES-SINCE-b57ebca.md`). This document describes the project as it is in the archive `JADARAH-FULL-HANDOVER.zip`. It is
 written so a new developer or AI agent can continue without the original conversation. Companion documents (same
 folder): `JADARAH-REMAINING-WORK.md`, `JADARAH-SETUP-WINDOWS.md`, `ENVIRONMENT-REFERENCE.md`,
 `JADARAH-TEST-REPORT.md`, `JADARAH-DEMO-DATA-PLAN.md`, `JADARAH-DEPLOYMENT-GUIDE.md`, `NEXT-AGENT-MASTER-PROMPT.md`.
@@ -38,6 +39,20 @@ eb32e19 Question-level evaluation: inert leaving question, docs, live E2E script
 858c8c9 tests: damaged legacy .doc is reported as failed (real .doc files are now read)
 (+ handover documents commit)
 ```
+
+### 0.1 Commit references, reconciled (continuation session, 2026-11-12)
+
+- The first archive was `git archive` of `preview/premium-redesign` at **`b57ebca`** (`HANDOVER-ZIP-CHECK.txt`), which
+  is the "handover documents commit" on top of `858c8c9`. Documents that say "`858c8c9` + handover docs" mean the same
+  snapshot. `3ce9690` is an older commit on the same line (the original local project's head), not a different state.
+- None of `b57ebca`, `858c8c9`, `3ce9690` exist anywhere reachable today: the continuation ran in a **new** container
+  whose `/home/user/Jadarah` is a fresh clone at `6399ded`, 4 commits *behind* the remote branch `e08fc66`. The
+  original commits were not recreated.
+- The continuation repository is `/home/user/jadarah-work` (branch `feature/jadarah-product-experience`):
+  `e08fc66` (remote) → `1c56654` "import handover snapshot b57ebca" (the archive's files exactly; its message lists the
+  14 original commits) → the continuation commits (`git log`). A diff of the archive against `e08fc66` showed only
+  the changes those commits describe (27 new paths, 166 changed files, `ai-evaluation-actions.ts` replaced by
+  `question-evaluation-actions.ts`). Nothing was pushed.
 
 To recreate the branch from the archive: the archive is a plain source export (no `.git`). The authoritative history
 lives in the container repository above; if it is gone, initialise a new repository from the archive and record the
@@ -158,6 +173,7 @@ project.** The ledger records MCP timestamps, not the repository file names:
 | `supabase/proposals/0030_workflow_cv_listings.sql` | **NOT applied** | — |
 | `supabase/proposals/0031_monitoring.sql` | **NOT applied** (local only) | — |
 | `supabase/proposals/0032_job_visibility_without_catalogue.sql` | **NOT applied** (name clashes with migration 0032; it is a separate proposal) | — |
+| `supabase/proposals/0034_ai_evaluation_reliability.sql` | **NOT applied** (prepared in the continuation session; tested locally; needs owner approval) | — (the app works without it; `/api/health` → `ai_evaluation_reliability: not_applied`) |
 
 Do not re-apply 0029/0032/0033 with `scripts/import/apply-migration.ts`: that script checks the file version, which is
 not in the ledger, and would run them again.
@@ -186,10 +202,10 @@ not fully tested**; **Partial**; **Blocked**; **Not implemented**.
 | 12 | Task assignment | Verified (live UI, 11-12) | `assignAssessment` in `src/features/company/actions.ts` | `assign_assessment` | — | Live E2E | — |
 | 13 | Task question management | Implemented, not fully tested | `src/app/company/assessments/[id]/*`, `src/features/assessments/company-actions.ts`, `builder-actions.ts`, `src/services/ai/assessment-builder.ts` | questions, rubrics | AI builder | Unit `assessment-quality.test.ts` | Builder now writes one rubric per question; the AI builder was not re-run end to end after that change. |
 | 14 | Task file attachments (per question) | Verified (live, 11-12) | `src/features/assessments/file-answer.tsx`, `file-actions.ts`, `attempt.tsx` | 0029/0032/0033 | Storage | Live E2E (user's PDF; 4 files on 3 questions), SQL tests | Old submission-level "solution" files are shown as "not linked to a question". |
-| 15 | File extraction | PDF text, DOCX, ZIP, PNG (AI) **verified live**; DOC, password/empty/damaged handling **verified with real files locally**; JPEG and scanned-PDF OCR **implemented, not verified live** | `src/services/evaluation/extract.ts`, `src/lib/zip/safe-zip.ts` | — | Gemini (OCR) | Unit + live | `.xls` unsupported; code not executed; limits documented in `docs/EVALUATION.md`. |
-| 16 | AI question-level evaluation | Verified live (29/29 on 2026-11-12) **using fallback model `gemini-3.5-flash`** | `src/features/assessments/question-evaluation-actions.ts`, `src/lib/domain/question-evaluation.ts` | 0033 | Gemini/OpenAI | Live E2E, unit, SQL | OpenAI quota exhausted; primary Gemini model overloaded during the test. Missing: duplicate-run prevention, persisted pending/failed states, explicit confidence field, task id in the prompt (see remaining work). |
+| 15 | File extraction | PDF text, DOCX, ZIP, PNG (AI) **verified live** (11-12, Gemini); DOC, PPTX, XLSX **verified live with a real text provider** (Groq, offline harness, no DB, continuation session); password-protected PDF/XLSX, image-only PPTX, empty XLSX **fail explicitly** (verified); JPEG and scanned-PDF OCR **implemented, not verified live: blocked, no Gemini key in the continuation environment** | `src/services/evaluation/extract.ts`, `src/lib/zip/safe-zip.ts` | — | Gemini (OCR) | Unit + live | `.xls` unsupported; code not executed; limits documented in `docs/EVALUATION.md`. |
+| 16 | AI question-level evaluation | Verified live (29/29 on 2026-11-12) **using fallback model `gemini-3.5-flash`**; continuation: duplicate prevention, lock, states, ids in prompt, limitations, confidence **implemented and unit/SQL-tested, not yet run in the browser against a database** | `question-evaluation-actions.ts`, `src/services/evaluation/question-evaluator.ts`, `src/lib/domain/question-evaluation.ts`, `evaluation-hash.ts`, `run-lock.ts` | 0033 (+ proposal 0034 for persisted states) | Gemini/OpenAI/Groq | Live E2E (11-12), unit 161, SQL incl. proposal 0034, offline live harness 25/0/2 | Provider decision pending (P0-1). Persisted run states need proposal 0034. |
 | 17 | Overall score calculation | Verified | `_recompute_submission_score` (0033), `aggregateQuestionScores` | 0033 | — | SQL + unit + live | — |
-| 18 | Employer evaluation review | Verified (live UI) | `src/app/company/applications/[id]/question-review.tsx` | 0033 | — | Live E2E | No separate "reject AI" button (reviewer can score independently). |
+| 18 | Employer evaluation review | Verified (live UI, 11-12); continuation: state badges, confidence, limitations, failure message, "re-evaluate anyway", reject with reason **implemented, server-rendered in tests (EN/AR), not run in a browser** | `src/app/company/applications/[id]/question-review.tsx`, `question-views.ts` | 0033 (+ 0034 for rejection) | — | Live E2E (11-12), render tests | Rejection needs proposal 0034 (the button is hidden without it). |
 | 19 | Candidate feedback | Verified (live UI) | `src/app/candidate/assessments/[id]/page.tsx`, `get_assessment_result` | 0033 | — | Live E2E | Shown only after the company shares feedback. |
 | 20 | Notifications | Partial | `src/features/notifications`, `email_outbox` (0029) | notifications, email_outbox | SMTP/Resend, `JADARAH_SERVER_KEY`, `CRON_SECRET` | Not tested on 11-12 | Email provider and server key not configured → in-app only. |
 | 21 | Search & filtering | Implemented, not fully tested | `src/lib/admin-filters.ts`, discovery | — | — | Not re-tested | — |
@@ -220,8 +236,8 @@ See `docs/EVALUATION.md` for the full design. Facts verified on 2026-11-12:
   `safe-zip.ts`; text formats as UTF-8; type checked against magic bytes).
 - **File ↔ question:** storage path `<candidate>/<submission>/<question>/<file>`, enforced by storage policy and
   `register_assessment_file`; evaluation selects `assessment_answer_files` by `submission_id` AND `question_id`.
-- **Question id in evaluation:** the action loads exactly one question by id; the prompt includes the question number,
-  type, points, instructions, deliverables and criteria (the raw ids are not written into the prompt text).
+- **Question id in evaluation:** the action loads exactly one question by id; the prompt starts with `TASK ID` and
+  `QUESTION ID`, then the question number, type, points, instructions, deliverables and criteria.
 - **Rubric construction:** `questionCriteria()` — question's own rubric → assessment-wide rubric narrowed by the
   builder's task mapping → assessment-wide rubric labelled shared → AI-derived criteria labelled "AI-suggested".
 - **Scores:** per criterion, clamped, scaled to question points; quotes verified against the submission
@@ -230,14 +246,23 @@ See `docs/EVALUATION.md` for the full design. Facts verified on 2026-11-12:
   `review_assessment_question` → `assessment_evaluations` + `assessment_evaluation_history`; audit log entries.
 - **Failures and retries:** provider chain with retry on retryable errors and same-provider backup model; per-call
   timeout from `AI_TIMEOUT_MS` (evaluation asks for ≥ 60 s); overall deadline 3× timeout; 20 AI calls/min per user
-  (memory rate limiter because `JADARAH_SERVER_KEY` is not set). A failed evaluation is shown as an error toast and is
-  **not persisted**; nothing changes the score.
+  (memory rate limiter because `JADARAH_SERVER_KEY` is not set). A failed evaluation never changes the score. It is
+  shown in the panel as "Failed" with its message; with proposal 0034 it is persisted (`assessment_ai_runs`) and stays
+  visible after a refresh.
+- **Duplicates, lock, states, confidence, rejection (continuation session):** see `docs/EVALUATION.md`, section
+  "Reliability, transparency and rejection".
 - **Employer review:** question-by-question panel; "Start from the AI suggestion", adjust, private notes, candidate
   feedback; source and history recorded.
 - **Candidate feedback:** per-question approved score, files and feedback (after sharing); never AI internals.
 - **Does the AI really read files?** Yes for PDF (text layer), DOCX, ZIP source files and PNG (AI transcription),
-  verified on production with real files and the configured provider on 2026-11-12. Not yet verified live: JPEG,
-  scanned PDF OCR, DOC (verified locally without AI), PPTX/XLSX.
+  verified on production with real files and the configured provider on 2026-11-12. DOC, PPTX and XLSX: verified in
+  the continuation session with real files and a real provider (Groq `openai/gpt-oss-120b`) through
+  `scripts/verify/evaluate-fixtures.ts`, which runs the same code as the action without a database (report in
+  `docs/evidence/ai-evaluation/`). Not yet verified live: JPEG and scanned-PDF OCR (need a Gemini key).
+- **Provider facts from the continuation environment:** only Groq was configured (no Gemini, no OpenAI key). Of about
+  18 Groq requests in that session, 1 evaluation failed on a schema mismatch (after the repair pass) and 3 requests were
+  refused with HTTP 429 (all handled as explicit failures, never as a score); it is not recommended as the primary
+  evaluator on that key.
 
 ## F. Production test records created during verification (demo accounts only)
 

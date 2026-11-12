@@ -62,3 +62,14 @@ read on the server or by scripts only.
   `GEMINI_API_KEY`, `GROQ_API_KEY`, `OPENAI_API_KEY` (quota exhausted), `DAILY_API_KEY`, `DEMO_USER_PASSWORD`.
 - Not configured: `JADARAH_SERVER_KEY` (health shows `server_key: missing`; rate limits run in memory), an email
   provider (`email: not_configured`), `DAILY_WEBHOOK_SECRET` (`video_webhooks: not_configured`).
+
+## Continuation environment (2026-11-12, names only)
+
+- Configured: `GROQ_API_KEY` (+ `GROQ_MODEL=openai/gpt-oss-120b`), `DAILY_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL` /
+  `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` **pointing to a different project (`squpszwbrqkflezfltoj`), not the documented
+  hosted project**. `GEMINI_MODEL` was set but empty.
+- Not configured: `GEMINI_API_KEY`, `OPENAI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL`,
+  `DEMO_USER_PASSWORD`, `JADARAH_SERVER_KEY`. Consequences: evaluations route to Groq; JPEG and scanned-PDF reading is
+  unavailable (reported, never scored); no live database tests were possible.
+- No new environment variables were introduced. Proposal 0034 needs none.
+

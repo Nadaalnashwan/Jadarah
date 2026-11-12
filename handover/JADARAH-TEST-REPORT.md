@@ -5,7 +5,45 @@ Node 22.23, Chromium (Playwright), the app built with `next build` and served wi
 against the **hosted Supabase project** (`qqvvlornhvfykusaxaid`) using demo accounts. SQL tests use a throwaway local
 PostgreSQL 16 (+ pgvector). Earlier results (2026-11-10) are taken from `TESTING.md` and are labelled as such.
 
-## Static checks and automated suites (latest code: branch `preview/premium-redesign`, commit `858c8c9` + handover docs)
+## Continuation session, 2026-11-12 (after snapshot `b57ebca`)
+
+**Environment:** a new Linux cloud container, Node 22.23, PostgreSQL 16 (+ pgvector installed in the session),
+repository `/home/user/jadarah-work`. Available credentials: Groq and Daily only (no Gemini, no OpenAI, no Supabase
+service key, no demo password). **No hosted database was written**; the hosted project was only read (migration
+ledger, `ai_provider_logs`). This environment's `NEXT_PUBLIC_SUPABASE_URL` points to a different project
+(`squpszwbrqkflezfltoj`), which was not used.
+
+| Check | Command | Result |
+|---|---|---|
+| Baseline of the received archive | `npm ci`, typecheck, lint, `npm test`, `bash tests/db/run-local.sh`, `npm run build` | 0 errors, clean, **129/129**, 3 PASS (30 migrations), pass — matches the handover |
+| Provider check | `npm run ai:verify` | Groq `openai/gpt-oss-120b` OK (148 ms, JSON valid); Daily OK; Gemini and OpenAI **not configured** |
+| TypeScript / lint | `npm run typecheck`, `npm run lint` | 0 errors / clean |
+| Unit tests | `npm test` | **161/161** (19 files). New: `evaluation-reliability.test.ts` (hash, reuse, lock, confidence, state), `question-evaluation-action.test.ts` (the real action, extraction and evaluator with a stand-in database client and a counted provider stub: no second provider call for unchanged input, forced re-run, lock, persisted failure, unreadable file never scored, no-0034 fallback), `question-review-render.test.ts` (the real review panel rendered in English and Arabic for every state; no trailing periods), new OOXML cases in `extraction-formats.test.ts` |
+| SQL tests | `bash tests/db/run-local.sh` | 3 PASS (unchanged) |
+| SQL tests with proposal 0034 | `WITH_PROPOSALS=0034_ai_evaluation_reliability.sql bash tests/db/run-local.sh tests/db/*.test.sql tests/db/proposals/*.test.sql` | **4 PASS** (0029, 0032, 0033 still pass with 0034 applied; 0034: lock, states, failure, stale run, transparency fields, rejection, history, RLS, anonymous denied) |
+| Production build | `npm run build` | Pass (new route `/api/company/evaluation-state`) |
+| Server smoke | `next start` + GET `/api/company/evaluation-state` without a session | HTTP 401 `unauthorized` |
+| Live file reading + AI evaluation (no database) | `NODE_USE_ENV_PROXY=1 npx tsx --conditions=react-server scripts/verify/evaluate-fixtures.ts` | **25 PASS, 0 FAIL, 2 BLOCKED** on Groq `openai/gpt-oss-120b` (`docs/evidence/ai-evaluation/evaluate-fixtures-2026-11-12T08-43-06-926Z.json`) |
+
+Live harness detail (final run):
+
+| File (question) | Read as | Result |
+|---|---|---|
+| `report.doc` (inventory report, 5 pts, employer rubric) | `doc`, 119 chars, "4.2 to 5.1", "340 units" | 5/5, 2/2 quotes verified, confidence high |
+| `forecast.pptx` (forecast deck, 6 pts) | slides + speaker notes, "1,240 units", "Assumes no promotion in July" | 6/6, 4/4 quotes verified, high |
+| `forecast.pptx` against an unrelated pricing question (6 pts) | same text | **0/6** (no credit for a file that merely exists) |
+| `budget.xlsx` (budget, 6 pts, AI-derived criteria) | cells by address, formulas, 2 sheets | 6/6, 2/2 verified, medium (AI-derived criteria; model stated a limitation) |
+| `photo.jpg`, `scanned.pdf` | not read (no Gemini key) | **BLOCKED**; correctly `extraction_failed`, score null, no AI call |
+| `protected.pdf`, `protected.xlsx`, `image-only.pptx` | explicit failure messages | `extraction_failed`, score null, no AI call |
+
+Earlier runs in the same session (not the final evidence): one XLSX evaluation failed on a Groq schema mismatch after
+the repair pass, and 3 Groq requests were refused with HTTP 429. Both are reported as failures with no score.
+
+**Not tested in the continuation session:** any browser flow against a database (no credentials / no Docker for a
+local Supabase); proposal 0034 on a real Supabase stack (PostgREST + RLS through the API); Gemini OCR for JPEG and
+scanned PDF; OpenAI; integration and Playwright suites; Windows.
+
+## Static checks and automated suites (snapshot `b57ebca` = `858c8c9` + handover docs)
 
 | Check | Command | Result | Date |
 |---|---|---|---|
@@ -93,7 +131,7 @@ calls, and 2,418 / 417 across 2 transcription calls.
 ## Not tested
 
 - Integration suite and full Playwright suite after the evaluation work (2026-11-12).
-- Live AI on JPEG, scanned PDF (OCR), DOC, PPTX/XLSX.
+- Live AI on JPEG and scanned PDF (OCR). DOC, PPTX and XLSX were verified live in the continuation session (above).
 - Re-running the AI Assessment Builder after its per-question rubric change.
 - Email delivery, Daily webhooks, notification emails.
 - Local Docker Supabase (`supabase start`).

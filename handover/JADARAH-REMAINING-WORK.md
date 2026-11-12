@@ -9,74 +9,64 @@ Only unfinished work is listed. Completed work is in `JADARAH-HANDOVER.md` (sect
 ## P0 — Critical before the demo
 
 The core pipeline (per-question files → extraction → per-question AI evaluation → persisted results → employer review →
-candidate feedback → weighted total) **passed a live end-to-end test on 2026-11-12 (29/29)**. The items below close the
-remaining gaps the owner asked for.
+candidate feedback → weighted total) **passed a live end-to-end test on 2026-11-12 (29/29)**. The continuation session
+(same day, after snapshot `b57ebca`) closed most of the remaining gaps; status per item below. Details of every change:
+`CHANGES-SINCE-b57ebca.md`.
 
-### P0-1 Restore the intended AI provider for evaluation
-- **Objective:** evaluation currently succeeds only on the fallback `gemini-3.5-flash`. OpenAI returns
-  `openai_quota_exhausted` and `gemini-3.8-flash` returned `gemini_overloaded`.
-- **Files:** `src/services/ai/config.ts` (routes), environment.
-- **Acceptance:** `npm run ai:verify` reports the chosen model working, and one live evaluation is logged in
-  `ai_provider_logs` with `success = true` on that model.
-- **Test:** `npm run ai:verify`, then evaluate one question in the employer UI.
-- **DB change:** no. **Credentials:** yes: a funded `OPENAI_API_KEY`, or a decision to route `assessment_evaluation`
-  to Gemini (`GEMINI_MODEL` / `GEMINI_FALLBACK_MODEL`).
+### P0-1 Choose and fund the AI provider for evaluation — **OPEN: owner decision + credentials**
+- **Facts:** on the hosted project (read-only check of `ai_provider_logs`), OpenAI `gpt-6.1-sol` → `openai_quota_exhausted`,
+  `gemini-3.8-flash` → `gemini_overloaded`/`gemini_timeout`, every success on `gemini-3.5-flash`; one Groq
+  `openai/gpt-oss-120b` evaluation succeeded on 11-11. In the continuation environment only Groq is configured
+  (`npm run ai:verify`: Groq OK, Gemini/OpenAI not configured); Groq produced correct evaluations, but of about 18 Groq
+  requests in that session 1 evaluation failed on a schema mismatch (after the repair pass) and 3 were refused with
+  HTTP 429 (rate limit).
+- **Recommendation:** route `assessment_evaluation` to Gemini with `GEMINI_MODEL=gemini-3.5-flash` (the model that did
+  every successful evaluation and all OCR) on a **paid** Gemini key, and keep OpenAI as the deep-task primary only if a
+  funded key is provided; otherwise leave `OPENAI_API_KEY` empty so evaluations do not first wait for a quota error.
+  Gemini is also required for JPEG / scanned-PDF reading (P0-2). Groq stays the last fallback.
+- **What the owner must provide/decide:** (a) a paid `GEMINI_API_KEY` (and the model choice above), and/or (b) a
+  funded `OPENAI_API_KEY`, or (c) confirm the routing without OpenAI. No code change is needed for (a)–(c): routing is by
+  environment (`src/services/ai/config.ts`).
+- **Acceptance:** `npm run ai:verify` shows the chosen model OK; `scripts/verify/evaluate-fixtures.ts` runs 0 FAIL with
+  the chosen provider; one evaluation in the employer UI logs `success = true` on that model in `ai_provider_logs`.
 
-### P0-2 Verify the remaining formats live (JPEG, scanned PDF OCR, DOC, PPTX/XLSX)
-- **Objective:** these paths are implemented and the non-AI parts are tested locally
-  (`tests/unit/extraction-formats.test.ts`), but they have not been evaluated by the live provider.
-- **Files:** `src/services/evaluation/extract.ts`; fixtures `tests/fixtures/evaluation/{photo.jpg,scanned.pdf,report.doc,protected.pdf}`.
-- **Acceptance:**
-  - a question with `photo.jpg` and one with `scanned.pdf` produce `image_ai` / `pdf_ocr_ai` with the real text
-    ("18,450 SAR");
-  - `report.doc` is evaluated with its text;
-  - `protected.pdf` produces an explicit failure and no score.
-- **Test:** extend `scripts/verify/question-evaluation-e2e.cjs` with these files, or run it on a local/staging
-  project.
-- **DB change:** no. **Credentials:** Gemini key. Writes demo records if run against the hosted project, which needs
-  owner approval.
+### P0-2 Verify the remaining formats live — **DONE for DOC, PPTX, XLSX; BLOCKED for JPEG and scanned PDF (Gemini key)**
+- Two extraction defects found and fixed: PPTX/XLSX with no real text were reported as "read" (only part headers), and
+  XLSX cells were sent as shared-string index numbers. Encrypted Office files are now reported as password-protected.
+- New real fixtures (`scripts/fixtures/make-office-fixtures.py`): `forecast.pptx`, `image-only.pptx`, `budget.xlsx`,
+  `empty.xlsx`, `protected.xlsx` (truly encrypted).
+- Live run (`scripts/verify/evaluate-fixtures.ts`, Groq, no database): **25 PASS, 0 FAIL, 2 BLOCKED**
+  (`docs/evidence/ai-evaluation/`). DOC 5/5, PPTX 6/6, XLSX 6/6 with verified quotes; the same PPTX against a question it
+  does not answer scored **0/6**; protected PDF, protected XLSX, image-only PPTX → `extraction_failed`, no score, no AI
+  call. JPEG and scanned PDF: correctly **not scored** without transcription; reading them needs Gemini.
+- **Remaining:** with a Gemini key, run `NODE_USE_ENV_PROXY=1 npx tsx --conditions=react-server scripts/verify/evaluate-fixtures.ts`
+  (expect `image_ai` / `pdf_ocr_ai` with "18,450 SAR"), then one browser evaluation per format on a local/staging project
+  (or the hosted project with approval).
 
-### P0-3 Duplicate-evaluation prevention and evaluation status
-- **Objective:** clicking "Evaluate"/"Re-evaluate" always calls the AI again. Add:
-  - skip when the latest AI result for the same submission + question has the same `input_sha256`, unless "Re-evaluate"
-    is confirmed (the hash is computed from file bytes + answer + criteria);
-  - an in-flight lock per submission + question;
-  - visible states per question: Not evaluated / Reading files / Evaluating / Completed / Failed / Requires human
-    review.
+### P0-3 Duplicate-evaluation prevention and evaluation status — **DONE in code; persisted states need proposal 0034**
+- Input hash (file bytes + answer + question + criteria + evaluator version) computed before any AI file reading; an
+  unchanged input returns the stored result with **no provider call**; the panel offers "Re-evaluate anyway" (forced).
+- In-process lock per submission + question; database lock with 0034.
+- States: Not evaluated / Reading files / Evaluating / Completed / Failed / Requires human review.
+- Tested: unit (hash, reuse, lock, state, the action's orchestration incl. "no second provider call" and "forced run
+  calls again"), SQL (proposal 0034: lock, failure persisted, stale run closed, RLS), render (EN/AR).
+- **Remaining:** owner approval to apply proposal 0034 (then the failed state survives a refresh and the live phase is
+  shown); a browser check of a second click (no new `ai_provider_logs` row) on a database.
 
-  Today the button only shows a spinner, and failures appear as a toast without being persisted.
-- **Files:** `src/features/assessments/question-evaluation-actions.ts`,
-  `src/app/company/applications/[id]/question-review.tsx`.
-- **Acceptance:**
-  - a second click with unchanged input returns the stored result without a new `ai_provider_logs` row;
-  - a forced re-run adds a new row;
-  - the failed state is visible after refresh.
-- **Test:** unit test for the hash comparison; live check of `ai_provider_logs` counts.
-- **DB change:** persisting the failed and in-progress states needs a small table or status values (e.g.
-  `assessment_ai_runs(submission_id, question_id, status, error, started_at, finished_at)`). Hash-based deduplication
-  needs no DB change. **Credentials:** no.
+### P0-4 Confidence, limitations and identifiers — **DONE**
+- Prompt starts with `TASK ID` and `QUESTION ID`; the model returns `limitations[]`; confidence high/medium/low with
+  reasons is derived from recorded facts and shown in the panel. Stored in their own columns with 0034 (without it,
+  limitations are kept as "points to check" and confidence is derived at display time).
 
-### P0-4 Confidence / limitations and identifiers in the evaluation prompt
-- **Objective:**
-  - add the task id and question id to the evaluation prompt (`evaluationPrompt` in
-    `src/lib/domain/question-evaluation.ts`);
-  - ask the model for `limitations[]`;
-  - derive a confidence level (high / medium / low) from extraction status, verified evidence and truncation, and show
-    it in the review panel. This can be derived at display time from the stored `files`, `criteria` and `concerns`,
-    so no DB change is needed.
-- **Acceptance:** the panel shows the confidence level with its reasons; the prompt contains both ids (unit test).
-- **DB change:** no. **Credentials:** no.
+### P0-5 Explicit "reject AI suggestion" — **DONE in code; needs proposal 0034 (approval)**
+- `reject_ai_question_evaluation(ai_evaluation, reason)`; rejection kept in `assessment_ai_rejections` and in the
+  history; source `ai_rejected`; a rejected result cannot be accepted. The button appears only when 0034 is applied.
 
-### P0-5 Explicit "reject AI suggestion" action
-- **Objective:** the reviewer can currently score independently (`source = human`), but there is no recorded
-  rejection of a specific AI result.
-- **Files:** `question-review.tsx`, `review_assessment_question` (0033).
-- **Acceptance:** the history shows "AI result X rejected by reviewer".
-- **DB change:** yes, a new `source` value (e.g. `ai_rejected`) or a rejection column. **Credentials:** no.
-
-### P0-6 Confirm with the owner that the gate is met
-- The real end-to-end evaluation has passed (`JADARAH-TEST-REPORT.md`, section "Question-level evaluation"). Ask the
-  owner to confirm before any demo seeding.
+### P0-6 Owner approvals needed now
+1. P0-1 provider decision and key(s).
+2. Apply `supabase/proposals/0034_ai_evaluation_reliability.sql` to the hosted project (additive; rollback in its
+   header), **or** first to a staging project. Not applied anywhere yet.
+3. Confirm the AI evaluation gate after the JPEG/scanned-PDF check, before any demo seeding (P1).
 
 ---
 
@@ -108,6 +98,8 @@ remaining gaps the owner asked for.
 - Sandbox execution of submitted code (containers) for test-based grading. Today code is read, not run.
 - `.xls` reading; OCR of images inside ZIP archives; ZIP64 support.
 - Batch "Evaluate all questions" with a progress queue (background job).
+- Request structured outputs with `strict: true` for providers that support it (Groq/OpenAI) to reduce schema
+  mismatches; today `strict: false` is sent and Zod validates with one repair pass.
 - Push GitHub branch `preview/premium-redesign` after owner approval (the Claude GitHub App lacked write permission:
   HTTP 403).
 - Docker-based local Supabase (`npx supabase start`) has never been run (image pulls were blocked in the cloud

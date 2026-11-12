@@ -219,7 +219,7 @@ const record = (scenario: string, check: string, result: Row["result"], detail =
       const score = Number(p.score);
       const [lo, hi] = sc.scoreRange ?? [0, 1];
       const inRange = Number.isFinite(score) && score >= lo * sc.points - 1e-9 && score <= hi * sc.points + 1e-9;
-      record(sc.name, `score within ${lo * sc.points}–${hi * sc.points} of ${sc.points}`, inRange ? "PASS" : "FAIL", `score ${p.score}/${sc.points}, ${p.provider}:${p.model}, ${ms} ms`);
+      record(sc.name, `score within ${+(lo * sc.points).toFixed(2)}–${+(hi * sc.points).toFixed(2)} of ${sc.points}`, inRange ? "PASS" : "FAIL", `score ${p.score}/${sc.points}, ${p.provider}:${p.model}, ${ms} ms`);
       const verified = (p.criteria ?? []).filter((c) => c.score > 0 && c.evidence_verified).length;
       const positive = (p.criteria ?? []).filter((c) => c.score > 0).length;
       record(sc.name, "positive scores backed by quotes found in the file", positive === 0 || verified > 0 ? "PASS" : "FAIL", `${verified}/${positive} verified`);

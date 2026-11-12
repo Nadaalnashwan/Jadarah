@@ -73,6 +73,16 @@ Check after starting the app: http://localhost:3000/api/health should show
 - `"database_schema": "0029"`
 - `"task_solution_files": "ready"`
 - `"question_evaluation": "ready"`
+- `"ai_evaluation_reliability": "not_applied"` until proposal 0034 is applied (section 5C); the app works either way
+
+### 5C. Proposal 0034 (AI evaluation reliability) — only with the owner's approval
+
+`supabase/proposals/0034_ai_evaluation_reliability.sql` adds persisted evaluation states (reading files / evaluating /
+failed), a database lock per question, the confidence and limitations columns, and the explicit "reject AI
+suggestion" action. It is **not applied** to any hosted project. It is additive; its header lists the rollback steps.
+After approval, take a backup, then run the file in the Supabase SQL editor (or with `scripts/import/apply-migration.ts`
+on a database you control). Afterwards `/api/health` shows `"ai_evaluation_reliability": "ready"` and the
+"Reject this AI suggestion" button appears in the employer review.
 
 ### 5B. A new or local Supabase (only if you do not use the hosted project)
 
@@ -125,10 +135,13 @@ Open http://localhost:3000. Stop with `Ctrl + C`.
 |---|---|
 | `npm run typecheck` | TypeScript, no output files |
 | `npm run lint` | ESLint |
-| `npm test` | Unit tests (`tests/unit`, 129 tests) |
+| `npm test` | Unit tests (`tests/unit`, 161 tests) |
 | `npm run test:integration` | Integration tests against the Supabase project in `.env.local`. **They write data: use a local or test project.** |
 | `npm run test:e2e` | Playwright against a running app (`npm run start` first) |
 | `bash tests/db/run-local.sh` | SQL tests on a throwaway local PostgreSQL 16 (Linux/WSL only) |
+| `WITH_PROPOSALS=0034_ai_evaluation_reliability.sql bash tests/db/run-local.sh tests/db/*.test.sql tests/db/proposals/*.test.sql` | The same, with proposal 0034 applied on top (WSL) |
+| `npx tsx --conditions=react-server scripts/verify/evaluate-fixtures.ts` | Live file reading + AI evaluation of the real fixtures with your AI keys. **Writes nothing to any database.** Report in `docs/evidence/ai-evaluation/` |
+| `python scripts/fixtures/make-office-fixtures.py` | Regenerates the PPTX/XLSX fixtures (needs python-pptx, openpyxl and LibreOffice; optional) |
 | `node scripts/verify/question-evaluation-e2e.cjs <files> <out>` | Live question-level evaluation check. **It writes demo records; needs owner approval for the hosted project.** |
 
 ## 8. Demo accounts
@@ -145,6 +158,9 @@ It is not stored in the repository.
 | `/api/health` shows `question_evaluation: "missing_0033"` | The database is not the hosted project or lacks 0033: apply the migrations in order (section 5B). |
 | "This feature is being enabled. Please try again later" | A database function is missing (PostgREST `PGRST202`): a migration is not applied to that database. |
 | "No AI provider is configured" / "AI could not evaluate this answer now" | Set `GEMINI_API_KEY` or `OPENAI_API_KEY`; run `npm run ai:verify`; check `ai_provider_logs` for `quota_exhausted` or `overloaded`. |
+| "Nothing changed since the evaluation of …" | Duplicate prevention: the same files, answer and criteria were already evaluated, so the AI was not called. Use "Re-evaluate anyway" to force a new run. |
+| "This question is already being evaluated" | Another evaluation of the same question is running; wait for it (a stopped run is released after 5 minutes). |
+| JPEG / scanned PDF reported as "AI transcription unavailable" | These need `GEMINI_API_KEY` (the only provider wired for reading images). They are never scored without it. |
 | Uploads fail with a type error | The file type is not on the allow-list (`src/lib/upload/rules.ts`) or is larger than 20 MB. |
 | Candidates cannot see a published job | The company is not listed in the catalogue (Super Admin → Subscriptions), or the deadline has passed. |
 | Sign-in loops on `/sign-in` | Sign-in is limited to 10 attempts per minute per IP; wait one minute. |

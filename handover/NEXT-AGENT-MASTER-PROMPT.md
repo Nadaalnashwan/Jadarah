@@ -9,6 +9,7 @@ Do not repeat completed work.
 
 ## 1. Read first (in this order) before touching code
 
+0. `handover/CHANGES-SINCE-b57ebca.md`: what the continuation session changed (read this first).
 1. `handover/JADARAH-HANDOVER.md`: versions and branches, architecture, data model, the **applied-migrations table**
    (verified against the live ledger), feature status, AI engine facts, production test records, the owner's rules.
 2. `handover/JADARAH-REMAINING-WORK.md`: the prioritised backlog (P0 → P3) with acceptance criteria.
@@ -21,20 +22,22 @@ Do not repeat completed work.
 
 ## 2. Verify the starting point
 
-- The latest work is branch **`preview/premium-redesign`** (worktree `/home/user/jadarah-premium` in the original cloud
-  container), on top of `858c8c9` plus the handover-documents commit. If you only have the ZIP, initialise a repository
-  from it and record that base. The original project (`/home/user/Jadarah`, branch
-  `feature/jadarah-product-experience` @ `3ce9690`) must not be overwritten. The GitHub remote has only `e08fc66`.
+- The latest work is the updated ZIP (or `/home/user/jadarah-work`, branch `feature/jadarah-product-experience`):
+  remote `e08fc66` → `1c56654` (import of snapshot `b57ebca`) → continuation commits. The commits `b57ebca`,
+  `858c8c9`, `3ce9690` no longer exist anywhere reachable (see `JADARAH-HANDOVER.md` section 0.1). If you only have the
+  ZIP, initialise a repository from it. Never overwrite the owner's original project folder. GitHub has only `e08fc66`.
 - Run, and expect these results:
   - `npm ci`;
   - `npm run typecheck` → 0 errors;
   - `npm run lint` → clean;
-  - `npm test` → 129 passing;
+  - `npm test` → 161 passing;
   - `bash tests/db/run-local.sh` (Linux/WSL with PostgreSQL 16 + pgvector) → 3 PASS;
+  - `WITH_PROPOSALS=0034_ai_evaluation_reliability.sql bash tests/db/run-local.sh tests/db/*.test.sql tests/db/proposals/*.test.sql` → 4 PASS;
   - `npm run build` → pass.
 
   If anything differs, stop and report.
-- Check `/api/health` with the owner's `.env.local`: expect `question_evaluation: ready`.
+- Check `/api/health` with the owner's `.env.local`: expect `question_evaluation: ready` and
+  `ai_evaluation_reliability: not_applied` (until the owner approves proposal 0034).
 
 ## 3. Rules (from the owner; non-negotiable)
 
@@ -44,7 +47,7 @@ Do not repeat completed work.
    branches.
 3. **Never modify production data or apply migrations to the hosted Supabase project (`qqvvlornhvfykusaxaid`) without
    explicit approval.** Read-only queries are fine. Migrations 0029, 0032 and 0033 are already applied there; do not
-   re-apply them.
+   re-apply them. Proposal 0034 is prepared and NOT applied.
 4. Never invent credentials, never print or commit secrets, never commit `.env*` files with values.
 5. No mock data or fake AI results to make features look working. Never claim a test result you did not run. Report
    failures with evidence.
@@ -76,18 +79,18 @@ Do not repeat completed work.
 
 ## 5. Your next tasks (in order)
 
-1. **P0-1 AI provider:** evaluation currently runs only on the fallback `gemini-3.5-flash` (OpenAI `gpt-6.1-sol`
-   quota exhausted; `gemini-3.8-flash` overloaded). Ask the owner for a funded key or a routing decision; verify with
-   `npm run ai:verify` and `ai_provider_logs`.
-2. **P0-2** Live-verify JPEG, scanned PDF OCR, DOC and PPTX/XLSX with the fixtures in `tests/fixtures/evaluation/`. Use
-   a local/staging project, or the hosted project only with approval.
-3. **P0-3** Duplicate-evaluation prevention (`input_sha256`), an in-flight lock, and visible evaluation states. Persisted
-   failed/in-progress states need a small migration (approval).
-4. **P0-4** Add task and question ids to the prompt, model-stated limitations, and a derived confidence level. **P0-5**
-   Explicit "reject AI suggestion" (needs a migration).
-5. Report to the owner and wait for confirmation of the gate. Then **P1** demo data per
-   `handover/JADARAH-DEMO-DATA-PLAN.md` (real files, real AI evaluation, interviews only once the demo date/time is
-   confirmed). Then **P2** production readiness; deploy only after approval.
+Done in the continuation session (do not redo): OOXML extraction fixes + fixtures; DOC/PPTX/XLSX live check (Groq);
+duplicate prevention by input hash; in-process lock; six evaluation states; ids in the prompt; model limitations;
+derived confidence; explicit rejection (code + proposal 0034); review UI; offline harness.
+
+1. **P0-1** Ask the owner for the provider decision and key(s) (recommendation in `JADARAH-REMAINING-WORK.md`). Verify
+   with `npm run ai:verify` and `scripts/verify/evaluate-fixtures.ts` (0 FAIL).
+2. **P0-2** With a Gemini key: rerun the harness (JPEG + scanned PDF must read "18,450 SAR"), then one browser
+   evaluation per format on a local/staging project (hosted only with approval).
+3. **Proposal 0034:** apply only after the owner approves (staging first is preferable); then check the failed state
+   after refresh, the live phase, the lock across two tabs and the rejection in the browser.
+4. Report to the owner and wait for confirmation of the gate. Then **P1** demo data per
+   `handover/JADARAH-DEMO-DATA-PLAN.md`. Then **P2**; deploy only after approval.
 
 ## 6. Known issues and exact paths
 
@@ -108,6 +111,8 @@ Do not repeat completed work.
   only with approval.
 - The cloud environment needed `NODE_USE_ENV_PROXY=1` for Node `fetch`; Docker image pulls were blocked; pushing to
   GitHub failed with HTTP 403 (the GitHub App lacked write access).
+- Groq (`openai/gpt-oss-120b`) occasionally returns output that fails the schema and is rate-limited (HTTP 429) on the
+  continuation key; both are handled as failures without a score.
 - When restarting `next start`, kill the old `next-server` process first: a running server keeps serving the previous
   build, and a rebuilt `.next` under a running server produces error pages.
 

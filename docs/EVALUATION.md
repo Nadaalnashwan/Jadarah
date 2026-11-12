@@ -57,11 +57,15 @@ assessment_assignments (task → candidate, application, company)
    checked against the file's bytes:
    - PDF: text layer. Scanned PDFs get an AI transcription, labelled as such.
    - DOCX: text.
-   - PPTX / XLSX: text only.
+   - PPTX: slide text in slide order plus speaker notes (images and charts are not read).
+   - XLSX: cell values by address per named sheet (`A2=Marketing | B2=12000 | D2=27500 (=B2+C2)`), shared strings
+     and formulas resolved. A presentation or workbook with no real text is reported as unread, never as "read".
+   - DOC (Word 97–2003): text through `word-extractor`.
+   - Password-protected PDF / Office files: reported as password-protected.
    - ZIP: read in memory (`src/lib/zip/safe-zip.ts`). Unsafe names, symlinks, encrypted entries and ZIP bombs are
      refused, and the full archive listing is kept.
    - PNG / JPEG / WEBP: AI transcription and description.
-   - Legacy `.doc` / `.xls`: reported as unsupported, never "evaluated".
+   - Legacy `.xls`: reported as unsupported, never "evaluated".
 4. If nothing was submitted, the result is `no_submission` (suggested 0, to be confirmed). If no file could be read and
    there is no text, the result is `extraction_failed` with no score. Neither is ever counted as a successful answer.
 5. The model returns, per criterion: score, an exact quote, the rationale, and whether the requirement is fulfilled,
@@ -71,6 +75,37 @@ assessment_assignments (task → candidate, application, company)
 7. The result is stored in `assessment_ai_evaluations` (recruiters of the company only; candidates never see it). It
    never changes the score.
 
+## Reliability, transparency and rejection (added after the handover snapshot b57ebca)
+
+- **Duplicate prevention.** Before any file is read by AI, the action hashes the complete input: every file's bytes,
+  the written answer, the task and question ids, the instructions, points, deliverables, the criteria and their source,
+  the output language and the evaluator version (`src/lib/domain/evaluation-hash.ts`). When the latest stored result
+  has the same hash (and is a real result that was not rejected), it is returned and **no AI call is made**. The
+  reviewer is told nothing changed and can confirm "Re-evaluate anyway" (`force`), which runs a new evaluation. An
+  "unreadable files" result is never reused.
+- **One run at a time** per submission + question: an in-process lock (`src/services/evaluation/run-lock.ts`), plus a
+  database lock when proposal 0034 is applied.
+- **States per question** (`questionEvaluationState`): Not evaluated, Reading files, Evaluating, Completed, Failed,
+  Requires human review. A stored AI result is a suggestion: the question "requires human review" until a reviewer
+  decides. With proposal 0034, runs are persisted (`assessment_ai_runs`): the panel polls
+  `/api/company/evaluation-state` during a run, and a failure stays visible after a refresh with its message. A run that
+  stops reporting for 5 minutes is closed as failed. Without 0034 the states come from stored results and reviews only.
+- **Prompt identifiers.** The evaluation prompt starts with `TASK ID` and `QUESTION ID`.
+- **Model-stated limitations.** The model returns `limitations[]` (content it could not see, code it could not run,
+  ambiguous instructions). Stored in their own column with 0034; without it they are kept as "points to check".
+- **Confidence** (`evaluationConfidence`): high / medium / low with reasons, derived only from recorded facts:
+  - low: a file could not be read; more than half of the positive scores have no quote found in the submission;
+  - medium: AI transcription (OCR or image), partially read archive, truncation, some unverified quotes, AI-derived or
+    assessment-wide criteria, limitations stated by the model;
+  - high: every file read and every positive score backed by a verified quote.
+- **Explicit rejection** (proposal 0034, `reject_ai_question_evaluation`): the reviewer rejects one AI result with a
+  reason. The AI result is kept unchanged; the rejection is stored in `assessment_ai_rejections` and written to the
+  review history ("AI suggestion rejected: <reason>"). A rejected result cannot be accepted. A score given afterwards is
+  recorded with source `ai_rejected` and the rejected result's id; an approved score that was based on that result
+  keeps its points but its source becomes `ai_rejected`.
+- **Offline live check**: `scripts/verify/evaluate-fixtures.ts` runs the same extraction and evaluator on the real
+  fixtures with the configured provider and writes nothing to any database.
+
 ## Human review and scores
 
 - `review_assessment_question` stores the reviewer's score, rubric scores, private notes and candidate feedback
@@ -78,7 +113,8 @@ assessment_assignments (task → candidate, application, company)
 - It records `source`:
   - `human`: no AI suggestion was used;
   - `ai_accepted`: the reviewer kept the AI score;
-  - `ai_adjusted`: the reviewer changed the AI score.
+  - `ai_adjusted`: the reviewer changed the AI score;
+  - `ai_rejected` (proposal 0034): the reviewer explicitly rejected the AI suggestion and scored independently.
 - The AI result itself is never altered.
 - Every change is written to `assessment_evaluation_history`.
 - `_recompute_submission_score` (mirrored in `aggregateQuestionScores` in `src/lib/domain/scoring.ts`):
@@ -99,7 +135,7 @@ the candidate.
 ## Tests
 
 - **Unit** (`tests/unit/question-evaluation.test.ts`): ZIP safety (traversal, symlinks, encryption, bombs, limits);
-  real PDF, DOCX and ZIP extraction; a fake PDF fails; `.doc` reported unsupported; criteria precedence and task
+  real PDF, DOCX and ZIP extraction; a fake PDF fails; a damaged `.doc` is reported as failed; criteria precedence and task
   mapping; evidence checks; score clamping and scaling; input isolation; overall score aggregation.
 - **SQL** (`tests/db/0033_question_level_evaluation.test.sql`, run as real roles): files by question; objective
   questions refuse files; a path cannot be registered against another question; the rubric split, including that

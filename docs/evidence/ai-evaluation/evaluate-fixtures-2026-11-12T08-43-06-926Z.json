@@ -1,0 +1,878 @@
+{
+  "at": "2026-11-12T08:43:06.926Z",
+  "providers": [
+    {
+      "name": "groq",
+      "model": "openai/gpt-oss-120b"
+    }
+  ],
+  "rows": [
+    {
+      "scenario": "DOC (legacy Word) — complete answer",
+      "check": "file contents extracted",
+      "result": "PASS",
+      "detail": "4.2 to 5.1 | 340 units"
+    },
+    {
+      "scenario": "DOC (legacy Word) — complete answer",
+      "check": "status completed",
+      "result": "PASS",
+      "detail": "got completed"
+    },
+    {
+      "scenario": "DOC (legacy Word) — complete answer",
+      "check": "score within 3–5 of 5",
+      "result": "PASS",
+      "detail": "score 5/5, groq:openai/gpt-oss-120b, 2245 ms"
+    },
+    {
+      "scenario": "DOC (legacy Word) — complete answer",
+      "check": "positive scores backed by quotes found in the file",
+      "result": "PASS",
+      "detail": "2/2 verified"
+    },
+    {
+      "scenario": "DOC (legacy Word) — complete answer",
+      "check": "confidence derived",
+      "result": "PASS",
+      "detail": "high: [{\"code\":\"all_evidence_verified\",\"level\":\"high\"}]"
+    },
+    {
+      "scenario": "PPTX — forecast deck that answers the question",
+      "check": "file contents extracted",
+      "result": "PASS",
+      "detail": "1,240 units | 180 units | 9 to 14 days | Assumes no promotion in July"
+    },
+    {
+      "scenario": "PPTX — forecast deck that answers the question",
+      "check": "status completed",
+      "result": "PASS",
+      "detail": "got completed"
+    },
+    {
+      "scenario": "PPTX — forecast deck that answers the question",
+      "check": "score within 3.5999999999999996–6 of 6",
+      "result": "PASS",
+      "detail": "score 6/6, groq:openai/gpt-oss-120b, 3254 ms"
+    },
+    {
+      "scenario": "PPTX — forecast deck that answers the question",
+      "check": "positive scores backed by quotes found in the file",
+      "result": "PASS",
+      "detail": "4/4 verified"
+    },
+    {
+      "scenario": "PPTX — forecast deck that answers the question",
+      "check": "confidence derived",
+      "result": "PASS",
+      "detail": "high: [{\"code\":\"all_evidence_verified\",\"level\":\"high\"}]"
+    },
+    {
+      "scenario": "PPTX — same deck, question it does NOT answer (no credit for a file that merely exists)",
+      "check": "file contents extracted",
+      "result": "PASS",
+      "detail": "1,240 units"
+    },
+    {
+      "scenario": "PPTX — same deck, question it does NOT answer (no credit for a file that merely exists)",
+      "check": "status completed",
+      "result": "PASS",
+      "detail": "got completed"
+    },
+    {
+      "scenario": "PPTX — same deck, question it does NOT answer (no credit for a file that merely exists)",
+      "check": "score within 0–1.2000000000000002 of 6",
+      "result": "PASS",
+      "detail": "score 0/6, groq:openai/gpt-oss-120b, 1946 ms"
+    },
+    {
+      "scenario": "PPTX — same deck, question it does NOT answer (no credit for a file that merely exists)",
+      "check": "positive scores backed by quotes found in the file",
+      "result": "PASS",
+      "detail": "0/0 verified"
+    },
+    {
+      "scenario": "PPTX — same deck, question it does NOT answer (no credit for a file that merely exists)",
+      "check": "confidence derived",
+      "result": "PASS",
+      "detail": "high: [{\"code\":\"all_evidence_verified\",\"level\":\"high\"}]"
+    },
+    {
+      "scenario": "XLSX — budget workbook (cells, formulas, second sheet)",
+      "check": "file contents extracted",
+      "result": "PASS",
+      "detail": "A2=Marketing | D4=195500 | Riyadh Season campaign"
+    },
+    {
+      "scenario": "XLSX — budget workbook (cells, formulas, second sheet)",
+      "check": "status completed",
+      "result": "PASS",
+      "detail": "got completed"
+    },
+    {
+      "scenario": "XLSX — budget workbook (cells, formulas, second sheet)",
+      "check": "score within 3–6 of 6",
+      "result": "PASS",
+      "detail": "score 6/6, groq:openai/gpt-oss-120b, 4189 ms"
+    },
+    {
+      "scenario": "XLSX — budget workbook (cells, formulas, second sheet)",
+      "check": "positive scores backed by quotes found in the file",
+      "result": "PASS",
+      "detail": "2/2 verified"
+    },
+    {
+      "scenario": "XLSX — budget workbook (cells, formulas, second sheet)",
+      "check": "confidence derived",
+      "result": "PASS",
+      "detail": "medium: [{\"code\":\"criteria_ai_derived\",\"level\":\"medium\"},{\"code\":\"model_limitations\",\"level\":\"medium\",\"detail\":\"1\"}]"
+    },
+    {
+      "scenario": "JPEG — photo of a document (AI transcription)",
+      "check": "file contents extracted",
+      "result": "BLOCKED",
+      "detail": "needs Gemini (GEMINI_API_KEY) for AI transcription"
+    },
+    {
+      "scenario": "JPEG — photo of a document (AI transcription)",
+      "check": "unreadable without transcription → not scored, no AI call",
+      "result": "PASS",
+      "detail": "None of the submitted files could be read automatically (photo.jpg: AI transcription unavailable (not_configured)). Not evaluated: open the files and score manually"
+    },
+    {
+      "scenario": "Scanned PDF — no text layer (AI OCR)",
+      "check": "file contents extracted",
+      "result": "BLOCKED",
+      "detail": "needs Gemini (GEMINI_API_KEY) for AI transcription"
+    },
+    {
+      "scenario": "Scanned PDF — no text layer (AI OCR)",
+      "check": "unreadable without transcription → not scored, no AI call",
+      "result": "PASS",
+      "detail": "None of the submitted files could be read automatically (scanned.pdf: scanned PDF without a text layer; AI transcription unavailable (not_configured)). Not evaluated: open the files and score manually"
+    },
+    {
+      "scenario": "Password-protected PDF — must fail explicitly, no score, no AI call",
+      "check": "status extraction_failed",
+      "result": "PASS",
+      "detail": "None of the submitted files could be read automatically (protected.pdf: the PDF is password-protected; ask the candidate for an unprotected copy). Not evaluated: open the files and score manually"
+    },
+    {
+      "scenario": "Password-protected XLSX — must fail explicitly, no score",
+      "check": "status extraction_failed",
+      "result": "PASS",
+      "detail": "None of the submitted files could be read automatically (protected.xlsx: the file is password-protected (encrypted); ask the candidate for an unprotected copy). Not evaluated: open the files and score"
+    },
+    {
+      "scenario": "Image-only PPTX — no readable text, must not be scored",
+      "check": "status extraction_failed",
+      "result": "PASS",
+      "detail": "None of the submitted files could be read automatically (image-only.pptx: the presentation contains no readable text (images, charts and empty slides inside Office files are not read); review it manua"
+    }
+  ],
+  "report": [
+    {
+      "scenario": "DOC (legacy Word) — complete answer",
+      "extraction": [
+        {
+          "file_id": "adea1904-8d09-49e1-9827-57fc20c729b0",
+          "file_name": "report.doc",
+          "mime_type": "application/msword",
+          "size_bytes": 9728,
+          "method": "doc",
+          "status": "read",
+          "chars": 119,
+          "note": "legacy Word 97–2003 document (text only)",
+          "preview": "Inventory report\nStock turnover improved from 4.2 to 5.1 in Q2.\nRecommendation: reorder point for SKU-118 is 340 units."
+        }
+      ],
+      "ai_called": true,
+      "latency_ms": 2245,
+      "result": {
+        "rubric_source": "employer_question",
+        "files": [
+          {
+            "file_id": "adea1904-8d09-49e1-9827-57fc20c729b0",
+            "file_name": "report.doc",
+            "mime_type": "application/msword",
+            "size_bytes": 9728,
+            "method": "doc",
+            "status": "read",
+            "chars": 119,
+            "note": "legacy Word 97–2003 document (text only)"
+          }
+        ],
+        "answer_present": false,
+        "input_sha256": "fd6b4fb6c6fc25257be47e41dc51a4533eebc1f704089547141bf24bb9ed7013",
+        "evaluator_version": "2026-11-12.p0",
+        "task_id": "0e2bf1c6-281a-4066-b379-99008dcc46e6",
+        "question_id": "3acc4c28-f173-413f-8718-602fe5764afb",
+        "status": "completed",
+        "score": 5,
+        "criteria": [
+          {
+            "key": "turnover",
+            "name": "States the Q2 stock turnover change with figures",
+            "max_points": 2,
+            "applicable": true,
+            "score": 2,
+            "evidence": "Stock turnover improved from 4.2 to 5.1 in Q2.",
+            "evidence_verified": true,
+            "rationale": "The report states the turnover change with specific figures (4.2 to 5.1) fulfilling the requirement."
+          },
+          {
+            "key": "reorder",
+            "name": "Recommends a reorder point for SKU-118",
+            "max_points": 3,
+            "applicable": true,
+            "score": 3,
+            "evidence": "Recommendation: reorder point for SKU-118 is 340 units.",
+            "evidence_verified": true,
+            "rationale": "A concrete reorder point (340 units) is provided for SKU-118, meeting the criterion."
+          }
+        ],
+        "requirements": [
+          {
+            "requirement": "State how stock turnover changed in Q2 with figures",
+            "status": "fulfilled",
+            "evidence": "Stock turnover improved from 4.2 to 5.1 in Q2.",
+            "evidence_verified": true,
+            "note": null
+          },
+          {
+            "requirement": "Recommend a reorder point for SKU-118",
+            "status": "fulfilled",
+            "evidence": "Recommendation: reorder point for SKU-118 is 340 units.",
+            "evidence_verified": true,
+            "note": null
+          }
+        ],
+        "strengths": [
+          "Clear, concise statements of turnover change and reorder point.",
+          "Uses specific numeric values, making the report actionable."
+        ],
+        "issues": [],
+        "improvements": [
+          "Provide brief context or calculation method for the turnover change.",
+          "Include a short rationale for the chosen reorder point."
+        ],
+        "concerns": [],
+        "limitations": [],
+        "explanation": "The candidate submitted a short inventory report in a Word document that directly addresses both required elements: it quantifies the Q2 turnover change and gives a specific reorder point for SKU-118, earning full points for each grading criterion.",
+        "provider": "groq",
+        "model": "openai/gpt-oss-120b",
+        "confidence": "high",
+        "confidence_reasons": [
+          {
+            "code": "all_evidence_verified",
+            "level": "high"
+          }
+        ]
+      }
+    },
+    {
+      "scenario": "PPTX — forecast deck that answers the question",
+      "extraction": [
+        {
+          "file_id": "14c442d4-e8a6-4eb0-8af3-408a70a434bb",
+          "file_name": "forecast.pptx",
+          "mime_type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+          "size_bytes": 34737,
+          "method": "text",
+          "status": "read",
+          "chars": 362,
+          "note": "slide text and speaker notes only (images, charts and layout are not evaluated)",
+          "preview": "--- slide 1 ---\nQ3 demand forecast\nInventory planning, Riyadh warehouse\n\n--- slide 2 ---\nForecast and safety stock\nForecast for SKU-118: 1,240 units in Q3\nSafety stock: 180 units (two weeks of demand)\nMethod: 3-month moving average adjusted for Ramadan\n[speaker notes]\nAssumes no promotion in July\n\n--- slide 3 ---\nRisks\nSupplier lead time rose from 9 to 14 days"
+        }
+      ],
+      "ai_called": true,
+      "latency_ms": 3254,
+      "result": {
+        "rubric_source": "employer_question",
+        "files": [
+          {
+            "file_id": "14c442d4-e8a6-4eb0-8af3-408a70a434bb",
+            "file_name": "forecast.pptx",
+            "mime_type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "size_bytes": 34737,
+            "method": "text",
+            "status": "read",
+            "chars": 362,
+            "note": "slide text and speaker notes only (images, charts and layout are not evaluated)"
+          }
+        ],
+        "answer_present": false,
+        "input_sha256": "712128cbff3b2cab89a9987692adbc92050e8cba79de043a7d3dbccbd6e30ea9",
+        "evaluator_version": "2026-11-12.p0",
+        "task_id": "0e2bf1c6-281a-4066-b379-99008dcc46e6",
+        "question_id": "d2f1b95c-e62c-48d8-af8b-9809dbd3651f",
+        "status": "completed",
+        "score": 6,
+        "criteria": [
+          {
+            "key": "forecast",
+            "name": "Q3 forecast for SKU-118 in units",
+            "max_points": 2,
+            "applicable": true,
+            "score": 2,
+            "evidence": "Forecast for SKU-118: 1,240 units in Q3",
+            "evidence_verified": true,
+            "rationale": "The slide provides a specific Q3 forecast value for SKU-118."
+          },
+          {
+            "key": "safety",
+            "name": "Recommended safety stock",
+            "max_points": 1.5,
+            "applicable": true,
+            "score": 1.5,
+            "evidence": "Safety stock: 180 units (two weeks of demand)",
+            "evidence_verified": true,
+            "rationale": "Safety stock is explicitly stated with a numeric value and rationale."
+          },
+          {
+            "key": "method",
+            "name": "Forecasting method explained",
+            "max_points": 1.5,
+            "applicable": true,
+            "score": 1.5,
+            "evidence": "Method: 3-month moving average adjusted for Ramadan",
+            "evidence_verified": true,
+            "rationale": "The forecasting method is named and briefly described."
+          },
+          {
+            "key": "risk",
+            "name": "Main supply risk identified",
+            "max_points": 1,
+            "applicable": true,
+            "score": 1,
+            "evidence": "Supplier lead time rose from 9 to 14 days",
+            "evidence_verified": true,
+            "rationale": "A clear supply risk (increased lead time) is identified."
+          }
+        ],
+        "requirements": [
+          {
+            "requirement": "Provide Q3 demand forecast for SKU-118 in units",
+            "status": "fulfilled",
+            "evidence": "Forecast for SKU-118: 1,240 units in Q3",
+            "evidence_verified": true,
+            "note": null
+          },
+          {
+            "requirement": "Provide recommended safety stock",
+            "status": "fulfilled",
+            "evidence": "Safety stock: 180 units (two weeks of demand)",
+            "evidence_verified": true,
+            "note": null
+          },
+          {
+            "requirement": "Explain forecasting method",
+            "status": "fulfilled",
+            "evidence": "Method: 3-month moving average adjusted for Ramadan",
+            "evidence_verified": true,
+            "note": null
+          },
+          {
+            "requirement": "Identify main supply risk",
+            "status": "fulfilled",
+            "evidence": "Supplier lead time rose from 9 to 14 days",
+            "evidence_verified": true,
+            "note": null
+          }
+        ],
+        "strengths": [
+          "All four required elements are present in a concise slide deck.",
+          "Numbers are clear and easy to read.",
+          "Method and risk are explicitly named."
+        ],
+        "issues": [
+          "No supporting calculations or justification for the safety stock level.",
+          "No visual charts or data tables to back up the forecast."
+        ],
+        "improvements": [
+          "Include a brief calculation or rationale for the safety stock figure.",
+          "Add a chart showing historical demand to illustrate the moving average.",
+          "Provide a quantitative assessment of the lead‑time risk impact."
+        ],
+        "concerns": [],
+        "limitations": [],
+        "explanation": "The candidate delivered a slide deck that contains the forecast, safety stock, method, and risk as required. Each item is clearly stated, meeting the grading criteria, so full points are awarded. Minor omissions such as lack of supporting calculations prevent a perfect qualitative assessment but do not affect the point allocation defined by the rubric.",
+        "provider": "groq",
+        "model": "openai/gpt-oss-120b",
+        "confidence": "high",
+        "confidence_reasons": [
+          {
+            "code": "all_evidence_verified",
+            "level": "high"
+          }
+        ]
+      }
+    },
+    {
+      "scenario": "PPTX — same deck, question it does NOT answer (no credit for a file that merely exists)",
+      "extraction": [
+        {
+          "file_id": "cfd5bf4a-9244-42eb-82f4-4da4ab027487",
+          "file_name": "forecast.pptx",
+          "mime_type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+          "size_bytes": 34737,
+          "method": "text",
+          "status": "read",
+          "chars": 362,
+          "note": "slide text and speaker notes only (images, charts and layout are not evaluated)",
+          "preview": "--- slide 1 ---\nQ3 demand forecast\nInventory planning, Riyadh warehouse\n\n--- slide 2 ---\nForecast and safety stock\nForecast for SKU-118: 1,240 units in Q3\nSafety stock: 180 units (two weeks of demand)\nMethod: 3-month moving average adjusted for Ramadan\n[speaker notes]\nAssumes no promotion in July\n\n--- slide 3 ---\nRisks\nSupplier lead time rose from 9 to 14 days"
+        }
+      ],
+      "ai_called": true,
+      "latency_ms": 1946,
+      "result": {
+        "rubric_source": "employer_question",
+        "files": [
+          {
+            "file_id": "cfd5bf4a-9244-42eb-82f4-4da4ab027487",
+            "file_name": "forecast.pptx",
+            "mime_type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "size_bytes": 34737,
+            "method": "text",
+            "status": "read",
+            "chars": 362,
+            "note": "slide text and speaker notes only (images, charts and layout are not evaluated)"
+          }
+        ],
+        "answer_present": false,
+        "input_sha256": "e24f40a860cc85516d4cec9949f53b1657d65fda7049a43182a0cccdebc1041b",
+        "evaluator_version": "2026-11-12.p0",
+        "task_id": "0e2bf1c6-281a-4066-b379-99008dcc46e6",
+        "question_id": "1bbb8491-b7b9-41ad-9fb2-62d41f7cca0b",
+        "status": "completed",
+        "score": 0,
+        "criteria": [
+          {
+            "key": "prices",
+            "name": "Three price points in SAR",
+            "max_points": 2,
+            "applicable": true,
+            "score": 0,
+            "evidence": null,
+            "evidence_verified": false,
+            "rationale": "No price points were provided."
+          },
+          {
+            "key": "competitors",
+            "name": "Competitor price comparison",
+            "max_points": 2,
+            "applicable": true,
+            "score": 0,
+            "evidence": null,
+            "evidence_verified": false,
+            "rationale": "No competitor price comparison table was included."
+          },
+          {
+            "key": "margin",
+            "name": "Expected margin per price point",
+            "max_points": 2,
+            "applicable": true,
+            "score": 0,
+            "evidence": null,
+            "evidence_verified": false,
+            "rationale": "Expected margin per price point was not presented."
+          }
+        ],
+        "requirements": [
+          {
+            "requirement": "Three price points in SAR",
+            "status": "missing",
+            "evidence": null,
+            "evidence_verified": false,
+            "note": null
+          },
+          {
+            "requirement": "Competitor price comparison",
+            "status": "missing",
+            "evidence": null,
+            "evidence_verified": false,
+            "note": null
+          },
+          {
+            "requirement": "Expected margin per price point",
+            "status": "missing",
+            "evidence": null,
+            "evidence_verified": false,
+            "note": null
+          }
+        ],
+        "strengths": [],
+        "issues": [
+          "The submission contains no written answer addressing the pricing strategy.",
+          "The provided PowerPoint file relates to demand forecasting, not pricing."
+        ],
+        "improvements": [
+          "Provide a written response that lists three specific price points in SAR.",
+          "Include a table comparing those prices to key competitors.",
+          "Calculate and state the expected margin for each price point."
+        ],
+        "concerns": [],
+        "limitations": [],
+        "explanation": "The candidate did not supply any of the required pricing strategy elements; the only material submitted is unrelated forecast slides, resulting in zero points for all criteria.",
+        "provider": "groq",
+        "model": "openai/gpt-oss-120b",
+        "confidence": "high",
+        "confidence_reasons": [
+          {
+            "code": "all_evidence_verified",
+            "level": "high"
+          }
+        ]
+      }
+    },
+    {
+      "scenario": "XLSX — budget workbook (cells, formulas, second sheet)",
+      "extraction": [
+        {
+          "file_id": "aa0d72fa-9919-44e5-acb2-3751b80e2551",
+          "file_name": "budget.xlsx",
+          "mime_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "size_bytes": 7252,
+          "method": "text",
+          "status": "read",
+          "chars": 361,
+          "note": "cell values and formulas only (charts and formatting are not evaluated)",
+          "preview": "--- sheet \"Budget\" ---\nA1=Item | B1=Q1 (SAR) | C1=Q2 (SAR) | D1=Total (SAR)\nA2=Marketing | B2=12000 | C2=15500 | D2=27500 (=B2+C2)\nA3=Salaries | B3=84000 | C3=84000 | D3=168000 (=B3+C3)\nA4=Total | B4=96000 (=SUM(B2:B3)) | C4=99500 (=SUM(C2:C3)) | D4=195500 (=SUM(D2:D3))\n\n--- sheet \"Notes\" ---\nA1=Q2 marketing variance is explained by the Riyadh Season campaign"
+        }
+      ],
+      "ai_called": true,
+      "latency_ms": 4189,
+      "result": {
+        "rubric_source": "ai_derived",
+        "files": [
+          {
+            "file_id": "aa0d72fa-9919-44e5-acb2-3751b80e2551",
+            "file_name": "budget.xlsx",
+            "mime_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "size_bytes": 7252,
+            "method": "text",
+            "status": "read",
+            "chars": 361,
+            "note": "cell values and formulas only (charts and formatting are not evaluated)"
+          }
+        ],
+        "answer_present": false,
+        "input_sha256": "d9102f4b5dab189d6a89998af28c118d2bcd8442313331c2233834798d8ec9d7",
+        "evaluator_version": "2026-11-12.p0",
+        "task_id": "0e2bf1c6-281a-4066-b379-99008dcc46e6",
+        "question_id": "db64f1a3-3e9c-4cb7-8708-9379553aa3f4",
+        "status": "completed",
+        "score": 6,
+        "criteria": [
+          {
+            "key": "budget_data",
+            "origin_key": "budget_data",
+            "name": "Budget data completeness and correctness",
+            "max_points": 3,
+            "description": "All required line items (Marketing, Salaries) with Q1, Q2, line totals and overall totals are present and correctly calculated.",
+            "applicable": true,
+            "score": 3,
+            "evidence": "A2=Marketing | B2=12000 | C2=15500 | D2=27500 (=B2+C2)\nA3=Salaries | B3=84000 | C3=84000 | D3=168000 (=B3+C3)\nA4=Total | B4=96000 (=SUM(B2:B3)) | C4=99500 (=SUM(C2:C3)) | D4=195500 (=SUM(D2:D3))",
+            "evidence_verified": true,
+            "rationale": "The spreadsheet includes Marketing and Salaries rows with Q1, Q2 values and correct line and overall totals."
+          },
+          {
+            "key": "variance_explanation",
+            "origin_key": "variance_explanation",
+            "name": "Explanation of marketing variance",
+            "max_points": 3,
+            "description": "Provides an explanation for the difference between Q1 and Q2 marketing spend.",
+            "applicable": true,
+            "score": 3,
+            "evidence": "A1=Q2 marketing variance is explained by the Riyadh Season campaign",
+            "evidence_verified": true,
+            "rationale": "A note explains the Q2 marketing variance by referencing the Riyadh Season campaign, satisfying the explanation requirement."
+          }
+        ],
+        "requirements": [
+          {
+            "requirement": "Provide H1 budget for marketing and salaries in SAR with Q1, Q2 and totals per line and overall",
+            "status": "fulfilled",
+            "evidence": "A2=Marketing | B2=12000 | C2=15500 | D2=27500 (=B2+C2)\nA3=Salaries | B3=84000 | C3=84000 | D3=168000 (=B3+C3)\nA4=Total | B4=96000 (=SUM(B2:B3)) | C4=99500 (=SUM(C2:C3)) | D4=195500 (=SUM(D2:D3))",
+            "evidence_verified": true,
+            "note": null
+          },
+          {
+            "requirement": "Explain the marketing variance between Q1 and Q2",
+            "status": "fulfilled",
+            "evidence": "A1=Q2 marketing variance is explained by the Riyadh Season campaign",
+            "evidence_verified": true,
+            "note": null
+          }
+        ],
+        "strengths": [
+          "Accurate budget figures with correct calculations for each line and overall total.",
+          "Explanation of the marketing variance is provided within the Notes sheet."
+        ],
+        "issues": [],
+        "improvements": [
+          "Provide a more detailed analysis of the variance, e.g., percentage change and impact on overall budget."
+        ],
+        "concerns": [],
+        "limitations": [
+          "Evaluation is based on the textual representation of the Excel file; the actual file could not be opened or executed."
+        ],
+        "explanation": "The candidate submitted a spreadsheet that fully meets both required deliverables: a complete H1 budget for Marketing and Salaries with Q1, Q2, line totals and overall totals, and a brief explanation of the Q2 marketing variance. All data appear correct and calculations are shown, earning full points for each derived criterion.",
+        "provider": "groq",
+        "model": "openai/gpt-oss-120b",
+        "confidence": "medium",
+        "confidence_reasons": [
+          {
+            "code": "criteria_ai_derived",
+            "level": "medium"
+          },
+          {
+            "code": "model_limitations",
+            "level": "medium",
+            "detail": "1"
+          }
+        ]
+      }
+    },
+    {
+      "scenario": "JPEG — photo of a document (AI transcription)",
+      "extraction": [
+        {
+          "file_id": "23e02688-99ab-4147-9bec-e6c022302eef",
+          "file_name": "photo.jpg",
+          "mime_type": "image/jpeg",
+          "size_bytes": 11678,
+          "method": "none",
+          "status": "failed",
+          "chars": 0,
+          "note": "AI transcription unavailable (not_configured)",
+          "preview": ""
+        }
+      ],
+      "ai_called": false,
+      "latency_ms": 0,
+      "result": {
+        "rubric_source": "employer_question",
+        "files": [
+          {
+            "file_id": "23e02688-99ab-4147-9bec-e6c022302eef",
+            "file_name": "photo.jpg",
+            "mime_type": "image/jpeg",
+            "size_bytes": 11678,
+            "method": "none",
+            "status": "failed",
+            "chars": 0,
+            "note": "AI transcription unavailable (not_configured)"
+          }
+        ],
+        "answer_present": false,
+        "input_sha256": "3295df85e78961ad80b0093967cb22fee43bf4c4c6933befbdc04bb3a4740bab",
+        "evaluator_version": "2026-11-12.p0",
+        "task_id": "0e2bf1c6-281a-4066-b379-99008dcc46e6",
+        "question_id": "af17b688-b77f-4d14-82e3-cbb914ef6212",
+        "status": "extraction_failed",
+        "score": null,
+        "explanation": "None of the submitted files could be read automatically (photo.jpg: AI transcription unavailable (not_configured)). Not evaluated: open the files and score manually",
+        "confidence": "low",
+        "confidence_reasons": [
+          {
+            "code": "files_unreadable",
+            "level": "low"
+          }
+        ]
+      }
+    },
+    {
+      "scenario": "Scanned PDF — no text layer (AI OCR)",
+      "extraction": [
+        {
+          "file_id": "1226227d-5043-43b8-a8b4-56275e3576fd",
+          "file_name": "scanned.pdf",
+          "mime_type": "application/pdf",
+          "size_bytes": 13743,
+          "method": "none",
+          "status": "failed",
+          "chars": 0,
+          "note": "scanned PDF without a text layer; AI transcription unavailable (not_configured)",
+          "preview": ""
+        }
+      ],
+      "ai_called": false,
+      "latency_ms": 0,
+      "result": {
+        "rubric_source": "employer_question",
+        "files": [
+          {
+            "file_id": "1226227d-5043-43b8-a8b4-56275e3576fd",
+            "file_name": "scanned.pdf",
+            "mime_type": "application/pdf",
+            "size_bytes": 13743,
+            "method": "none",
+            "status": "failed",
+            "chars": 0,
+            "note": "scanned PDF without a text layer; AI transcription unavailable (not_configured)"
+          }
+        ],
+        "answer_present": false,
+        "input_sha256": "d4d991e3d765b8feed454d00379fef1c1fe7b0c4d130ad573cde09083db31e61",
+        "evaluator_version": "2026-11-12.p0",
+        "task_id": "0e2bf1c6-281a-4066-b379-99008dcc46e6",
+        "question_id": "d6305ee7-81c3-401f-be67-4f8669ebb2f0",
+        "status": "extraction_failed",
+        "score": null,
+        "explanation": "None of the submitted files could be read automatically (scanned.pdf: scanned PDF without a text layer; AI transcription unavailable (not_configured)). Not evaluated: open the files and score manually",
+        "confidence": "low",
+        "confidence_reasons": [
+          {
+            "code": "files_unreadable",
+            "level": "low"
+          }
+        ]
+      }
+    },
+    {
+      "scenario": "Password-protected PDF — must fail explicitly, no score, no AI call",
+      "extraction": [
+        {
+          "file_id": "8872cc62-ae2a-487d-80a6-9f9e2ac249e9",
+          "file_name": "protected.pdf",
+          "mime_type": "application/pdf",
+          "size_bytes": 15556,
+          "method": "none",
+          "status": "failed",
+          "chars": 0,
+          "note": "the PDF is password-protected; ask the candidate for an unprotected copy",
+          "preview": ""
+        }
+      ],
+      "ai_called": false,
+      "latency_ms": 0,
+      "result": {
+        "rubric_source": "employer_question",
+        "files": [
+          {
+            "file_id": "8872cc62-ae2a-487d-80a6-9f9e2ac249e9",
+            "file_name": "protected.pdf",
+            "mime_type": "application/pdf",
+            "size_bytes": 15556,
+            "method": "none",
+            "status": "failed",
+            "chars": 0,
+            "note": "the PDF is password-protected; ask the candidate for an unprotected copy"
+          }
+        ],
+        "answer_present": false,
+        "input_sha256": "b94ff6db6d32e56794a4835d9e810f9bef6ddd1c1d5b6f81b8c9baec6c791bda",
+        "evaluator_version": "2026-11-12.p0",
+        "task_id": "0e2bf1c6-281a-4066-b379-99008dcc46e6",
+        "question_id": "de1f03e1-9ea4-46c0-846f-8ecb02dae6ca",
+        "status": "extraction_failed",
+        "score": null,
+        "explanation": "None of the submitted files could be read automatically (protected.pdf: the PDF is password-protected; ask the candidate for an unprotected copy). Not evaluated: open the files and score manually",
+        "confidence": "low",
+        "confidence_reasons": [
+          {
+            "code": "files_unreadable",
+            "level": "low"
+          }
+        ]
+      }
+    },
+    {
+      "scenario": "Password-protected XLSX — must fail explicitly, no score",
+      "extraction": [
+        {
+          "file_id": "407226b2-16f5-4195-8544-799edf5a9389",
+          "file_name": "protected.xlsx",
+          "mime_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "size_bytes": 9216,
+          "method": "none",
+          "status": "failed",
+          "chars": 0,
+          "note": "the file is password-protected (encrypted); ask the candidate for an unprotected copy",
+          "preview": ""
+        }
+      ],
+      "ai_called": false,
+      "latency_ms": 0,
+      "result": {
+        "rubric_source": "employer_question",
+        "files": [
+          {
+            "file_id": "407226b2-16f5-4195-8544-799edf5a9389",
+            "file_name": "protected.xlsx",
+            "mime_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "size_bytes": 9216,
+            "method": "none",
+            "status": "failed",
+            "chars": 0,
+            "note": "the file is password-protected (encrypted); ask the candidate for an unprotected copy"
+          }
+        ],
+        "answer_present": false,
+        "input_sha256": "db57517d0d793a7ef7e3b51b29c1841d2315f3ac7adc147a1ced6a741ee39370",
+        "evaluator_version": "2026-11-12.p0",
+        "task_id": "0e2bf1c6-281a-4066-b379-99008dcc46e6",
+        "question_id": "8f1bf942-2acf-478c-9d45-bd1f0abe4ffa",
+        "status": "extraction_failed",
+        "score": null,
+        "explanation": "None of the submitted files could be read automatically (protected.xlsx: the file is password-protected (encrypted); ask the candidate for an unprotected copy). Not evaluated: open the files and score manually",
+        "confidence": "low",
+        "confidence_reasons": [
+          {
+            "code": "files_unreadable",
+            "level": "low"
+          }
+        ]
+      }
+    },
+    {
+      "scenario": "Image-only PPTX — no readable text, must not be scored",
+      "extraction": [
+        {
+          "file_id": "f432b006-b3da-473f-a258-a02235023ef9",
+          "file_name": "image-only.pptx",
+          "mime_type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+          "size_bytes": 38364,
+          "method": "none",
+          "status": "failed",
+          "chars": 0,
+          "note": "the presentation contains no readable text (images, charts and empty slides inside Office files are not read); review it manually",
+          "preview": ""
+        }
+      ],
+      "ai_called": false,
+      "latency_ms": 0,
+      "result": {
+        "rubric_source": "employer_question",
+        "files": [
+          {
+            "file_id": "f432b006-b3da-473f-a258-a02235023ef9",
+            "file_name": "image-only.pptx",
+            "mime_type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "size_bytes": 38364,
+            "method": "none",
+            "status": "failed",
+            "chars": 0,
+            "note": "the presentation contains no readable text (images, charts and empty slides inside Office files are not read); review it manually"
+          }
+        ],
+        "answer_present": false,
+        "input_sha256": "27f33968b38b86c1e410e89378053bf46719b73bed3b10dfb111fee9f47077ff",
+        "evaluator_version": "2026-11-12.p0",
+        "task_id": "0e2bf1c6-281a-4066-b379-99008dcc46e6",
+        "question_id": "ea0cd6cf-fea5-4f47-899d-9fc62d319073",
+        "status": "extraction_failed",
+        "score": null,
+        "explanation": "None of the submitted files could be read automatically (image-only.pptx: the presentation contains no readable text (images, charts and empty slides inside Office files are not read); review it manually). Not evaluated: open the files and score manually",
+        "confidence": "low",
+        "confidence_reasons": [
+          {
+            "code": "files_unreadable",
+            "level": "low"
+          }
+        ]
+      }
+    }
+  ]
+}
