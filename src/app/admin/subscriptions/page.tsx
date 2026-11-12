@@ -20,7 +20,9 @@ export default async function Subscriptions() {
       .from("company_profiles")
       .select("id, name_en, name_ar, registry_id, sector_en, sector_ar, listed, is_demo, status, company_subscriptions(status, plan, price_sar, expires_on, assessment_credits, credits_used, payment_status, is_demo)")
       .order("listed", { ascending: false })
-      .order("name_en"),
+      .order("name_en")
+      // Exhibition: only the supported registry organizations.
+      .or(exhibitionMode() ? "registry_id.not.is.null" : "id.not.is.null"),
     supabase.from("company_payments").select("company_id, kind, amount_sar"),
   ]);
   const paid = new Map<string, number>();

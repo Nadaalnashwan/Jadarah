@@ -24,6 +24,7 @@ export default async function AdminCompanies({
       "id, name_en, name_ar, industry, city, status, created_at, is_demo, jobs(count), company_memberships(count)",
     )
     .order("created_at", { ascending: false });
+  if (exhibition) q = q.not("registry_id", "is", null);
   if (sp.status === "pending") q = q.in("status", ["pending", "info_requested"]);
   else if (sp.status) q = q.eq("status", sp.status as "approved");
   const { data } = await q;

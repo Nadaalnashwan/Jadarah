@@ -17,7 +17,9 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
   const L = tx(locale);
   const supabase = await createClient();
   const page = pageOf(sp);
-  const { data: companyRows } = await supabase.from("company_profiles").select("id, name_en, name_ar").order("name_en");
+  let cq = supabase.from("company_profiles").select("id, name_en, name_ar").order("name_en");
+  if (exhibitionMode()) cq = cq.not("registry_id", "is", null);
+  const { data: companyRows } = await cq;
   let q = supabase
     .from("profiles")
     .select(

@@ -3,6 +3,7 @@ import { Card, PageHeader } from "@/components/ui/primitives";
 import { requireSuperAdmin } from "@/lib/auth/session";
 import { formatDate, formatNumber, pick, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
+import { exhibitionMode } from "@/lib/exhibition";
 import { createClient } from "@/lib/supabase/server";
 import { dateRange, pageOf, pageRange, searchTerm, validUuid, type AdminListParams } from "@/lib/admin-filters";
 import { AdminFilterBar, AdminPager } from "../list-controls";
@@ -16,13 +17,17 @@ export default async function AdminJobs({ searchParams }: { searchParams: Promis
   const L = tx(locale);
   const supabase = await createClient();
   const page = pageOf(sp);
-  const { data: companyRows } = await supabase.from("company_profiles").select("id, name_en, name_ar").order("name_en");
+  const exhibition = exhibitionMode();
+  let cq = supabase.from("company_profiles").select("id, name_en, name_ar").order("name_en");
+  if (exhibition) cq = cq.not("registry_id", "is", null);
+  const { data: companyRows } = await cq;
   let q = supabase
     .from("jobs")
     .select(
-      "id, title_en, title_ar, status, city, published_at, created_at, ai_assisted, company:company_profiles(name_en, name_ar), applications(count)",
+      `id, title_en, title_ar, status, city, published_at, created_at, ai_assisted, company:company_profiles${exhibition ? "!inner" : ""}(name_en, name_ar, registry_id), applications(count)`,
       { count: "exact" },
     );
+  if (exhibition) q = q.not("company.registry_id", "is", null);
   const term = searchTerm(sp.q);
   if (term) q = q.or(`title_en.ilike.%${term}%,title_ar.ilike.%${term}%`);
   if (sp.status && (JOB_STATUSES as readonly string[]).includes(sp.status)) q = q.eq("status", sp.status as "draft");

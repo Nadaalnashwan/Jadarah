@@ -5,6 +5,7 @@ import { requireSuperAdmin } from "@/lib/auth/session";
 import { APPLICATION_STATUSES } from "@/lib/domain/application-status";
 import { formatNumber, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
+import { exhibitionMode } from "@/lib/exhibition";
 import { createClient } from "@/lib/supabase/server";
 
 type S = {
@@ -32,6 +33,15 @@ export default async function AdminOverview() {
   const supabase = await createClient();
   const { data } = await supabase.rpc("admin_platform_stats");
   const s = data as unknown as S;
+  // Exhibition: the platform serves the supported registry organizations only.
+  if (exhibitionMode()) {
+    const [{ count: supported }, { count: pending }] = await Promise.all([
+      supabase.from("company_profiles").select("id", { count: "exact", head: true }).not("registry_id", "is", null),
+      supabase.from("company_profiles").select("id", { count: "exact", head: true }).not("registry_id", "is", null).in("status", ["pending", "info_requested"]),
+    ]);
+    s.companies = supported ?? s.companies;
+    s.pending_companies = pending ?? 0;
+  }
   const n = (v: number) => formatNumber(v, locale);
   return (
     <>
