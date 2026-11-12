@@ -6,6 +6,7 @@ import { publicEnv } from "@/lib/env";
 import { getI18n } from "@/lib/i18n/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { getSession, homeFor } from "@/lib/auth/session";
+import { hasRecoverySession } from "@/lib/auth/recovery";
 import { localizeError } from "@/lib/errors";
 import {
   accessRequestSchema,
@@ -188,8 +189,8 @@ export async function resetPasswordAction(_: AuthState, form: FormData): Promise
     return { fieldErrors: { [k]: k === "confirmPassword" ? t.auth.passwordsMismatch : t.auth.weakPassword } };
   }
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return { error: t.auth.linkInvalid };
+  // Same rule as the page: only a fresh recovery session may set a new password here.
+  if (!(await hasRecoverySession(supabase))) return { error: t.auth.linkInvalid };
   const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
   if (error) return { error: error.code === "same_password" ? t.auth.weakPassword : t.common.errorBody };
   const session = await getSession();
