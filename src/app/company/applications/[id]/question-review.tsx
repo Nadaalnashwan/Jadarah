@@ -1,14 +1,14 @@
 "use client";
-import { useActionState, useEffect, useMemo, useState, useTransition } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Download, Eye, FileText, Sparkles, UserCheck } from "lucide-react";
+import { AlertTriangle, Ban, CheckCircle2, ChevronLeft, ChevronRight, Download, Eye, FileText, Gauge, Sparkles, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, FormMessage, Input, Textarea } from "@/components/ui/form";
 import { Badge } from "@/components/ui/primitives";
 import { assessmentFileUrl } from "@/features/assessments/file-actions";
-import { evaluateQuestionWithAI, reviewQuestion } from "@/features/assessments/question-evaluation-actions";
-import type { RubricSource } from "@/lib/domain/question-evaluation";
+import { evaluateQuestionWithAI, rejectAiSuggestion, reviewQuestion } from "@/features/assessments/question-evaluation-actions";
+import type { Confidence, ConfidenceReason, EvaluationState, RubricSource } from "@/lib/domain/question-evaluation";
 import type { ActionResult } from "@/lib/errors";
 import { useI18n } from "@/lib/i18n/client";
 import { tx } from "@/lib/i18n/config";
@@ -43,6 +43,10 @@ export type AiEvaluationView = {
   provider: string | null;
   model: string | null;
   created_at: string;
+  /** Proposal 0034 columns (absent on databases without it). */
+  limitations?: string[];
+  confidence?: Confidence | null;
+  confidence_reasons?: ConfidenceReason[];
 };
 
 export type QuestionReviewView = {
@@ -64,20 +68,77 @@ export type QuestionReviewView = {
   files: { id: string; file_name: string; size_bytes: number; mime_type: string }[];
   ai: AiEvaluationView | null;
   aiRuns: number;
+  state: EvaluationState;
+  lastRun: { status: string; error_code: string | null; error_message: string | null; at: string } | null;
+  confidence: { level: Confidence; reasons: ConfidenceReason[] } | null;
+  limitations: string[];
+  /** Explicit rejection of the latest AI result (proposal 0034). */
+  rejection: { reason: string; at: string; by: string | null } | null;
   review: {
     points: number;
     rubric_scores: Record<string, number>;
     comments: string | null;
     candidate_feedback: { strengths?: string; missing?: string; improvements?: string } | null;
-    source: "human" | "ai_accepted" | "ai_adjusted";
+    source: "human" | "ai_accepted" | "ai_adjusted" | "ai_rejected";
     ai_evaluation_id: string | null;
     at: string;
     by: string | null;
   } | null;
-  history: { action: string; points: number | null; previous_points: number | null; source: string | null; at: string }[];
+  history: { action: string; points: number | null; previous_points: number | null; source: string | null; at: string; note?: string | null }[];
 };
 
 const fmt = (n: number | null | undefined) => (n === null || n === undefined ? "—" : String(Math.round(Number(n) * 100) / 100));
+const when = (iso: string, locale: string) => new Date(iso).toLocaleString(locale === "ar" ? "ar-SA" : "en-GB", { timeZone: "Asia/Riyadh" });
+
+function StateBadge({ state }: { state: EvaluationState }) {
+  const { locale } = useI18n();
+  const L = tx(locale);
+  switch (state) {
+    case "not_evaluated":
+      return <Badge tone="muted">{L("Not evaluated", "لم يُقيَّم")}</Badge>;
+    case "reading_files":
+      return <Badge tone="progress">{L("Reading files", "قراءة الملفات")}</Badge>;
+    case "evaluating":
+      return <Badge tone="progress">{L("Evaluating", "جارٍ التقييم")}</Badge>;
+    case "failed":
+      return <Badge tone="negative">{L("Failed", "تعذّر التقييم")}</Badge>;
+    case "requires_review":
+      return <Badge tone="info">{L("Requires human review", "يتطلب مراجعة بشرية")}</Badge>;
+    case "completed":
+      return <Badge tone="positive">{L("Completed", "مكتمل")}</Badge>;
+  }
+}
+
+/** Reviewer-facing text for each confidence reason (derived from facts stored with the AI result). */
+function reasonText(r: ConfidenceReason, L: (en: string, ar: string) => string): string {
+  const d = r.detail ?? "";
+  switch (r.code) {
+    case "nothing_submitted":
+      return L("Nothing was submitted for this question", "لم يُسلَّم شيء لهذا السؤال");
+    case "files_unreadable":
+      return L("None of the files could be read; there is no score to rely on", "تعذّرت قراءة كل الملفات؛ لا توجد درجة يُعتمد عليها");
+    case "file_unreadable":
+      return L(`Not read: ${d}`, `لم يُقرأ: ${d}`);
+    case "archive_partial":
+      return L(`Only part of ${d} was read`, `قُرئ جزء من ${d} فقط`);
+    case "ai_transcription":
+      return L(`${d} was read through an AI transcription; compare it with the original`, `قُرئ ${d} عبر نسخ آلي؛ قارنه بالأصل`);
+    case "truncated":
+      return L("Part of the submission was too long and was cut", "جزء من التسليم طويل جدًا واقتُطع");
+    case "evidence_missing_most":
+      return L(`Most scores are not backed by a quote from the submission (${d})`, `معظم الدرجات لا يدعمها اقتباس من التسليم (${d})`);
+    case "evidence_missing_some":
+      return L(`Some scores are not backed by a quote from the submission (${d})`, `بعض الدرجات لا يدعمها اقتباس من التسليم (${d})`);
+    case "criteria_ai_derived":
+      return L("The criteria were suggested by AI, not set by the employer", "المعايير مقترحة آليًا وليست من صاحب العمل");
+    case "criteria_shared":
+      return L("The criteria are an assessment-wide rubric, not this question's own", "المعايير للتقييم كاملًا وليست خاصة بهذا السؤال");
+    case "model_limitations":
+      return L("The evaluator stated limitations (listed below)", "ذكر المُقيِّم قيودًا (مذكورة أدناه)");
+    case "all_evidence_verified":
+      return L("Every file was read and every score is backed by a quote found in the submission", "قُرئت كل الملفات وكل درجة يدعمها اقتباس موجود في التسليم");
+  }
+}
 
 export function QuestionReviewPanel({
   applicationId,
@@ -85,10 +146,13 @@ export function QuestionReviewPanel({
   questions,
   unlinkedFiles,
   totals,
+  reliability = false,
 }: {
   applicationId: string;
   submissionId: string;
   questions: QuestionReviewView[];
+  /** Proposal 0034 applied: persisted run states and explicit rejection are available. */
+  reliability?: boolean;
   unlinkedFiles: { id: string; file_name: string; size_bytes: number; mime_type: string }[];
   totals: { auto: number; manual: number; max: number; percentage: number | null; pending: number };
 }) {
@@ -106,6 +170,7 @@ export function QuestionReviewPanel({
           <thead className="bg-surface-2 text-muted text-xs">
             <tr>
               <th scope="col" className="p-2 text-start">{L("Question", "السؤال")}</th>
+              <th scope="col" className="p-2 text-start">{L("Status", "الحالة")}</th>
               <th scope="col" className="p-2 text-start">{L("AI suggestion", "اقتراح الذكاء الاصطناعي")}</th>
               <th scope="col" className="p-2 text-start">{L("Approved score", "الدرجة المعتمدة")}</th>
             </tr>
@@ -118,12 +183,15 @@ export function QuestionReviewPanel({
                     {L(`Q${x.n}`, `س${x.n}`)} · {x.title}
                   </button>
                 </td>
+                <td className="p-2">{x.autoScored ? <span className="text-subtle text-xs">{L("automatic", "آلي")}</span> : <StateBadge state={x.state} />}</td>
                 <td className="ltr-nums p-2">
                   {x.autoScored ? (
                     <span className="text-subtle">{L("n/a (automatic)", "لا ينطبق (آلي)")}</span>
                   ) : x.ai ? (
                     x.ai.status === "extraction_failed" ? (
                       <span className="text-warning">{L("files unreadable", "تعذّرت قراءة الملفات")}</span>
+                    ) : x.rejection ? (
+                      <span className="text-subtle line-through">{`${fmt(x.ai.score)}/${x.points}`}</span>
                     ) : (
                       `${fmt(x.ai.score)}/${x.points}`
                     )
@@ -148,6 +216,7 @@ export function QuestionReviewPanel({
           <tfoot className="border-t font-bold">
             <tr>
               <td className="p-2">{L("Total (weighted by points)", "الإجمالي (موزون بالنقاط)")}</td>
+              <td className="p-2" />
               <td className="p-2" />
               <td className="ltr-nums p-2">
                 {fmt(totals.auto + totals.manual)}/{totals.max}
@@ -176,7 +245,7 @@ export function QuestionReviewPanel({
         ))}
       </nav>
 
-      <QuestionPanel key={q.id} applicationId={applicationId} submissionId={submissionId} q={q} />
+      <QuestionPanel key={q.id} applicationId={applicationId} submissionId={submissionId} q={q} reliability={reliability} />
 
       <div className="flex justify-between">
         <Button variant="ghost" size="sm" disabled={active === 0} onClick={() => setActive((i) => i - 1)}>
@@ -253,19 +322,57 @@ function SourceBadge({ source, mapped }: { source: RubricSource; mapped?: boolea
   return <Badge tone="progress">{L("No rubric: AI suggests criteria for your approval", "لا توجد معايير: يقترح الذكاء الاصطناعي معايير لاعتمادك")}</Badge>;
 }
 
-function QuestionPanel({ applicationId, submissionId, q }: { applicationId: string; submissionId: string; q: QuestionReviewView }) {
+function QuestionPanel({ applicationId, submissionId, q, reliability }: { applicationId: string; submissionId: string; q: QuestionReviewView; reliability: boolean }) {
   const { locale } = useI18n();
   const L = tx(locale);
   const router = useRouter();
   const [running, start] = useTransition();
-  const runAi = () =>
+  /** Live phase of the running evaluation, read from the persisted run (proposal 0034). */
+  const [phase, setPhase] = useState<"reading_files" | "evaluating" | null>(null);
+  /** The stored result was returned because nothing changed: offer an explicit re-evaluation. */
+  const [unchanged, setUnchanged] = useState<string | null>(null);
+  const [failure, setFailure] = useState<string | null>(null);
+  const poll = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => () => void (poll.current && clearInterval(poll.current)), []);
+  const runAi = (force: boolean) =>
     start(async () => {
-      const res = await evaluateQuestionWithAI(applicationId, submissionId, q.id);
-      if (!res.ok) return void toast.error(res.error);
-      toast.success(L("AI evaluation ready for your review", "التقييم الآلي جاهز لمراجعتك"));
-      router.refresh();
+      setUnchanged(null);
+      setFailure(null);
+      if (reliability) {
+        setPhase("reading_files");
+        poll.current = setInterval(async () => {
+          try {
+            const r = await fetch(`/api/company/evaluation-state?submission=${submissionId}&question=${q.id}`, { cache: "no-store" });
+            const j = (await r.json()) as { run?: { status: string } | null };
+            if (j.run?.status === "reading_files" || j.run?.status === "evaluating") setPhase(j.run.status);
+          } catch {
+            // polling is informative only
+          }
+        }, 1500);
+      }
+      try {
+        const res = await evaluateQuestionWithAI(applicationId, submissionId, q.id, force);
+        if (!res.ok) {
+          setFailure(res.error);
+          toast.error(res.error);
+          router.refresh();
+          return;
+        }
+        if (res.data?.reused) {
+          setUnchanged(res.data.created_at);
+          return;
+        }
+        toast.success(L("AI evaluation ready for your review", "التقييم الآلي جاهز لمراجعتك"));
+        router.refresh();
+      } finally {
+        if (poll.current) clearInterval(poll.current);
+        poll.current = null;
+        setPhase(null);
+      }
     });
   const ai = q.ai;
+  const shownState: EvaluationState = running ? (phase ?? "evaluating") : failure ? "failed" : q.state;
+  const failureText = failure ?? (q.state === "failed" ? (q.lastRun?.error_message ?? L("The last evaluation did not finish", "لم يكتمل التقييم الأخير")) : null);
   const reqCount = ai?.requirements.length ?? 0;
   const fulfilled = ai?.requirements.filter((r) => r.status === "fulfilled").length ?? 0;
   return (
@@ -276,6 +383,7 @@ function QuestionPanel({ applicationId, submissionId, q }: { applicationId: stri
         <span className="ltr-nums text-subtle text-xs">
           {q.points} {L("points", "نقطة")}
         </span>
+        {!q.autoScored && <StateBadge state={shownState} />}
       </header>
 
       <details open className="bg-surface-2 rounded-xl p-3 text-sm">
@@ -364,10 +472,45 @@ function QuestionPanel({ applicationId, submissionId, q }: { applicationId: stri
             <p className="flex items-center gap-2 text-sm font-bold">
               <Sparkles className="text-primary-ink size-4" /> {L("AI assessment (suggestion)", "التقييم الآلي (اقتراح)")}
             </p>
-            <Button type="button" size="sm" variant="soft" loading={running} onClick={runAi}>
+            <Button type="button" size="sm" variant="soft" loading={running} onClick={() => runAi(false)}>
               {ai ? L("Re-evaluate this question", "إعادة تقييم هذا السؤال") : L("Evaluate this question with AI", "قيّم هذا السؤال بالذكاء الاصطناعي")}
             </Button>
           </div>
+          {running && (
+            <p className="text-muted mt-2 text-xs" role="status">
+              {!reliability
+                ? L("Reading this question's files and evaluating", "جارٍ قراءة ملفات هذا السؤال وتقييمه")
+                : (phase ?? "evaluating") === "reading_files"
+                  ? L("Reading this question's files", "جارٍ قراءة ملفات هذا السؤال")
+                  : L("Evaluating against this question's criteria", "جارٍ التقييم وفق معايير هذا السؤال")}
+            </p>
+          )}
+          {unchanged && !running && (
+            <div className="bg-surface mt-3 flex flex-wrap items-center gap-2 rounded-xl p-3 text-xs" role="status">
+              <span className="flex-1">
+                {L(
+                  `Nothing changed since the evaluation of ${when(unchanged, locale)} (same files, answer and criteria), so the AI was not called again. The stored result is shown`,
+                  `لم يتغيّر شيء منذ تقييم ${when(unchanged, locale)} (الملفات والإجابة والمعايير نفسها)، لذا لم يُستدعَ الذكاء الاصطناعي مجددًا. تُعرض النتيجة المحفوظة`,
+                )}
+              </span>
+              <Button type="button" size="sm" variant="outline" onClick={() => runAi(true)}>
+                {L("Re-evaluate anyway", "أعد التقييم على أي حال")}
+              </Button>
+              <Button type="button" size="sm" variant="ghost" onClick={() => setUnchanged(null)}>
+                {L("Keep the stored result", "أبقِ النتيجة المحفوظة")}
+              </Button>
+            </div>
+          )}
+          {failureText && !running && (
+            <p className="bg-danger-soft text-danger mt-3 flex items-center gap-2 rounded-xl p-3 text-xs" role="alert">
+              <AlertTriangle className="size-4 shrink-0" />
+              <span>
+                {failureText}
+                {!failure && q.lastRun ? ` · ${when(q.lastRun.at, locale)}` : ""}
+                {ai ? ` · ${L("The previous result below is unchanged", "النتيجة السابقة أدناه لم تتغيّر")}` : ""}
+              </span>
+            </p>
+          )}
           <p className="text-muted mt-1 text-xs">
             {L(
               "Uses only this question's instructions, criteria, answer and files. It assists your review; it is not a hiring decision",
@@ -390,10 +533,37 @@ function QuestionPanel({ applicationId, submissionId, q }: { applicationId: stri
                 {ai.status === "no_submission" && <Badge tone="negative">{L("Nothing submitted", "لم يُسلَّم شيء")}</Badge>}
                 {ai.status === "extraction_failed" && <Badge tone="negative">{L("Not evaluated: files unreadable", "لم يُقيَّم: تعذّرت قراءة الملفات")}</Badge>}
                 <span className="text-subtle text-xs">
-                  {[ai.model, new Date(ai.created_at).toLocaleString(locale === "ar" ? "ar-SA" : "en-GB", { timeZone: "Asia/Riyadh" })].filter(Boolean).join(" · ")}
+                  {[ai.model, when(ai.created_at, locale)].filter(Boolean).join(" · ")}
                   {q.aiRuns > 1 ? ` · ${L(`${q.aiRuns} runs kept`, `${q.aiRuns} تشغيلات محفوظة`)}` : ""}
                 </span>
               </div>
+              {q.rejection && (
+                <p className="bg-surface flex items-start gap-2 rounded-xl p-3 text-xs" role="note">
+                  <Ban className="text-danger mt-0.5 size-4 shrink-0" />
+                  <span dir="auto">
+                    <span className="font-bold">{L("Rejected by the reviewer", "رفضه المراجِع")}</span>
+                    {` · ${[q.rejection.by, when(q.rejection.at, locale)].filter(Boolean).join(" · ")} · `}
+                    {q.rejection.reason}
+                  </span>
+                </p>
+              )}
+              {q.confidence && (
+                <div className="bg-surface rounded-xl p-3 text-xs">
+                  <p className="flex flex-wrap items-center gap-2 font-bold">
+                    <Gauge className="size-4" /> {L("Confidence", "درجة الثقة")}
+                    <Badge tone={q.confidence.level === "high" ? "positive" : q.confidence.level === "medium" ? "info" : "negative"}>
+                      {q.confidence.level === "high" ? L("High", "عالية") : q.confidence.level === "medium" ? L("Medium", "متوسطة") : L("Low", "منخفضة")}
+                    </Badge>
+                  </p>
+                  <ul className="text-muted mt-1 list-disc ps-5">
+                    {q.confidence.reasons.map((r, i) => (
+                      <li key={i} dir="auto">
+                        {reasonText(r, L)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {ai.explanation && <p dir="auto">{ai.explanation}</p>}
               {ai.requirements.length > 0 && (
                 <div className="grid gap-3 md:grid-cols-3">
@@ -449,7 +619,15 @@ function QuestionPanel({ applicationId, submissionId, q }: { applicationId: stri
               <ListBlock title={L("Strengths", "نقاط القوة")} items={ai.strengths} />
               <ListBlock title={L("Technical or factual issues", "ملاحظات تقنية أو معرفية")} items={ai.issues} />
               <ListBlock title={L("Improvement recommendations", "توصيات للتحسين")} items={ai.improvements} />
-              {ai.concerns.length > 0 && <ListBlock title={L("Points to check", "نقاط للتحقق")} items={ai.concerns} warn />}
+              <ListBlock title={L("Limitations stated by the evaluator", "قيود ذكرها المُقيِّم")} items={q.limitations} warn />
+              {ai.concerns.length > 0 && (
+                <ListBlock
+                  title={L("Points to check", "نقاط للتحقق")}
+                  items={ai.concerns.filter((c) => !c.startsWith("Limitation stated by the evaluator: ") && !c.startsWith("قيد ذكره المُقيِّم: "))}
+                  warn
+                />
+              )}
+              {reliability && !q.rejection && ai.status === "completed" && <RejectAi applicationId={applicationId} aiId={ai.id} />}
               {ai.files.length > 0 && (
                 <details className="text-xs">
                   <summary className="cursor-pointer font-semibold">{L("What the evaluator read", "ما قرأه المُقيِّم")}</summary>
@@ -546,7 +724,13 @@ function ReviewForm({ applicationId, submissionId, q }: { applicationId: string;
   };
 
   const sourceLabel = (s: string | null) =>
-    s === "ai_accepted" ? L("AI suggestion accepted", "اعتُمد اقتراح الذكاء الاصطناعي") : s === "ai_adjusted" ? L("AI suggestion adjusted by reviewer", "عدّل المراجِع اقتراح الذكاء الاصطناعي") : L("Scored by reviewer", "قيّمه المراجِع");
+    s === "ai_accepted"
+      ? L("AI suggestion accepted", "اعتُمد اقتراح الذكاء الاصطناعي")
+      : s === "ai_adjusted"
+        ? L("AI suggestion adjusted by reviewer", "عدّل المراجِع اقتراح الذكاء الاصطناعي")
+        : s === "ai_rejected"
+          ? L("AI suggestion rejected; scored by reviewer", "رُفض اقتراح الذكاء الاصطناعي؛ قيّمه المراجِع")
+          : L("Scored by reviewer", "قيّمه المراجِع");
 
   return (
     <section className="rounded-2xl border p-4" aria-label={L("Human review", "مراجعة بشرية")}>
@@ -572,7 +756,7 @@ function ReviewForm({ applicationId, submissionId, q }: { applicationId: string;
       ) : (
         <form action={action} className="mt-3 grid gap-3 sm:grid-cols-2">
           <input type="hidden" name="ai_evaluation_id" value={aiId} />
-          {q.ai && q.ai.score !== null && (
+          {q.ai && q.ai.score !== null && !q.rejection && (
             <div className="sm:col-span-2">
               <Button type="button" size="sm" variant="soft" onClick={useAi}>
                 <Sparkles /> {L("Start from the AI suggestion", "ابدأ من اقتراح الذكاء الاصطناعي")}
@@ -633,13 +817,77 @@ function ReviewForm({ applicationId, submissionId, q }: { applicationId: string;
           <ul className="text-muted mt-1 flex flex-col gap-1">
             {q.history.map((h, i) => (
               <li key={i} className="ltr-nums">
-                {new Date(h.at).toLocaleString(locale === "ar" ? "ar-SA" : "en-GB", { timeZone: "Asia/Riyadh" })} · {h.action}
-                {h.previous_points !== null ? ` · ${fmt(h.previous_points)} → ${fmt(h.points)}` : ` · ${fmt(h.points)}`} · {sourceLabel(h.source)}
+                {when(h.at, locale)} ·{" "}
+                {h.action === "ai_rejected" ? (
+                  <span dir="auto">
+                    {L("AI suggestion rejected", "رُفض اقتراح الذكاء الاصطناعي")}
+                    {h.note ? `: ${h.note}` : ""}
+                  </span>
+                ) : (
+                  <>
+                    {h.action}
+                    {h.previous_points !== null ? ` · ${fmt(h.previous_points)} → ${fmt(h.points)}` : ` · ${fmt(h.points)}`} · {sourceLabel(h.source)}
+                  </>
+                )}
               </li>
             ))}
           </ul>
         </details>
       )}
     </section>
+  );
+}
+
+/** Explicit rejection of the AI suggestion, with a reason (recorded in the review history; the AI result is kept). */
+function RejectAi({ applicationId, aiId }: { applicationId: string; aiId: string }) {
+  const { locale } = useI18n();
+  const L = tx(locale);
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [busy, start] = useTransition();
+  if (!open)
+    return (
+      <div>
+        <Button type="button" size="sm" variant="ghost" onClick={() => setOpen(true)}>
+          <Ban /> {L("Reject this AI suggestion", "رفض اقتراح الذكاء الاصطناعي هذا")}
+        </Button>
+      </div>
+    );
+  return (
+    <div className="bg-surface flex flex-col gap-2 rounded-xl p-3">
+      <Field label={L("Why is this suggestion wrong", "لماذا هذا الاقتراح غير صحيح")} htmlFor={`rej-${aiId}`}>
+        <Textarea id={`rej-${aiId}`} rows={2} maxLength={1000} value={reason} onChange={(e) => setReason(e.target.value)} dir="auto" />
+      </Field>
+      <p className="text-muted text-xs">
+        {L(
+          "The AI result stays on record unchanged. Your rejection and its reason are added to the review history; then score the question yourself",
+          "تبقى نتيجة الذكاء الاصطناعي محفوظة دون تغيير. يُضاف رفضك وسببه إلى سجل المراجعة؛ ثم قيّم السؤال بنفسك",
+        )}
+      </p>
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          size="sm"
+          variant="danger"
+          loading={busy}
+          disabled={reason.trim().length < 3}
+          onClick={() =>
+            start(async () => {
+              const res = await rejectAiSuggestion(applicationId, aiId, reason);
+              if (!res.ok) return void toast.error(res.error);
+              toast.success(res.message ?? L("Rejected", "رُفض"));
+              setOpen(false);
+              router.refresh();
+            })
+          }
+        >
+          {L("Confirm rejection", "تأكيد الرفض")}
+        </Button>
+        <Button type="button" size="sm" variant="ghost" onClick={() => setOpen(false)}>
+          {L("Cancel", "إلغاء")}
+        </Button>
+      </div>
+    </div>
   );
 }

@@ -70,6 +70,16 @@ export async function GET() {
   } catch {
     questionEvaluation = "unknown";
   }
+  // AI evaluation reliability (proposal 0034: persisted run states, database lock, explicit rejection). Optional.
+  let aiReliability: "ready" | "not_applied" | "unknown" = "unknown";
+  try {
+    const r = await rpcClient().from("assessment_ai_runs").select("id").limit(0).abortSignal(AbortSignal.timeout(3000));
+    const code = r.error?.code ?? "";
+    if (code === "PGRST205" || code === "42P01") aiReliability = "not_applied";
+    else if (!r.error || code === "42501") aiReliability = "ready";
+  } catch {
+    aiReliability = "unknown";
+  }
   const ai = aiStatus();
   const email = emailConfig();
   const body = {
@@ -83,6 +93,7 @@ export async function GET() {
       database_schema: schema ?? "unknown",
       task_solution_files: taskSolutionFiles,
       question_evaluation: questionEvaluation,
+      ai_evaluation_reliability: aiReliability,
       auth,
       server_key: hasServerKey() ? "configured" : "missing",
       rate_limit: rateLimitBackend().configured,

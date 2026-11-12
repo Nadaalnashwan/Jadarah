@@ -13,7 +13,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isAutoScored, type QuestionType } from "@/lib/domain/scoring";
 import { taskRefsFromGuide } from "@/lib/domain/question-evaluation";
 import { QuestionReviewPanel } from "./question-review";
-import { buildQuestionViews, type EvalExtra, type FileRow, type HistoryRow } from "./question-views";
+import { buildQuestionViews, type EvalExtra, type FileRow, type HistoryRow, type RejectionRow, type RunRow } from "./question-views";
 import { matchJob } from "@/services/candidate";
 import { withSemantics } from "@/services/semantic";
 import type { CandidateSkillRecord } from "@/lib/domain/matching";
@@ -121,7 +121,7 @@ export default async function CompanyApplicationDetail({
   // Question-level review data (migration 0033). Separate queries: without that migration the page still renders and
   // falls back to the scores alone.
   const none = { data: null, error: null };
-  const [{ data: answerFiles }, extrasRes, aiRes, histRes] = submissionIds.length
+  const [{ data: answerFiles }, extrasRes, aiRes, histRes, runsRes, rejRes] = submissionIds.length
     ? await Promise.all([
         supabase
           .from("assessment_answer_files")
@@ -135,12 +135,24 @@ export default async function CompanyApplicationDetail({
         supabase.from("assessment_ai_evaluations").select("*").in("submission_id", submissionIds).order("created_at", { ascending: false }),
         supabase
           .from("assessment_evaluation_history")
-          .select("submission_id, question_id, action, points, previous_points, source, changed_at")
+          .select("submission_id, question_id, action, points, previous_points, source, comments, ai_evaluation_id, changed_at")
           .in("submission_id", submissionIds)
           .order("changed_at", { ascending: false })
           .limit(300),
+        // Proposal 0034 (persisted run states and explicit rejections): errors when not applied; the page then works without them.
+        supabase
+          .from("assessment_ai_runs")
+          .select("submission_id, question_id, status, error_code, error_message, started_at, updated_at, forced")
+          .in("submission_id", submissionIds)
+          .order("started_at", { ascending: false })
+          .limit(300),
+        supabase
+          .from("assessment_ai_rejections")
+          .select("ai_evaluation_id, submission_id, question_id, reason, created_at, rejected_by_profile:profiles(full_name)")
+          .in("submission_id", submissionIds),
       ])
-    : [none, none, none, none];
+    : [none, none, none, none, none, none];
+  const reliability = { available: !runsRes.error && !rejRes.error, runs: (runsRes.data ?? []) as RunRow[], rejections: (rejRes.data ?? []) as RejectionRow[] };
   const questionLevel = !extrasRes.error && !aiRes.error;
   // The task builder's criterion → task mapping (assessor guides; recruiters of the company can read them).
   const assessmentIds = (asg ?? []).map((x) => x.assessment?.id).filter((x): x is string => Boolean(x));
@@ -423,7 +435,9 @@ export default async function CompanyApplicationDetail({
                         (aiRes.data ?? []) as never[],
                         (histRes.data ?? []) as HistoryRow[],
                         taskRefsFromGuide((guides ?? []).find((g) => g.assessment_id === a.assessment?.id)?.guide),
+                        reliability,
                       )}
+                      reliability={reliability.available}
                       unlinkedFiles={((answerFiles ?? []) as FileRow[]).filter((f) => f.submission_id === sub.id && f.question_id === null)}
                       totals={{
                         auto: Number(sub.auto_score),

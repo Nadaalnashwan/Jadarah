@@ -274,12 +274,13 @@ describe("evaluation input isolation", () => {
 
   it("puts the question's own instructions, deliverables and criteria in the prompt", () => {
     const p = evaluationPrompt(
-      { id: "q2", position: 1, type: "coding", prompt: "Build POST /orders with validation", points: 8, deliverables: [{ name: "routes.ts", format: "TypeScript" }] },
+      { id: "q2", taskId: "t1", position: 1, type: "coding", prompt: "Build POST /orders with validation", points: 8, deliverables: [{ name: "routes.ts", format: "TypeScript" }] },
       [{ key: "validation", name: "Validation", max_points: 5 }],
       "employer_question",
       "<answer_text>x</answer_text>",
     );
     expect(p).toContain("QUESTION 2");
+    expect(p).toMatch(/^TASK ID: t1\nQUESTION ID: q2\n/);
     expect(p).toContain("Build POST /orders with validation");
     expect(p).toContain("routes.ts (TypeScript)");
     expect(p).toContain('"key":"validation"');

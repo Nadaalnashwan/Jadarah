@@ -409,7 +409,8 @@ export async function generateJSON<T extends z.ZodTypeAny>(
         const parsed = schema.safeParse(parseJson(out.text));
         const latency = Date.now() - started;
         if (!parsed.success)
-          console.warn(`[ai] ${p.model} schema mismatch: ${parsed.error.issues.slice(0, 8).map((i) => `${i.path.join(".")}:${i.code}`).join(", ")}`);
+          // Paths, codes and zod's type messages only ("expected object, received string"): never the content.
+          console.warn(`[ai] ${p.model} schema mismatch: ${parsed.error.issues.slice(0, 8).map((i) => `${i.path.join(".")}:${i.code}${i.code === "invalid_type" ? ` (${i.message.replace(/^Invalid input: /, "")})` : ""}`).join(", ")}`);
         void logCall({
           provider: p.name,
           model: p.model,

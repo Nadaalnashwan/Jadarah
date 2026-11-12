@@ -7,56 +7,13 @@ import { localizeError, type ActionResult } from "@/lib/errors";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { isAutoScored, type QuestionType } from "@/lib/domain/scoring";
-import {
-  evaluationPrompt,
-  evaluationSystemPrompt,
-  finaliseScores,
-  normaliseDerivedCriteria,
-  questionCriteria,
-  rekeyDerivedScores,
-  submissionBlock,
-  taskRefsFromGuide,
-  type Criterion,
-  type TaskMapping,
-  type FileExtraction,
-} from "@/lib/domain/question-evaluation";
+import { questionCriteria, taskRefsFromGuide, type FileExtraction, type TaskMapping } from "@/lib/domain/question-evaluation";
+import { evaluationInputHash, reusableResult } from "@/lib/domain/evaluation-hash";
 import { extractSubmittedFile } from "@/services/evaluation/extract";
-import { AIUnavailableError, generateJSON } from "@/services/ai/provider";
+import { evaluateQuestionSubmission } from "@/services/evaluation/question-evaluator";
+import { acquireLocalLock } from "@/services/evaluation/run-lock";
 
 const BUCKET = "assessment-attachments";
-
-const outputSchema = z.object({
-  derived_criteria: z
-    .array(z.object({ key: z.string().max(60), name: z.string().max(160), max_points: z.number(), description: z.string().max(400).nullable().optional() }))
-    .max(6)
-    .default([]),
-  criteria: z
-    .array(
-      z.object({
-        key: z.string().max(60),
-        applies: z.boolean().nullable().optional(),
-        score: z.number(),
-        evidence: z.string().max(400).nullable().optional(),
-        rationale: z.string().max(700),
-      }),
-    )
-    .max(12),
-  requirements: z
-    .array(
-      z.object({
-        requirement: z.string().max(400),
-        status: z.enum(["fulfilled", "partial", "missing"]),
-        evidence: z.string().max(400).nullable().optional(),
-        note: z.string().max(400).nullable().optional(),
-      }),
-    )
-    .max(15),
-  strengths: z.array(z.string().max(400)).max(6),
-  issues: z.array(z.string().max(400)).max(8),
-  improvements: z.array(z.string().max(400)).max(6),
-  explanation: z.string().max(1200),
-  concerns: z.array(z.string().max(300)).max(5).default([]),
-});
 
 const ids = z.object({ applicationId: z.string().uuid(), submissionId: z.string().uuid(), questionId: z.string().uuid() });
 
@@ -66,25 +23,37 @@ export type AiQuestionEvaluation = {
   score: number | null;
   max_score: number;
   created_at: string;
+  /** True when the input was unchanged and the stored result was returned without calling the AI. */
+  reused: boolean;
 };
+
+/** Is this a "function / table does not exist" answer (database without proposal 0034)? */
+const missing = (e: { code?: string } | null | undefined) => e?.code === "PGRST202" || e?.code === "PGRST205" || e?.code === "42883" || e?.code === "42P01";
 
 /**
  * AI evaluation of ONE question: its instructions, deliverables and criteria, and ONLY the answer and files the
  * candidate submitted for that question (selected by submission id + question id). The result is stored as an AI
- * suggestion (append-only); it never changes the candidate's score — a reviewer approves or adjusts it.
+ * suggestion (append-only); it never changes the candidate's score — a reviewer approves, adjusts or rejects it.
+ *
+ * Duplicate runs are prevented: the input (file bytes, answer, question, criteria, evaluator version) is hashed BEFORE
+ * any file is read by AI; when the latest result has the same hash it is returned unless `force` is set (an explicit,
+ * confirmed re-evaluation). One run per submission + question at a time (in-process lock, plus a database lock and
+ * persisted run states when proposal 0034 is applied).
  */
 export async function evaluateQuestionWithAI(
   applicationId: string,
   submissionId: string,
   questionId: string,
+  force = false,
 ): Promise<ActionResult<AiQuestionEvaluation>> {
   const s = await requireCompanyMember(["company_admin", "recruiter"]);
   const { locale } = await getI18n();
-  const L = (en: string, ar: string) => (locale === "ar" ? ar : en);
+  const lang = locale === "ar" ? "ar" : "en";
+  const L = (en: string, ar: string) => (lang === "ar" ? ar : en);
   if (!ids.safeParse({ applicationId, submissionId, questionId }).success) return { ok: false, error: L("Not found", "غير موجود") };
   const supabase = await createClient();
 
-  const [{ data: sub }, { data: q }, { data: ans }, { data: files }] = await Promise.all([
+  const [{ data: sub }, { data: q }, { data: ans }, { data: files }, { data: latestRows }] = await Promise.all([
     supabase
       .from("assessment_submissions")
       .select("id, status, assignment:assessment_assignments(application_id, company_id, assessment_id)")
@@ -103,6 +72,13 @@ export async function evaluateQuestionWithAI(
       .eq("submission_id", submissionId)
       .eq("question_id", questionId)
       .order("created_at"),
+    supabase
+      .from("assessment_ai_evaluations")
+      .select("id, status, score, max_score, created_at, input_sha256")
+      .eq("submission_id", submissionId)
+      .eq("question_id", questionId)
+      .order("created_at", { ascending: false })
+      .limit(1),
   ]);
   const a = sub?.assignment;
   if (
@@ -134,157 +110,139 @@ export async function evaluateQuestionWithAI(
     }
   }
   const picked = questionCriteria(q.rubric, shared, mapping);
+  const answer = (ans?.text_answer ?? "").trim();
+  const cfg = (q.config ?? {}) as { deliverables?: { name: string; format?: string | null; description?: string | null }[] };
+  const question = {
+    id: q.id,
+    taskId: q.assessment_id,
+    position: q.position,
+    type: q.type,
+    prompt: q.prompt_en,
+    points: q.points,
+    deliverables: Array.isArray(cfg.deliverables) ? cfg.deliverables.slice(0, 8) : [],
+  };
+  const promptAr = lang === "ar" ? q.prompt_ar : null;
 
-  // Read every submitted file for this question (actual contents, not names).
-  const extractions: FileExtraction[] = [];
-  const digests: string[] = [];
+  // 1. Download this question's files (bytes only; nothing is read by AI yet) and hash the complete input.
+  const downloaded: { f: NonNullable<typeof files>[number]; bytes: Buffer | null }[] = [];
   for (const f of files ?? []) {
     const { data: blob, error } = await supabase.storage.from(BUCKET).download(f.storage_path);
-    if (error || !blob) {
-      extractions.push({ file_id: f.id, file_name: f.file_name, mime_type: f.mime_type, size_bytes: f.size_bytes, method: "none", status: "failed", chars: 0, note: "the file could not be downloaded from storage", text: "" });
-      continue;
-    }
-    const bytes = Buffer.from(await blob.arrayBuffer());
-    digests.push(createHash("sha256").update(bytes).digest("hex"));
-    extractions.push(await extractSubmittedFile(f, bytes, s.userId));
+    downloaded.push({ f, bytes: error || !blob ? null : Buffer.from(await blob.arrayBuffer()) });
   }
-
-  const answer = (ans?.text_answer ?? "").trim();
-  const prompt = locale === "ar" ? q.prompt_ar : q.prompt_en;
-  const cfg = (q.config ?? {}) as { deliverables?: { name: string; format?: string | null; description?: string | null }[] };
-  const question = { id: q.id, position: q.position, type: q.type, prompt: q.prompt_en, points: q.points, deliverables: Array.isArray(cfg.deliverables) ? cfg.deliverables.slice(0, 8) : [] };
-  // Stored report of what was read (the extracted text itself is not stored).
-  const fileReport = extractions.map((x) => ({
-    file_id: x.file_id,
-    file_name: x.file_name,
-    mime_type: x.mime_type,
-    size_bytes: x.size_bytes,
-    method: x.method,
-    status: x.status,
-    chars: x.chars,
-    note: x.note,
-    entries: x.entries?.slice(0, 200),
-  }));
-  const inputSha = createHash("sha256")
-    .update(JSON.stringify({ q: q.id, prompt: q.prompt_en, criteria: picked.criteria, answer, files: digests }))
-    .digest("hex");
-  const readable = extractions.filter((x) => (x.status === "read" || x.status === "partial") && x.text);
-
-  const base = { rubric_source: picked.source, files: fileReport, answer_present: answer.length > 0, input_sha256: inputSha };
-  let payload: Record<string, unknown>;
-  if (!answer && !extractions.length) {
-    payload = {
-      ...base,
-      status: "no_submission",
-      score: 0,
-      criteria: picked.criteria.map((c) => ({ ...c, applicable: true, score: 0, evidence: null, evidence_verified: false, rationale: L("Nothing was submitted", "لم يُسلَّم شيء") })),
-      explanation: L(
-        "Nothing was submitted for this question: no written answer and no files. Suggested score 0, to be confirmed by the reviewer",
-        "لم يُسلَّم شيء لهذا السؤال: لا إجابة مكتوبة ولا ملفات. الدرجة المقترحة 0 بانتظار تأكيد المراجِع",
-      ),
-    };
-  } else if (!answer && !readable.length) {
-    payload = {
-      ...base,
-      status: "extraction_failed",
-      score: null,
-      explanation: L(
-        `None of the submitted files could be read automatically (${extractions.map((x) => `${x.file_name}: ${x.note ?? x.status}`).join("; ")}). Not evaluated: open the files and score manually`,
-        `تعذّرت قراءة الملفات المسلَّمة آليًا (${extractions.map((x) => `${x.file_name}: ${x.note ?? x.status}`).join("؛ ")}). لم يُقيَّم: افتح الملفات وقيّم يدويًا`,
-      ),
-    };
-  } else {
-    const derive = picked.source === "ai_derived";
-    const sub = submissionBlock(answer, extractions);
-    let out: z.infer<typeof outputSchema>;
-    let provider: string;
-    let model: string;
-    try {
-      const r = await generateJSON(
-        {
-          operation: "assessment_evaluation",
-          userId: s.userId,
-          system: evaluationSystemPrompt(locale === "ar" ? "ar" : "en", derive),
-          prompt: evaluationPrompt(question, picked.criteria, picked.source, sub.text) +
-            (locale === "ar" && prompt !== q.prompt_en ? `\n\n(Arabic version of the instructions for reference)\n${prompt.slice(0, 3000)}` : ""),
-          timeoutMs: 60_000,
-        },
-        outputSchema,
-      );
-      out = r.data;
-      provider = r.provider;
-      model = r.model;
-    } catch (e) {
-      if (e instanceof AIUnavailableError)
-        return {
-          ok: false,
-          error:
-            e.message === "not_configured"
-              ? L("No AI provider is configured", "لم يُضبط مزوّد ذكاء اصطناعي")
-              : L("AI could not evaluate this answer now. Score manually or try again", "تعذّر التقييم الآلي الآن. قيّم يدويًا أو أعد المحاولة"),
-        };
-      throw e;
-    }
-    let criteria: Criterion[] = picked.criteria;
-    if (derive) {
-      const derived = normaliseDerivedCriteria(out.derived_criteria, q.points);
-      criteria = derived;
-      if (!criteria.length) return { ok: false, error: L("AI could not derive criteria for this question. Score manually", "تعذّر اشتقاق معايير لهذا السؤال. قيّم يدويًا") };
-      out.criteria = rekeyDerivedScores(out.criteria, derived);
-    }
-    // The submitted text this question's evidence must come from (answer + this question's readable files only).
-    const submittedText = [answer, ...readable.map((x) => x.text)].join("\n");
-    const fin = finaliseScores(criteria, out.criteria, out.requirements, q.points, submittedText, picked.source);
-    const concerns = [...out.concerns];
-    if (fin.unverified)
-      concerns.push(
-        L(
-          `${fin.unverified} criterion score(s) are not backed by a quote found in the submission; check them`,
-          `${fin.unverified} من درجات المعايير لا يدعمها اقتباس موجود في التسليم؛ تحقّق منها`,
-        ),
-      );
-    if (sub.truncated) concerns.push(L("Part of the submission was too long and was cut before evaluation", "جزء من التسليم طويل جدًا واقتُطع قبل التقييم"));
-    const unreadable = extractions.filter((x) => x.status === "failed" || x.status === "unsupported");
-    if (unreadable.length)
-      concerns.push(
-        L(
-          `Not read automatically: ${unreadable.map((x) => x.file_name).join(", ")}. Review these files manually`,
-          `لم تُقرأ آليًا: ${unreadable.map((x) => x.file_name).join("، ")}. راجع هذه الملفات يدويًا`,
-        ),
-      );
-    payload = {
-      ...base,
-      status: "completed",
-      score: fin.score,
-      criteria: fin.criteria,
-      requirements: fin.requirements,
-      strengths: out.strengths,
-      issues: out.issues,
-      improvements: out.improvements,
-      concerns: concerns.slice(0, 8),
-      explanation: out.explanation,
-      provider,
-      model,
-    };
-  }
-
-  const { data: id, error } = await supabase.rpc("record_ai_question_evaluation", {
-    p_submission: submissionId,
-    p_question: questionId,
-    p_result: payload as never,
+  const inputSha = evaluationInputHash({
+    taskId: q.assessment_id,
+    questionId: q.id,
+    prompt: q.prompt_en,
+    promptAr,
+    points: q.points,
+    deliverables: question.deliverables,
+    rubricSource: picked.source,
+    criteria: picked.criteria,
+    answer,
+    files: downloaded.map(({ f, bytes }) => ({ id: f.id, name: f.file_name, mime: f.mime_type, sha256: bytes ? createHash("sha256").update(bytes).digest("hex") : null })),
+    locale: lang,
   });
-  if (error || !id) return { ok: false, error: localizeError(error, locale) };
+
+  // 2. Unchanged input: return the stored result without calling the AI (unless a re-evaluation was confirmed).
+  const latest = latestRows?.[0];
+  if (!force && latest) {
+    const { data: rej, error: rejErr } = await supabase.from("assessment_ai_rejections").select("id").eq("ai_evaluation_id", latest.id).maybeSingle();
+    if (reusableResult({ ...latest, rejected: !rejErr && Boolean(rej) }, inputSha))
+      return {
+        ok: true,
+        data: {
+          id: latest.id,
+          status: latest.status as AiQuestionEvaluation["status"],
+          score: latest.score === null ? null : Number(latest.score),
+          max_score: Number(latest.max_score),
+          created_at: latest.created_at,
+          reused: true,
+        },
+      };
+  }
+
+  // 3. One run at a time for this submission + question.
+  const release = acquireLocalLock(`${submissionId}:${questionId}`);
+  if (!release) return { ok: false, error: L("This question is already being evaluated. Wait for it to finish", "يجري تقييم هذا السؤال الآن. انتظر حتى ينتهي") };
+  let runId: string | null = null;
+  try {
+    const begun = await supabase.rpc("begin_ai_question_run", { p_submission: submissionId, p_question: questionId, p_input_sha256: inputSha, p_forced: force });
+    if (begun.error && !missing(begun.error)) {
+      if (begun.error.code === "55P03")
+        return { ok: false, error: L("This question is already being evaluated. Wait for it to finish", "يجري تقييم هذا السؤال الآن. انتظر حتى ينتهي") };
+      return { ok: false, error: localizeError(begun.error, lang) };
+    }
+    runId = begun.error ? null : (begun.data ?? null);
+    const fail = async (code: string, message: string) => {
+      if (runId) await supabase.rpc("update_ai_question_run", { p_run: runId, p_status: "failed", p_error_code: code, p_error_message: message.slice(0, 500) });
+      return { ok: false as const, error: message };
+    };
+
+    // 4. Read the actual contents of every file (state: reading files).
+    const extractions: FileExtraction[] = [];
+    for (const { f, bytes } of downloaded) {
+      if (!bytes) {
+        extractions.push({ file_id: f.id, file_name: f.file_name, mime_type: f.mime_type, size_bytes: f.size_bytes, method: "none", status: "failed", chars: 0, note: "the file could not be downloaded from storage", text: "" });
+        continue;
+      }
+      extractions.push(await extractSubmittedFile(f, bytes, s.userId));
+    }
+    // 5. Evaluate (state: evaluating) — only when there is something readable to evaluate.
+    if (runId && (answer || extractions.some((x) => (x.status === "read" || x.status === "partial") && x.text)))
+      await supabase.rpc("update_ai_question_run", { p_run: runId, p_status: "evaluating" });
+    const outcome = await evaluateQuestionSubmission({
+      question,
+      promptAr,
+      criteria: picked.criteria,
+      rubricSource: picked.source,
+      rubricMapped: picked.mapped,
+      answer,
+      extractions,
+      locale: lang,
+      userId: s.userId,
+      inputSha256: inputSha,
+    });
+    if (!outcome.ok) return await fail(outcome.code, outcome.message);
+    const payload = { ...outcome.payload, run_id: runId };
+    // Database without proposal 0034: model-stated limitations have no column yet, so keep them visible as points to check.
+    if (!runId && payload.limitations?.length)
+      payload.concerns = [...(payload.concerns ?? []), ...payload.limitations.map((x) => L(`Limitation stated by the evaluator: ${x}`, `قيد ذكره المُقيِّم: ${x}`))].slice(0, 8);
+
+    // 6. Store the result (completes the run atomically).
+    const { data: id, error } = await supabase.rpc("record_ai_question_evaluation", { p_submission: submissionId, p_question: questionId, p_result: payload as never });
+    if (error || !id) return await fail("store_failed", localizeError(error, lang));
+    runId = null; // completed by record_ai_question_evaluation
+    revalidatePath(`/company/applications/${applicationId}`);
+    return {
+      ok: true,
+      data: { id: id as string, status: payload.status, score: payload.score ?? null, max_score: q.points, created_at: new Date().toISOString(), reused: false },
+    };
+  } catch (e) {
+    if (runId) await supabase.rpc("update_ai_question_run", { p_run: runId, p_status: "failed", p_error_code: "internal_error", p_error_message: "the evaluation stopped because of an internal error" });
+    throw e;
+  } finally {
+    release();
+  }
+}
+
+/** Explicitly reject one AI suggestion (with a reason). The AI result is kept unchanged; the decision is recorded. */
+export async function rejectAiSuggestion(applicationId: string, aiEvaluationId: string, reason: string): Promise<ActionResult> {
+  await requireCompanyMember(["company_admin", "recruiter"]);
+  const { locale } = await getI18n();
+  const L = (en: string, ar: string) => (locale === "ar" ? ar : en);
+  if (!z.string().uuid().safeParse(applicationId).success || !z.string().uuid().safeParse(aiEvaluationId).success) return { ok: false, error: L("Not found", "غير موجود") };
+  const why = reason.trim().slice(0, 1000);
+  if (why.length < 3) return { ok: false, error: L("Give a reason for rejecting the AI suggestion", "اذكر سبب رفض اقتراح الذكاء الاصطناعي") };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("reject_ai_question_evaluation", { p_ai_evaluation: aiEvaluationId, p_reason: why });
+  if (missing(error))
+    return { ok: false, error: L("Rejecting an AI suggestion needs database update 0034, which is not applied yet", "رفض اقتراح الذكاء الاصطناعي يحتاج تحديث قاعدة البيانات 0034 غير المطبَّق بعد") };
+  if (error) {
+    if (/already been rejected/i.test(error.message)) return { ok: false, error: L("This AI suggestion has already been rejected", "رُفض هذا الاقتراح من قبل") };
+    return { ok: false, error: localizeError(error, locale) };
+  }
   revalidatePath(`/company/applications/${applicationId}`);
-  return {
-    ok: true,
-    data: {
-      id: id as string,
-      status: payload.status as AiQuestionEvaluation["status"],
-      score: (payload.score as number | null) ?? null,
-      max_score: q.points,
-      created_at: new Date().toISOString(),
-    },
-  };
+  return { ok: true, message: L("AI suggestion rejected and recorded", "رُفض اقتراح الذكاء الاصطناعي وسُجّل القرار") };
 }
 
 const reviewSchema = z.object({
@@ -338,6 +296,8 @@ export async function reviewQuestion(
     revalidatePath(`/company/applications/${applicationId}`);
     return { ok: true, message: locale === "ar" ? "حُفظت الدرجة (بلا ملاحظات للمرشح قبل الترحيل 0033)" : "Score saved (candidate feedback needs migration 0033)" };
   }
+  if (error && /was rejected/i.test(error.message))
+    return { ok: false, error: locale === "ar" ? "رُفض اقتراح الذكاء الاصطناعي هذا؛ قيّم السؤال بنفسك" : "This AI suggestion was rejected; score the question yourself" };
   if (error) return { ok: false, error: localizeError(error, locale) };
   revalidatePath(`/company/applications/${applicationId}`);
   return { ok: true, message: locale === "ar" ? "حُفظ تقييم السؤال" : "Question review saved" };

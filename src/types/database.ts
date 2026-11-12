@@ -1793,6 +1793,51 @@ export type Database = {
           },
         ]
       }
+      // Proposal 0034 (supabase/proposals/0034_ai_evaluation_reliability.sql; NOT applied to the hosted project).
+      assessment_ai_runs: {
+        Row: {
+          id: string
+          submission_id: string
+          question_id: string
+          company_id: string
+          requested_by: string | null
+          status: "reading_files" | "evaluating" | "completed" | "failed"
+          forced: boolean
+          input_sha256: string | null
+          error_code: string | null
+          error_message: string | null
+          ai_evaluation_id: string | null
+          started_at: string
+          updated_at: string
+          finished_at: string | null
+        }
+        Insert: { [key: string]: never }
+        Update: { [key: string]: never }
+        Relationships: []
+      }
+      assessment_ai_rejections: {
+        Row: {
+          id: string
+          ai_evaluation_id: string
+          submission_id: string
+          question_id: string
+          company_id: string
+          rejected_by: string | null
+          reason: string
+          created_at: string
+        }
+        Insert: { [key: string]: never }
+        Update: { [key: string]: never }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_ai_rejections_rejected_by_fkey"
+            columns: ["rejected_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assessment_ai_evaluations: {
         Row: {
           id: string
@@ -1817,6 +1862,12 @@ export type Database = {
           model: string | null
           input_sha256: string | null
           created_at: string
+          // Proposal 0034 (not applied to the hosted project yet): absent on databases without it.
+          run_id?: string | null
+          limitations?: Json
+          confidence?: "high" | "medium" | "low" | null
+          confidence_reasons?: Json
+          evaluator_version?: string | null
         }
         Insert: { [key: string]: never }
         Update: { [key: string]: never }
@@ -4292,6 +4343,10 @@ export type Database = {
       remove_assessment_file: { Args: { p_file: string }; Returns: string }
       register_task_solution_file: { Args: { p_assignment: string; p_path: string; p_name: string; p_mime: string; p_size: number }; Returns: string }
       record_ai_question_evaluation: { Args: { p_submission: string; p_question: string; p_result: Json }; Returns: string }
+      // Proposal 0034 (not applied to the hosted project): PGRST202 on databases without it.
+      begin_ai_question_run: { Args: { p_submission: string; p_question: string; p_input_sha256: string | null; p_forced?: boolean }; Returns: string }
+      update_ai_question_run: { Args: { p_run: string; p_status: string; p_error_code?: string; p_error_message?: string }; Returns: undefined }
+      reject_ai_question_evaluation: { Args: { p_ai_evaluation: string; p_reason: string }; Returns: string }
       review_assessment_question: {
         Args: {
           p_submission: string

@@ -68,23 +68,95 @@ async function docxText(bytes: Buffer): Promise<string> {
   return clean(value);
 }
 
-/** Text of an Office Open XML package (pptx slides, xlsx shared strings and sheets). */
-function ooxmlText(bytes: Buffer, kind: "pptx" | "xlsx"): string {
-  const want = kind === "pptx" ? /^ppt\/slides\/slide\d+\.xml$/ : /^xl\/(sharedStrings|worksheets\/sheet\d+)\.xml$/;
-  const entries = readZip(bytes, (n) => want.test(n));
-  return entries
-    .filter((e) => e.status === "read")
-    .sort((a, b) => a.name.localeCompare(b.name, "en", { numeric: true }))
-    .map((e) => {
-      const xml = e.data!.toString("utf8");
-      const runs = kind === "pptx" ? [...xml.matchAll(/<a:t>([^<]*)<\/a:t>/g)].map((m) => m[1]) : [...xml.matchAll(/<(?:t|v)[^>]*>([^<]*)<\/(?:t|v)>/g)].map((m) => m[1]);
-      return `--- ${e.name} ---\n${decodeXml(runs.join(kind === "pptx" ? "\n" : " | "))}`;
-    })
-    .join("\n\n");
+/**
+ * Text of an Office Open XML package. Returns "" when the package holds no real text (only images, empty slides or an
+ * empty workbook), so such a file is reported as unread instead of being passed to the evaluator as "read".
+ */
+export function ooxmlText(bytes: Buffer, kind: "pptx" | "xlsx"): string {
+  return kind === "pptx" ? pptxText(bytes) : xlsxText(bytes);
 }
 
+const byNumber = (re: RegExp) => (a: { name: string }, b: { name: string }) => Number(a.name.match(re)?.[1] ?? 0) - Number(b.name.match(re)?.[1] ?? 0);
+const xmlOf = (entries: ZipEntry[], name: string) => entries.find((e) => e.name === name && e.status === "read")?.data?.toString("utf8") ?? "";
+const hasLetters = (s: string) => /[\p{L}\p{N}]/u.test(s);
+
+/** Slides in order, each with its text and its speaker notes (labelled). Images and charts are not read. */
+function pptxText(bytes: Buffer): string {
+  const entries = readZip(bytes, (n) => /^ppt\/(slides\/slide\d+|notesSlides\/notesSlide\d+)\.xml$/.test(n) || /^ppt\/slides\/_rels\/slide\d+\.xml\.rels$/.test(n));
+  const runs = (xml: string) =>
+    [...xml.matchAll(/<a:p\b[^>]*>([\s\S]*?)<\/a:p>/g)]
+      .map((p) => [...p[1].matchAll(/<a:t(?:\s[^>]*)?>([^<]*)<\/a:t>/g)].map((m) => decodeXml(m[1])).join(""))
+      .filter((line) => line.trim());
+  const slides = entries.filter((e) => e.status === "read" && /^ppt\/slides\/slide\d+\.xml$/.test(e.name)).sort(byNumber(/slide(\d+)\.xml$/));
+  const parts: string[] = [];
+  slides.forEach((s, i) => {
+    const n = s.name.match(/slide(\d+)\.xml$/)![1];
+    const text = runs(s.data!.toString("utf8"));
+    // The notes part linked from this slide's relationships (notesSlideN does not always share the slide's number).
+    const rel = xmlOf(entries, `ppt/slides/_rels/slide${n}.xml.rels`).match(/Target="\.\.\/notesSlides\/(notesSlide\d+\.xml)"/)?.[1];
+    const notes = rel ? runs(xmlOf(entries, `ppt/notesSlides/${rel}`)).filter((l) => !/^\d+$/.test(l.trim())) : [];
+    if (!text.length && !notes.length) return;
+    parts.push(`--- slide ${i + 1} ---\n${text.join("\n")}${notes.length ? `\n[speaker notes]\n${notes.join("\n")}` : ""}`);
+  });
+  const body = parts.join("\n\n");
+  return hasLetters(body.replace(/--- slide \d+ ---|\[speaker notes\]/g, "")) ? body : "";
+}
+
+/** Sheets by name, rows of cell-addressed values (shared strings resolved, formulas shown next to their cached value). */
+function xlsxText(bytes: Buffer): string {
+  const entries = readZip(bytes, (n) => /^xl\/(workbook\.xml|_rels\/workbook\.xml\.rels|sharedStrings\.xml|worksheets\/sheet\d+\.xml)$/.test(n));
+  const shared = [...xmlOf(entries, "xl/sharedStrings.xml").matchAll(/<si\b[^>]*>([\s\S]*?)<\/si>/g)].map((si) =>
+    // Rich text runs are joined; phonetic hints (<rPh>) are not part of the value.
+    decodeXml([...si[1].replace(/<rPh\b[\s\S]*?<\/rPh>/g, "").matchAll(/<t(?:\s[^>]*)?>([^<]*)<\/t>/g)].map((m) => m[1]).join("")),
+  );
+  // Sheet names in workbook order, mapped to their part through the workbook relationships.
+  const rels = new Map([...xmlOf(entries, "xl/_rels/workbook.xml.rels").matchAll(/<Relationship\b[^>]*>/g)].map((m) => [attr(m[0], "Id"), attr(m[0], "Target")]));
+  const order = [...xmlOf(entries, "xl/workbook.xml").matchAll(/<sheet\b[^>]*>/g)].map((m) => {
+    const target = (rels.get(attr(m[0], "r:id")) ?? "").replace(/^\/?xl\//, "");
+    return { name: decodeXml(attr(m[0], "name")), part: target ? `xl/${target}` : "" };
+  });
+  const sheets = entries.filter((e) => e.status === "read" && /^xl\/worksheets\/sheet\d+\.xml$/.test(e.name)).sort(byNumber(/sheet(\d+)\.xml$/));
+  const parts: string[] = [];
+  let cells = 0;
+  sheets.forEach((s, i) => {
+    const label = order.find((o) => o.part === s.name)?.name ?? `sheet ${i + 1}`;
+    const rows: string[] = [];
+    for (const row of s.data!.toString("utf8").matchAll(/<row\b[^>]*>([\s\S]*?)<\/row>/g)) {
+      const values: string[] = [];
+      for (const c of row[1].matchAll(/<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)) {
+        const ref = attr(c[1], "r");
+        const t = attr(c[1], "t");
+        const inner = c[2] ?? "";
+        const v = inner.match(/<v>([^<]*)<\/v>/)?.[1];
+        const f = inner.match(/<f\b[^>]*>([^<]*)<\/f>/)?.[1];
+        let value =
+          t === "s" ? (v !== undefined ? (shared[Number(v)] ?? "") : "")
+          : t === "inlineStr" ? [...inner.matchAll(/<t(?:\s[^>]*)?>([^<]*)<\/t>/g)].map((m) => decodeXml(m[1])).join("")
+          : t === "b" ? (v === "1" ? "TRUE" : v === "0" ? "FALSE" : "")
+          : decodeXml(v ?? "");
+        if (f) value = `${value} (=${decodeXml(f)})`;
+        if (!value.trim()) continue;
+        cells++;
+        values.push(`${ref || "?"}=${value}`);
+      }
+      if (values.length) rows.push(values.join(" | "));
+    }
+    if (rows.length) parts.push(`--- sheet "${label}" ---\n${rows.join("\n")}`);
+  });
+  return cells ? parts.join("\n\n") : "";
+}
+
+const attr = (tag: string, name: string) => tag.match(new RegExp(`\\s${name.replace(":", "\\:")}="([^"]*)"`))?.[1] ?? "";
+
 const decodeXml = (s: string) =>
-  s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, "&");
+  s
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(Number(d)))
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, "&");
 
 const ocrSchema = z.object({
   legible: z.boolean(),
@@ -217,9 +289,32 @@ export async function extractSubmittedFile(
       return text ? result(base, "docx", "read", text, null) : result(base, "docx", "failed", "", "the document contains no readable text");
     }
     if (mime === "application/vnd.openxmlformats-officedocument.presentationml.presentation" || mime === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") {
+      if (kind === "ole") return result(base, "none", "failed", "", "the file is password-protected (encrypted); ask the candidate for an unprotected copy");
       if (kind !== "zip") return result(base, "none", "failed", "", "the file does not match its declared type");
-      const text = ooxmlText(bytes, mime.includes("presentation") ? "pptx" : "xlsx");
-      return text ? result(base, "text", "read", text, "text only (formatting, charts and formulas are not evaluated)") : result(base, "text", "failed", "", "no readable text found");
+      const pptx = mime.includes("presentation");
+      let text: string;
+      try {
+        text = ooxmlText(bytes, pptx ? "pptx" : "xlsx");
+      } catch (e) {
+        return result(base, "none", "failed", "", readFailure(e, pptx ? "presentation" : "spreadsheet"));
+      }
+      if (!text)
+        return result(
+          base,
+          "none",
+          "failed",
+          "",
+          pptx
+            ? "the presentation contains no readable text (images, charts and empty slides inside Office files are not read); review it manually"
+            : "the spreadsheet contains no readable cell values; review it manually",
+        );
+      return result(
+        base,
+        "text",
+        "read",
+        text,
+        pptx ? "slide text and speaker notes only (images, charts and layout are not evaluated)" : "cell values and formulas only (charts and formatting are not evaluated)",
+      );
     }
     if (mime === "application/msword") {
       if (kind !== "ole") return result(base, "none", "failed", "", "the file is not a valid Word 97–2003 (.doc) document");

@@ -45,6 +45,11 @@ done
 "${PSQL[@]}" -f "$ROOT/supabase/seed/demo_seed.sql" >/dev/null
 "${PSQL[@]}" -c "select public.seed_demo('local-only-' || md5(random()::text))" >/dev/null && echo "demo seed loaded" 
 echo "migrations applied: $(ls "$ROOT"/supabase/migrations/*.sql | wc -l)"
+# Optional: proposals (NOT applied to the hosted project) on top, e.g. WITH_PROPOSALS="0034_ai_evaluation_reliability.sql".
+for p in ${WITH_PROPOSALS:-}; do
+  "${PSQL[@]}" -f "$ROOT/supabase/proposals/$p" >/dev/null || { echo "PROPOSAL FAILED: $p"; exit 1; }
+  echo "proposal applied: $p"
+done
 
 TESTS=("$@")
 [ ${#TESTS[@]} -eq 0 ] && TESTS=("$ROOT"/tests/db/*.test.sql)
