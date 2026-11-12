@@ -190,6 +190,7 @@ export async function addQuestion(
     .from("assessment_rubrics")
     .select("id")
     .eq("assessment_id", assessmentId)
+    .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle();
   const { count } = await supabase
@@ -321,7 +322,7 @@ export async function updateRubric(assessmentId: string, criteria: unknown): Pro
     return { ok: false, error: L("Criteria must be unique.", "يجب ألا تتكرر المعايير.") };
   const { data: a } = await supabase.from("assessments").select("status").eq("id", assessmentId).single();
   if (a?.status !== "draft") return { ok: false, error: L("Only drafts can be edited.", "يمكن تعديل المسودات فقط.") };
-  const { data: rub } = await supabase.from("assessment_rubrics").select("id").eq("assessment_id", assessmentId).limit(1).maybeSingle();
+  const { data: rub } = await supabase.from("assessment_rubrics").select("id").eq("assessment_id", assessmentId).order("created_at", { ascending: true }).limit(1).maybeSingle();
   const { error } = rub
     ? await supabase.from("assessment_rubrics").update({ criteria: parsed.data }).eq("id", rub.id)
     : await supabase.from("assessment_rubrics").insert({
@@ -384,6 +385,7 @@ Create 5 questions: 3 objective (multiple_choice/true_false/multiple_select) and
       .from("assessment_rubrics")
       .select("id")
       .eq("assessment_id", assessmentId)
+      .order("created_at", { ascending: true })
       .limit(1)
       .maybeSingle();
     const { count } = await supabase

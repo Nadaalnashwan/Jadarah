@@ -231,7 +231,7 @@ export async function approveAndPublish(assessmentId: string): Promise<ActionRes
   if (!g) return { ok: false, error: L("Not found.", "غير موجود.") };
   const d = g.output as unknown as GeneratedDraft;
   // Pick up rubric edits made in the rubric editor.
-  const { data: rub } = await supabase.from("assessment_rubrics").select("criteria").eq("assessment_id", assessmentId).limit(1).maybeSingle();
+  const { data: rub } = await supabase.from("assessment_rubrics").select("criteria").eq("assessment_id", assessmentId).order("created_at", { ascending: true }).limit(1).maybeSingle();
   const edited = (rub?.criteria as { key: string; name_en: string; name_ar: string; max_points: number }[] | null) ?? [];
   const merged: GeneratedDraft = {
     ...d,

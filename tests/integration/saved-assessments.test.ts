@@ -35,8 +35,11 @@ describe.skipIf(!integrationEnabled)("saved Assessment Builder drafts (live, rea
       const { data: rub } = await owner
         .from("assessment_rubrics")
         .select("id, title_en, criteria")
-        .eq("assessment_id", s.id);
-      expect(rub ?? []).toHaveLength(1);
+        .eq("assessment_id", s.id)
+        .order("created_at", { ascending: true });
+      // The original overall rubric is the oldest row; later per-question rubrics may be derived from it.
+      expect((rub ?? []).length).toBeGreaterThanOrEqual(1);
+      expect(rub![0].title_en).toBe("Practical rubric");
       expect(Array.isArray(rub![0].criteria) && (rub![0].criteria as unknown[]).length > 0).toBe(true);
       const { data: guide } = await owner
         .from("assessment_assessor_guides")

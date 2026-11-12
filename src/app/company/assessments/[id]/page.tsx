@@ -38,8 +38,9 @@ export default async function AssessmentBuilder({ params }: { params: Promise<{ 
   const supabase = await createClient();
   const { data: a } = await supabase
     .from("assessments")
-    .select("*, assessment_questions(*, assessment_options(*)), assessment_rubrics(id, criteria)")
+    .select("*, assessment_questions(*, assessment_options(*)), assessment_rubrics(id, criteria, created_at)")
     .eq("id", id)
+    .order("created_at", { referencedTable: "assessment_rubrics", ascending: true })
     .eq("company_id", s.activeMembership.company_id)
     .maybeSingle();
   if (!a) notFound();

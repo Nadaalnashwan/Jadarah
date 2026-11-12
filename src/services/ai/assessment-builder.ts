@@ -337,7 +337,7 @@ export async function applyDraft(supabase: ServerSupabase, assessmentId: string,
     .eq("id", assessmentId);
   // rubric (candidate-safe criteria only; expected evidence lives in the assessor guide)
   const criteria = d.rubric.map((c) => ({ key: c.key, name_en: c.criterion_en, name_ar: c.criterion_ar, description_en: c.description, description_ar: "", max_points: c.max_points }));
-  const { data: rub } = await supabase.from("assessment_rubrics").select("id").eq("assessment_id", assessmentId).limit(1).maybeSingle();
+  const { data: rub } = await supabase.from("assessment_rubrics").select("id").eq("assessment_id", assessmentId).order("created_at", { ascending: true }).limit(1).maybeSingle();
   const rubricId = rub
     ? (await supabase.from("assessment_rubrics").update({ criteria }).eq("id", rub.id).select("id").single()).data!.id
     : (await supabase.from("assessment_rubrics").insert({ assessment_id: assessmentId, title_en: "Practical rubric", title_ar: "معايير التقييم العملي", criteria }).select("id").single()).data!.id;
