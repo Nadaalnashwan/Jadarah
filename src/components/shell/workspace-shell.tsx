@@ -5,6 +5,7 @@ import { Avatar, Badge } from "@/components/ui/primitives";
 import { signOutAction } from "@/features/auth/actions";
 import type { SessionContext } from "@/lib/auth/session";
 import { getI18n } from "@/lib/i18n/server";
+import { exhibitionMode } from "@/lib/exhibition";
 import { createClient } from "@/lib/supabase/server";
 import { LanguageSwitcher, ThemeToggle } from "./preference-toggles";
 import { WorkspaceNav, type NavItem } from "./workspace-nav";
@@ -92,7 +93,7 @@ export async function WorkspaceShell({
             </Link>
           </div>
           <div className="hidden min-w-0 lg:block">
-            {session.profile.is_demo && <Badge tone="progress">{t.common.demoBadge}</Badge>}
+            {session.profile.is_demo && !exhibitionMode() && <Badge tone="progress">{t.common.demoBadge}</Badge>}
           </div>
           <div className="flex items-center gap-1">
             <LanguageSwitcher />

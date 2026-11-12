@@ -7,8 +7,10 @@ import { AdminFilterBar, AdminPager } from "../list-controls";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { UserControls } from "../admin-client";
+import { exhibitionMode } from "@/lib/exhibition";
 
 export default async function AdminUsers({ searchParams }: { searchParams: Promise<AdminListParams> }) {
+  const exhibition = exhibitionMode();
   const sp = await searchParams;
   const session = await requireSuperAdmin();
   const { t, locale } = await getI18n();
@@ -111,7 +113,7 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
                           {t.roles[m.role]} · {locale === "ar" ? m.company?.name_ar : m.company?.name_en}
                         </Badge>
                       ))}
-                      {u.is_demo && <Badge tone="muted">demo</Badge>}
+                      {u.is_demo && !exhibition && <Badge tone="muted">demo</Badge>}
                     </div>
                   </td>
                   <td className="p-4">

@@ -5,6 +5,7 @@ import { formatDate, formatNumber, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { BrandForm, PaymentForm, SubscriptionForm } from "../../b2b-client";
+import { exhibitionMode } from "@/lib/exhibition";
 
 export default async function SubscriptionDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -59,7 +60,7 @@ export default async function SubscriptionDetail({ params }: { params: Promise<{
               </ul>
             )}
             {sub?.is_demo ? (
-              <p className="text-muted text-sm">{L("Demonstration access — no payments recorded", "وصول تجريبي — لا تُسجَّل مدفوعات")}</p>
+              <p className="text-muted text-sm">{exhibitionMode() ? L("Complimentary access — no payments recorded", "وصول مجاني — لا تُسجَّل مدفوعات") : L("Demonstration access — no payments recorded", "وصول تجريبي — لا تُسجَّل مدفوعات")}</p>
             ) : (
               <PaymentForm companyId={c.id} />
             )}

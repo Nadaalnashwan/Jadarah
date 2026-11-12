@@ -5,12 +5,14 @@ import { requireSuperAdmin } from "@/lib/auth/session";
 import { formatDate, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
+import { exhibitionMode } from "@/lib/exhibition";
 
 export default async function AdminCompanies({
   searchParams,
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
+  const exhibition = exhibitionMode();
   const sp = await searchParams;
   await requireSuperAdmin();
   const { t, locale } = await getI18n();
@@ -64,7 +66,7 @@ export default async function AdminCompanies({
                       >
                         {locale === "ar" ? c.name_ar : c.name_en}
                       </Link>
-                      {c.is_demo && <span className="text-subtle ms-2 text-xs">demo</span>}
+                      {c.is_demo && !exhibition && <span className="text-subtle ms-2 text-xs">demo</span>}
                     </td>
                     <td className="text-muted p-4">
                       {c.industry} · {c.city}

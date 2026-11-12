@@ -2,6 +2,7 @@ import { WorkspaceShell } from "@/components/shell/workspace-shell";
 import type { NavItem } from "@/components/shell/workspace-nav";
 import { requireSuperAdmin } from "@/lib/auth/session";
 import { getI18n } from "@/lib/i18n/server";
+import { exhibitionMode } from "@/lib/exhibition";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await requireSuperAdmin();
@@ -21,7 +22,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin/audit", label: n.audit, icon: "ScrollText" },
     { href: "/admin/emails", label: n.emails, icon: "MailCheck" },
     { href: "/admin/settings", label: n.settings, icon: "Settings" },
-    { href: "/admin/demo", label: n.demo, icon: "FlaskConical" },
+    ...(exhibitionMode() ? [] : [{ href: "/admin/demo", label: n.demo, icon: "FlaskConical" } as NavItem]),
     { href: "/admin/notifications", label: t.common.notifications, icon: "Bell" },
   ];
   return (

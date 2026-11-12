@@ -5,10 +5,12 @@ import { formatDate, formatNumber, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { ProvisionForm } from "../b2b-client";
+import { exhibitionMode } from "@/lib/exhibition";
 
 const SAR = (n: number, locale: "ar" | "en") => `${formatNumber(Math.round(n), locale)} ${locale === "ar" ? "ر.س" : "SAR"}`;
 
 export default async function Subscriptions() {
+  const exhibition = exhibitionMode();
   await requireSuperAdmin();
   const { locale } = await getI18n();
   const L = tx(locale);
@@ -47,7 +49,7 @@ export default async function Subscriptions() {
           [L("Contract value", "قيمة العقود"), SAR(totals.contract, locale)],
           [L("Outstanding", "المستحق"), SAR(totals.outstanding, locale)],
           [L("Paid subscriptions active", "اشتراكات مدفوعة نشطة"), formatNumber(totals.active, locale)],
-          [L("Demonstration access", "وصول تجريبي"), formatNumber(totals.demo, locale)],
+          [exhibition ? L("Complimentary access", "وصول مجاني") : L("Demonstration access", "وصول تجريبي"), formatNumber(totals.demo, locale)],
         ].map(([k, v]) => (
           <Card key={k} className="p-4">
             <p className="text-subtle text-xs">{k}</p>
@@ -75,13 +77,13 @@ export default async function Subscriptions() {
                     {locale === "ar" ? c.name_ar : c.name_en}
                   </Link>
                   <p className="text-subtle text-xs">
-                    {c.registry_id ?? (c.is_demo ? L("Fictional demo", "تجريبية وهمية") : "—")}
+                    {c.registry_id ?? (c.is_demo && !exhibition ? L("Fictional demo", "تجريبية وهمية") : "—")}
                     {c.listed ? ` · ${L("Listed", "ظاهرة")}` : ""}
                   </p>
                 </td>
                 <td className="p-3">
                   <Badge tone={tone(s?.status)}>{s?.status ?? L("none", "لا يوجد")}</Badge>{" "}
-                  {s?.is_demo && <Badge tone="neutral">{L("demo", "تجريبي")}</Badge>}
+                  {s?.is_demo && !exhibition && <Badge tone="neutral">{L("demo", "تجريبي")}</Badge>}
                 </td>
                 <td className="ltr-nums p-3">{s?.expires_on ? formatDate(s.expires_on, locale) : "—"}</td>
                 <td className="ltr-nums p-3 text-end">{s ? `${s.credits_used}/${s.assessment_credits ?? "∞"}` : "—"}</td>
