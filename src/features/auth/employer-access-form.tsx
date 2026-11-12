@@ -71,11 +71,11 @@ export function EmployerAccessForm({ companies }: { companies: Company[] }) {
           <Checkbox name="consent" required className="mt-1" />
           <span>
             {t.auth.consent}{" "}
-            <Link href="/terms" className="text-primary dark:text-lavender font-semibold">
+            <Link href="/terms" className="text-primary font-semibold">
               {t.landing.footerTerms}
             </Link>{" "}
             ·{" "}
-            <Link href="/privacy" className="text-primary dark:text-lavender font-semibold">
+            <Link href="/privacy" className="text-primary font-semibold">
               {t.landing.footerPrivacy}
             </Link>
           </span>
@@ -86,7 +86,7 @@ export function EmployerAccessForm({ companies }: { companies: Company[] }) {
         </Button>
       </form>
       <p className="text-muted text-center text-sm">
-        <Link href="/sign-in" className="text-primary dark:text-lavender font-semibold hover:underline">
+        <Link href="/sign-in" className="text-primary font-semibold hover:underline">
           {t.auth.signIn}
         </Link>
       </p>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BrandPattern, BrandWave, Logo } from "@/components/brand/logo";
+import { BrandWave, Logo } from "@/components/brand/logo";
 import type { Messages } from "@/lib/i18n/messages";
 
 export function SiteFooter({ t, contactEmail }: { t: Messages; contactEmail?: string | null }) {
@@ -32,7 +32,6 @@ export function SiteFooter({ t, contactEmail }: { t: Messages; contactEmail?: st
             {t.brand.tagline.replace(/\.$/, "")}
           </p>
         </div>
-        <BrandPattern className="mt-6 h-12 w-full opacity-60" />
       </div>
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr]">
         <div>
@@ -42,7 +41,7 @@ export function SiteFooter({ t, contactEmail }: { t: Messages; contactEmail?: st
             <p className="mt-4 text-sm">
               <span className="text-subtle">{t.landing.footerContact}: </span>
               <a
-                className="text-primary dark:text-lavender font-semibold hover:underline"
+                className="text-primary font-semibold hover:underline"
                 href={`mailto:${contactEmail}`}
               >
                 {contactEmail}
@@ -68,7 +67,7 @@ export function SiteFooter({ t, contactEmail }: { t: Messages; contactEmail?: st
       <div className="border-t">
         <div className="text-subtle mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-xs sm:flex-row sm:justify-between sm:px-6">
           <p>
-            © <span className="ltr-nums">{year}</span> JADARAH · جدارة. {t.landing.footerRights}
+            © <span className="ltr-nums">{year}</span> JADARAH · جدارة {t.landing.footerRights}
           </p>
           <p>{t.landing.footerNote}</p>
         </div>

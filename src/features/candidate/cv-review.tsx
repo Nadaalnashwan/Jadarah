@@ -62,7 +62,7 @@ export function CvReview({ documentId, parsed, onDone }: { documentId: string; p
   function save() {
     setError(null);
     if (missingDates)
-      return setError(L("Add a start month (YYYY-MM) for each selected role, or untick it.", "أضف شهر البداية (سنة-شهر) لكل دور مختار، أو ألغِ اختياره."));
+      return setError(L("Add a start month (YYYY-MM) for each selected role, or untick it", "أضف شهر البداية (سنة-شهر) لكل دور مختار، أو ألغِ اختياره"));
     start(async () => {
       const r = await applyCvReview(documentId, {
         ...basics,
@@ -84,7 +84,7 @@ export function CvReview({ documentId, parsed, onDone }: { documentId: string; p
       <h4 className="flex items-center gap-2 text-sm font-bold">
         {title} <span className="text-subtle ltr-nums text-xs font-normal">({count})</span>
       </h4>
-      {count === 0 ? <p className="text-subtle text-xs">{L("Nothing found in the CV.", "لم يُعثر على شيء في السيرة.")}</p> : children}
+      {count === 0 ? <p className="text-subtle text-xs">{L("Nothing found in the CV", "لم يُعثر على شيء في السيرة")}</p> : children}
     </section>
   );
   const row = "flex flex-col gap-2 rounded-xl border p-3";
@@ -106,15 +106,15 @@ export function CvReview({ documentId, parsed, onDone }: { documentId: string; p
         <Badge tone={parsed.method === "ai" ? "progress" : "neutral"}>{parsed.method === "ai" ? t.common.aiGenerated : t.common.ruleBased}</Badge>
         <p className="text-muted text-xs">
           {L(
-            "Only what your CV states was extracted. Edit or remove anything, then approve. Nothing is added until you save.",
-            "استُخرج فقط ما تذكره سيرتك. عدّل أو احذف ما تشاء ثم اعتمد. لا يُضاف شيء قبل الحفظ.",
+            "Only what your CV states was extracted. Edit or remove anything, then approve. Nothing is added until you save",
+            "استُخرج فقط ما تذكره سيرتك. عدّل أو احذف ما تشاء ثم اعتمد. لا يُضاف شيء قبل الحفظ",
           )}
         </p>
         {g && !g.checked && (
           <p className="bg-warning-soft text-warning w-full rounded-xl px-3 py-2 text-xs font-semibold">
             {L(
-              "This file has no readable text layer (e.g. a scanned image), so items could not be checked against it. Review each one carefully.",
-              "لا يحتوي هذا الملف على نص قابل للقراءة (مثل صورة ممسوحة)، فلم نتمكن من مطابقة العناصر معه. راجع كل عنصر بعناية.",
+              "This file has no readable text layer (e.g. a scanned image), so items could not be checked against it. Review each one carefully",
+              "لا يحتوي هذا الملف على نص قابل للقراءة (مثل صورة ممسوحة)، فلم نتمكن من مطابقة العناصر معه. راجع كل عنصر بعناية",
             )}
           </p>
         )}
@@ -223,8 +223,8 @@ export function CvReview({ documentId, parsed, onDone }: { documentId: string; p
       )}
       <p className="text-subtle text-xs">
         {L(
-          "Skills stated in your CV are saved as CV evidence; inferred skills you approve are saved as self-reported. Neither counts as verified — practical tasks and assessments add verified evidence.",
-          "تُحفظ المهارات المذكورة في سيرتك كأدلة من السيرة، والمستنتجة التي تعتمدها كمهارات مُصرَّح بها ذاتيًا. ولا يُعدّ أيّ منهما موثّقًا؛ المهام العملية والتقييمات هي ما يضيف أدلة موثّقة.",
+          "Skills stated in your CV are saved as CV evidence; inferred skills you approve are saved as self-reported. Neither counts as verified — practical tasks and assessments add verified evidence",
+          "تُحفظ المهارات المذكورة في سيرتك كأدلة من السيرة، والمستنتجة التي تعتمدها كمهارات مُصرَّح بها ذاتيًا. ولا يُعدّ أيّ منهما موثّقًا؛ المهام العملية والتقييمات هي ما يضيف أدلة موثّقة",
         )}
       </p>
       {error && <FormMessage>{error}</FormMessage>}

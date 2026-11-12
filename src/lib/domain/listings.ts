@@ -20,3 +20,18 @@ export function isPracticeListing(job: { listing_type?: string | null; created_b
 
 /** PostgREST `.or()` filter for job queries: keep verified vacancies and employer-posted jobs only. */
 export const LISTED_JOB_FILTER = "listing_type.in.(verified,employer),created_by.not.is.null";
+
+/** Today's date (YYYY-MM-DD) in Saudi Arabia — job deadlines are calendar dates in Asia/Riyadh. */
+export function riyadhToday(nowMs: number = Date.now()): string {
+  return new Date(nowMs + 3 * 3_600_000).toISOString().slice(0, 10); // Asia/Riyadh is UTC+3 all year (no DST)
+}
+
+/** A job is open to applications while published and on or before its deadline (Riyadh calendar date). */
+export function isJobOpen(job: { status: string; deadline: string | null }, today: string = riyadhToday()): boolean {
+  return job.status === "published" && (job.deadline === null || job.deadline >= today);
+}
+
+/** PostgREST `.or()` filter: no deadline, or a deadline today or later (combine with the published-status filter). */
+export function openDeadlineFilter(today: string = riyadhToday()): string {
+  return `deadline.is.null,deadline.gte.${today}`;
+}

@@ -54,13 +54,13 @@ export async function uploadWithProgress(opts: {
 
 export function uploadErrorMessage(code: UploadErrorCode, locale: "ar" | "en"): string {
   const m: Record<UploadErrorCode, [string, string]> = {
-    denied: ["This upload isn't allowed here.", "لا يُسمح بهذا الرفع هنا."],
-    too_large: ["The file is too large.", "الملف كبير جدًا."],
-    type: ["This file type isn't accepted.", "نوع الملف غير مقبول."],
-    exists: ["A file with this name is already uploaded.", "رُفع ملف بهذا الاسم مسبقًا."],
-    network: ["Upload interrupted. Check your connection and retry.", "انقطع الرفع. تحقّق من اتصالك وأعد المحاولة."],
-    aborted: ["Upload cancelled.", "أُلغي الرفع."],
-    session: ["Your session expired. Sign in again.", "انتهت الجلسة. سجّل الدخول من جديد."],
+    denied: ["This upload isn't allowed here", "لا يُسمح بهذا الرفع هنا"],
+    too_large: ["The file is too large", "الملف كبير جدًا"],
+    type: ["This file type isn't accepted", "نوع الملف غير مقبول"],
+    exists: ["A file with this name is already uploaded", "رُفع ملف بهذا الاسم مسبقًا"],
+    network: ["Upload interrupted. Check your connection and retry", "انقطع الرفع. تحقّق من اتصالك وأعد المحاولة"],
+    aborted: ["Upload cancelled", "أُلغي الرفع"],
+    session: ["Your session expired. Sign in again", "انتهت الجلسة. سجّل الدخول من جديد"],
   };
   return m[code][locale === "ar" ? 1 : 0];
 }

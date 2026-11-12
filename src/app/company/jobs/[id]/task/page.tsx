@@ -61,8 +61,8 @@ export default async function JobTaskPage({
       <PageHeader
         title={L("Create the practical task", "إنشاء المهمة العملية")}
         description={L(
-          "Linked to the job below. The job stays a draft — nothing is published until you choose to.",
-          "مرتبطة بالوظيفة أدناه. تبقى الوظيفة مسودة، ولا يُنشر شيء حتى تقرر ذلك.",
+          "Linked to the job below. The job stays a draft — nothing is published until you choose to",
+          "مرتبطة بالوظيفة أدناه. تبقى الوظيفة مسودة، ولا يُنشر شيء حتى تقرر ذلك",
         )}
         actions={
           <Button asChild variant="ghost" size="sm">

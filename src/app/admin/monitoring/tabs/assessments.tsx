@@ -47,28 +47,26 @@ export async function AssessmentsTab({ supabase, period, demo, locale, params = 
   }));
   const lc = b.lifecycle;
   const emptyText = L(
-    "No Assessment Builder activity in this period.",
-    "لا يوجد نشاط لمنشئ التقييمات في هذه الفترة.",
+    "No Assessment Builder activity in this period",
+    "لا يوجد نشاط لمنشئ التقييمات في هذه الفترة",
   );
   return (
     <div className="flex flex-col gap-6">
       {b.generationsAccess === "rls_only" && (
         <p className="bg-warning-soft text-warning rounded-xl px-4 py-2 text-sm">
           {L(
-            "Draft records are readable only by each company's recruiters. Apply proposal 0031 (metadata-only monitoring function) to include them; figures below that depend on drafts are incomplete.",
-            "سجلات المسودات متاحة فقط لمسؤولي التوظيف في كل شركة. طبّق المقترح 0031 (دالة مراقبة للبيانات الوصفية فقط) لتضمينها؛ الأرقام المعتمدة على المسودات أدناه غير مكتملة.",
+            "Draft records are readable only by each company's recruiters. Apply proposal 0031 (metadata-only monitoring function) to include them; figures below that depend on drafts are incomplete",
+            "سجلات المسودات متاحة فقط لمسؤولي التوظيف في كل شركة. طبّق المقترح 0031 (دالة مراقبة للبيانات الوصفية فقط) لتضمينها؛ الأرقام المعتمدة على المسودات أدناه غير مكتملة",
           )}
         </p>
       )}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          tone="blue"
           label={L("Generation attempts", "محاولات التوليد")}
           value={n(b.attempts)}
           hint={`${n(b.generatedEvents)} ${L("succeeded", "نجحت")} · ${n(b.failedEvents)} ${L("failed", "فشلت")} (${pct(b.attempts ? b.failedEvents / b.attempts : null, locale)})`}
         />
         <KpiCard
-          tone="mist"
           label={L("Generation duration p50", "مدة التوليد p50")}
           value={ms(percentile(durSorted, 50), locale)}
           hint={
@@ -78,13 +76,11 @@ export async function AssessmentsTab({ supabase, period, demo, locale, params = 
           }
         />
         <KpiCard
-          tone="sage"
           label={L("Drafts passing every check", "مسودات اجتازت كل الفحوص")}
           value={lc.generated ? pct(lc.validated / lc.generated, locale) : "—"}
           hint={`${n(lc.validated)}/${n(lc.generated)} ${L("drafts", "مسودة")}`}
         />
         <KpiCard
-          tone="sand"
           label={L("Human corrections", "التعديلات البشرية")}
           value={b.instrumentedSamples || b.humanEdits ? n(b.humanEdits) : "—"}
           hint={
@@ -132,8 +128,8 @@ export async function AssessmentsTab({ supabase, period, demo, locale, params = 
           empty={!b.attempts}
           emptyText={emptyText}
           definition={L(
-            "Successful = a draft was saved; failed = generation ended without a draft (recorded from this release on).",
-            "الناجحة = حُفظت مسودة؛ الفاشلة = انتهى التوليد دون مسودة (تُسجَّل من هذا الإصدار).",
+            "Successful = a draft was saved; failed = generation ended without a draft (recorded from this release on)",
+            "الناجحة = حُفظت مسودة؛ الفاشلة = انتهى التوليد دون مسودة (تُسجَّل من هذا الإصدار)",
           )}
         >
           <StackedBars
@@ -151,8 +147,8 @@ export async function AssessmentsTab({ supabase, period, demo, locale, params = 
           empty={!lc.generated}
           emptyText={emptyText}
           definition={L(
-            "Validated = passed every automatic check; reviewed = edited by a person or decided; published = the resulting Assessment is live.",
-            "المتحقق منها = اجتازت كل الفحوص الآلية؛ المراجَعة = عدّلها شخص أو اتُّخذ فيها قرار؛ المنشورة = التقييم الناتج متاح.",
+            "Validated = passed every automatic check; reviewed = edited by a person or decided; published = the resulting Assessment is live",
+            "المتحقق منها = اجتازت كل الفحوص الآلية؛ المراجَعة = عدّلها شخص أو اتُّخذ فيها قرار؛ المنشورة = التقييم الناتج متاح",
           )}
         >
           <Funnel
@@ -173,8 +169,8 @@ export async function AssessmentsTab({ supabase, period, demo, locale, params = 
           empty={!checks.length}
           emptyText={emptyText}
           definition={L(
-            "Rule-based checks run on every draft. They verify structure and coverage; they do not prove an assessment is valid or fair.",
-            "فحوص آلية قائمة على القواعد تُجرى على كل مسودة. تتحقق من البنية والتغطية ولا تثبت صلاحية التقييم أو عدالته.",
+            "Rule-based checks run on every draft. They verify structure and coverage; they do not prove an assessment is valid or fair",
+            "فحوص آلية قائمة على القواعد تُجرى على كل مسودة. تتحقق من البنية والتغطية ولا تثبت صلاحية التقييم أو عدالته",
           )}
         >
           <StackedBars
@@ -194,8 +190,8 @@ export async function AssessmentsTab({ supabase, period, demo, locale, params = 
           empty={!byModel.length}
           emptyText={emptyText}
           definition={L(
-            "Latency of successful Assessment Builder provider calls (all companies).",
-            "زمن استدعاءات المزوّد الناجحة لمنشئ التقييمات (كل الشركات).",
+            "Latency of successful Assessment Builder provider calls (all companies)",
+            "زمن استدعاءات المزوّد الناجحة لمنشئ التقييمات (كل الشركات)",
           )}
         >
           <MiniTable
@@ -243,10 +239,10 @@ export async function AssessmentsTab({ supabase, period, demo, locale, params = 
           title={L("13 · Reference library health", "13 · سلامة مكتبة المراجع")}
           sample={`${n(b.references.total)} ${L("references", "مرجع")} · ${n(b.references.embedded)} ${L("embedded chunks", "مقطعًا مُضمَّنًا")}`}
           empty={!b.references.total}
-          emptyText={L("The reference library is empty.", "مكتبة المراجع فارغة.")}
+          emptyText={L("The reference library is empty", "مكتبة المراجع فارغة")}
           definition={L(
-            "Validation status of the private reference library (contents are never shown here).",
-            "حالة التحقق لمكتبة المراجع الخاصة (لا تُعرض محتوياتها هنا).",
+            "Validation status of the private reference library (contents are never shown here)",
+            "حالة التحقق لمكتبة المراجع الخاصة (لا تُعرض محتوياتها هنا)",
           )}
         >
           <Donut

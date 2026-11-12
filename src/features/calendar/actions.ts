@@ -26,18 +26,18 @@ export async function saveMyAvailability(input: unknown): Promise<ActionResult> 
   const { locale } = await getI18n();
   const L = (en: string, ar: string) => (locale === "ar" ? ar : en);
   const parsed = availabilitySchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: L("Check the time ranges.", "تحقق من الفترات الزمنية.") };
+  if (!parsed.success) return { ok: false, error: L("Check the time ranges", "تحقق من الفترات الزمنية") };
   try {
     new Intl.DateTimeFormat("en", { timeZone: parsed.data.timezone });
   } catch {
-    return { ok: false, error: L("Unknown time zone.", "منطقة زمنية غير معروفة.") };
+    return { ok: false, error: L("Unknown time zone", "منطقة زمنية غير معروفة") };
   }
   // Overlaps within a day are rejected up front (the DB exclusion constraint is the final guard).
   for (let d = 0; d < 7; d++) {
     const day = parsed.data.windows.filter((w) => w.weekday === d).sort((a, b) => a.start_minute - b.start_minute);
     for (let i = 1; i < day.length; i++)
       if (day[i].start_minute < day[i - 1].end_minute)
-        return { ok: false, error: L("Time ranges on the same day overlap.", "تتداخل فترات اليوم نفسه.") };
+        return { ok: false, error: L("Time ranges on the same day overlap", "تتداخل فترات اليوم نفسه") };
   }
   const supabase = await createClient();
   const cid = s.activeMembership.company_id;
@@ -50,7 +50,7 @@ export async function saveMyAvailability(input: unknown): Promise<ActionResult> 
     if (error) return { ok: false, error: localizeError(error, locale) };
   }
   revalidatePath("/company/availability");
-  return { ok: true, message: L("Availability saved.", "حُفظت أوقات التوفّر.") };
+  return { ok: true, message: L("Availability saved", "حُفظت أوقات التوفّر") };
 }
 
 /** Candidate confirms attendance (RPC re-checks ownership and timing). */
@@ -61,7 +61,7 @@ export async function confirmInterview(interviewId: string): Promise<ActionResul
   const { error } = await supabase.rpc("confirm_interview_attendance", { p_interview: interviewId });
   if (error) return { ok: false, error: localizeError(error, locale) };
   revalidatePath("/candidate/interviews");
-  return { ok: true, message: locale === "ar" ? "تم تأكيد حضورك." : "Attendance confirmed." };
+  return { ok: true, message: locale === "ar" ? "تم تأكيد حضورك" : "Attendance confirmed" };
 }
 
 const slotQuery = z.object({

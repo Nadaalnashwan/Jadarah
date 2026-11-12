@@ -13,7 +13,7 @@ import { matchJob } from "@/services/candidate";
 const ICON: Record<MatchStatus, React.ReactNode> = {
   matched: <CheckCircle2 className="text-success mx-auto size-5" />,
   partial: <CircleDashed className="text-warning mx-auto size-5" />,
-  unverified: <CircleHelp className="text-primary dark:text-lavender mx-auto size-5" />,
+  unverified: <CircleHelp className="text-primary mx-auto size-5" />,
   missing: <CircleSlash className="text-danger mx-auto size-5" />,
 };
 
@@ -41,8 +41,8 @@ export default async function ComparePage({ searchParams }: { searchParams: Prom
         <Card>
           <EmptyState
             title={L(
-              "Select applications to compare from the Applications page.",
-              "اختر الطلبات للمقارنة من صفحة الطلبات.",
+              "Select applications to compare from the Applications page",
+              "اختر الطلبات للمقارنة من صفحة الطلبات",
             )}
           />
         </Card>
@@ -104,7 +104,7 @@ export default async function ComparePage({ searchParams }: { searchParams: Prom
       />
       {sameJob.length < apps.length && (
         <p className="text-warning mb-4 text-sm">
-          {L("Only applications for the same job are compared.", "تُقارن طلبات الوظيفة نفسها فقط.")}
+          {L("Only applications for the same job are compared", "تُقارن طلبات الوظيفة نفسها فقط")}
         </p>
       )}
       <Card>
@@ -119,7 +119,7 @@ export default async function ComparePage({ searchParams }: { searchParams: Prom
                   <th key={r.a.id} className="p-3 text-center">
                     <Link
                       href={`/company/applications/${r.a.id}`}
-                      className="hover:text-primary dark:hover:text-lavender font-bold"
+                      className="hover:text-primary font-bold"
                     >
                       {r.a.candidate?.full_name}
                     </Link>

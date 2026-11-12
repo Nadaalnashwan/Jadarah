@@ -15,22 +15,22 @@ export default async function ForCompanies() {
         {
           title: L("Verified workspace", "مساحة عمل موثّقة"),
           body: L(
-            "Register, submit verification and get approved by the platform team before publishing.",
-            "سجّل، وأرسل التحقق، واحصل على اعتماد فريق المنصة قبل النشر.",
+            "Register, submit verification and get approved by the platform team before publishing",
+            "سجّل، وأرسل التحقق، واحصل على اعتماد فريق المنصة قبل النشر",
           ),
         },
         {
           title: L("Structured jobs", "وظائف منظّمة"),
           body: L(
-            "Bilingual posts with required and preferred skills at minimum levels — the basis for explainable matching.",
-            "إعلانات ثنائية اللغة بمهارات مطلوبة ومفضّلة بمستويات دنيا — أساس المطابقة القابلة للتفسير.",
+            "Bilingual posts with required and preferred skills at minimum levels — the basis for explainable matching",
+            "إعلانات ثنائية اللغة بمهارات مطلوبة ومفضّلة بمستويات دنيا — أساس المطابقة القابلة للتفسير",
           ),
         },
         {
           title: L("Practical assessments", "تقييمات عملية"),
           body: L(
-            "Use 15 library assessments or build your own: auto-scored objective items, rubric-reviewed open work.",
-            "استخدم 15 تقييمًا من المكتبة أو ابنِ تقييمك: بنود موضوعية تُصحَّح آليًا وأعمال مفتوحة تُراجع بالمعايير.",
+            "Use 15 library assessments or build your own: auto-scored objective items, rubric-reviewed open work",
+            "استخدم 15 تقييمًا من المكتبة أو ابنِ تقييمك: بنود موضوعية تُصحَّح آليًا وأعمال مفتوحة تُراجع بالمعايير",
           ),
         },
         {

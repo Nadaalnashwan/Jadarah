@@ -69,16 +69,16 @@ export default async function CompanyLayout({ children }: { children: React.Reac
         <p className="flex-1">
           {status === "pending" &&
             L(
-              "Your company is awaiting platform approval. You can prepare jobs as drafts; publishing unlocks after approval.",
-              "شركتك بانتظار اعتماد المنصة. يمكنك إعداد الوظائف كمسودات، ويتاح النشر بعد الاعتماد.",
+              "Your company is awaiting platform approval. You can prepare jobs as drafts; publishing unlocks after approval",
+              "شركتك بانتظار اعتماد المنصة. يمكنك إعداد الوظائف كمسودات، ويتاح النشر بعد الاعتماد",
             )}
           {status === "info_requested" &&
-            L("The platform team requested more information.", "طلب فريق المنصة معلومات إضافية.")}
-          {status === "rejected" && L("Your registration was not approved.", "لم يتم اعتماد تسجيلك.")}
+            L("The platform team requested more information", "طلب فريق المنصة معلومات إضافية")}
+          {status === "rejected" && L("Your registration was not approved", "لم يتم اعتماد تسجيلك")}
           {status === "suspended" &&
             L(
-              "Your workspace is suspended. Published jobs were paused.",
-              "مساحة عملك معلّقة. أُوقفت الوظائف المنشورة.",
+              "Your workspace is suspended. Published jobs were paused",
+              "مساحة عملك معلّقة. أُوقفت الوظائف المنشورة",
             )}
         </p>
         {role === "company_admin" && (

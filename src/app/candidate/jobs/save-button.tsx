@@ -32,7 +32,7 @@ export function SaveJobButton({ jobId, saved }: { jobId: string; saved: boolean 
       className="text-subtle hover:bg-surface-2 hover:text-primary flex size-9 items-center justify-center rounded-full"
     >
       {optimistic ? (
-        <BookmarkCheck className="text-primary dark:text-lavender size-5" />
+        <BookmarkCheck className="text-primary size-5" />
       ) : (
         <Bookmark className="size-5" />
       )}

@@ -51,8 +51,8 @@ export default async function CompanyAssessments() {
             {(own ?? []).length === 0 ? (
               <p className="text-subtle text-sm">
                 {L(
-                  "None yet — create one or copy from the library.",
-                  "لا يوجد بعد — أنشئ واحدًا أو انسخ من المكتبة.",
+                  "None yet — create one or copy from the library",
+                  "لا يوجد بعد — أنشئ واحدًا أو انسخ من المكتبة",
                 )}
               </p>
             ) : (

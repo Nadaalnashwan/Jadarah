@@ -74,6 +74,7 @@ const OPERATION_TASK: Record<string, AITask> = {
   career_plan: "structured",
   exploration_feedback: "fast",
   assessment_evaluation: "deep",
+  assessment_file_reading: "structured",
   final_evaluation: "deep",
 };
 

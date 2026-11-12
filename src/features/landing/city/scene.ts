@@ -308,23 +308,24 @@ function symbolPortal(mode: Mode) {
   const g = new THREE.Group();
   const back = new THREE.Mesh(
     new THREE.ExtrudeGeometry(framedPanel(64, 100, 7), ext),
-    glassy(0x4b83c5, dark ? 0.88 : 0.9, dark ? 0.32 : 0.35),
+    glassy(0x6a7cff, dark ? 0.88 : 0.9, dark ? 0.24 : 0.24),
   );
   back.position.set(-40, 9, -34);
   const mid = new THREE.Mesh(
     new THREE.ExtrudeGeometry(framedPanel(64, 100, 7, { x0: 14, x1: 48, top: 80, r: 4 }), ext),
-    glassy(0xa9cbe5, dark ? 0.75 : 0.82, dark ? 0.32 : 0.3),
+    glassy(0xa78bfa, dark ? 0.75 : 0.82, dark ? 0.27 : 0.22),
   );
   mid.position.set(-19, 3, -16);
   const front = new THREE.Mesh(
     new THREE.ExtrudeGeometry(framedPanel(64, 100, 7, { x0: 12, x1: 34, top: 86, r: 3 }), ext),
-    glassy(0x3b66f6, dark ? 0.92 : 0.94, dark ? 0.3 : 0.35),
+    glassy(0x5b5bf0, dark ? 0.92 : 0.94, dark ? 0.23 : 0.24),
   );
   front.position.set(2, -4, 2);
   // tunnel interior + ivory light at the end of the doorway
   const door = new THREE.Mesh(
     new THREE.PlaneGeometry(22, 84),
-    new THREE.MeshBasicMaterial({ color: new THREE.Color(0xfff7e8).multiplyScalar(1.7), toneMapped: false }),
+    // Soft lilac-ivory doorway (was white at 170% — the main source of glare and bloom blow-out).
+    new THREE.MeshBasicMaterial({ color: new THREE.Color(0xf1eaff).multiplyScalar(1.08), toneMapped: false }),
   );
   door.position.set(2 - 32 + 23, 38, -6);
   const jamb = new THREE.Mesh(
@@ -332,13 +333,13 @@ function symbolPortal(mode: Mode) {
     new THREE.MeshStandardMaterial({
       color: 0xd4e4ef,
       emissive: 0xd4e4ef,
-      emissiveIntensity: dark ? 0.5 : 0.25,
+      emissiveIntensity: dark ? 0.32 : 0.18,
     }),
   );
   jamb.position.set(2 - 32 + 12, 38, -6);
   g.add(back, mid, front, door, jamb);
   g.traverse((o) => ((o as THREE.Mesh).castShadow = true));
-  const light = new THREE.PointLight(0xeee4da, dark ? 4000 : 3000, 260, 2);
+  const light = new THREE.PointLight(0xeee4da, dark ? 2300 : 1700, 190, 2);
   light.position.set(-7, 30, 14);
   g.add(light);
   return g;
@@ -352,20 +353,25 @@ function skyDome(mode: Mode) {
     depthWrite: false,
     uniforms: {
       // dark: Deep Midnight → Petrol Surface → petrol/soft-sky horizon, a soft Blue Accent glow (never a tan sky)
-      top: { value: new THREE.Color(dark ? 0x101e31 : 0x8fb0cb) },
-      mid: { value: new THREE.Color(dark ? 0x204355 : 0xc3d3dc) },
-      horizon: { value: new THREE.Color(dark ? 0x5a7e97 : 0xd9c6b3) },
-      glow: { value: new THREE.Color(dark ? 0x3a5f8a : 0xe8d6c2) },
+      top: { value: new THREE.Color(dark ? 0x1e2250 : 0x9aa6e0) },
+      mid: { value: new THREE.Color(dark ? 0x352f72 : 0xd8d1ec) },
+      horizon: { value: new THREE.Color(dark ? 0x6b5fb3 : 0xf1e4cc) },
+      glow: { value: new THREE.Color(dark ? 0x7a9bff : 0xf5dcb0) },
+      // violet signature: a muted lavender twilight belt on the side of the sky facing away from the sun
+      dusk: { value: new THREE.Color(dark ? 0x7a52d6 : 0xcdb6f2) },
       sunDir: { value: new THREE.Vector3(0.12, 0.14, -0.98).normalize() },
     },
     vertexShader:
       "varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
-    fragmentShader: `uniform vec3 top; uniform vec3 mid; uniform vec3 horizon; uniform vec3 glow; uniform vec3 sunDir; varying vec3 vDir;
+    fragmentShader: `uniform vec3 top; uniform vec3 mid; uniform vec3 horizon; uniform vec3 glow; uniform vec3 dusk; uniform vec3 sunDir; varying vec3 vDir;
       void main(){ float h = clamp(vDir.y, 0.0, 1.0);
         vec3 c = mix(horizon, mid, smoothstep(0.0, 0.18, h));
         c = mix(c, top, smoothstep(0.18, 0.75, h));
         float s = max(dot(normalize(vDir), sunDir), 0.0);
         c += glow * (pow(s, 16.0) * 0.9 + pow(s, 3.0) * 0.3) * (1.0 - h * 0.6);
+        float away = max(dot(normalize(vDir), -sunDir), 0.0);
+        float belt = smoothstep(0.02, 0.16, h) * (1.0 - smoothstep(0.22, 0.55, h));
+        c = mix(c, dusk, belt * (0.25 + 0.35 * away));
         gl_FragColor = vec4(c, 1.0); }`,
   });
   return new THREE.Mesh(new THREE.SphereGeometry(8000, 32, 16), mat);
@@ -378,14 +384,14 @@ export function createCityScene(canvas: HTMLCanvasElement, opts: CityOptions) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: high, powerPreference: "high-performance" });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, high ? 1.75 : 1.25));
   renderer.toneMapping = THREE.NeutralToneMapping; // keeps the board's blues saturated
-  renderer.toneMappingExposure = dark ? 0.9 : 0.85;
+  renderer.toneMappingExposure = dark ? 0.92 : 0.8;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.shadowMap.enabled = high;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   const scene = new THREE.Scene();
   // Board haze: the far skyline dissolves into lavender (light) or violet-navy (dark).
-  scene.fog = new THREE.FogExp2(dark ? 0x1c3a4c : 0xc9d1d3, dark ? 0.0004 : 0.00042);
+  scene.fog = new THREE.FogExp2(dark ? 0x2c2a5e : 0xe4dcef, dark ? 0.0004 : 0.0004);
   const camera = new THREE.PerspectiveCamera(36, 1, 2, 12000);
 
   // The journey path (defined first: the city keeps a clear corridor around it)
@@ -429,7 +435,7 @@ export function createCityScene(canvas: HTMLCanvasElement, opts: CityOptions) {
   scene.environment = env;
 
   scene.add(
-    new THREE.HemisphereLight(dark ? 0x5f8fb4 : 0xe3eef5, dark ? 0x14263a : 0xf0e3d6, dark ? 0.7 : 1.1),
+    new THREE.HemisphereLight(dark ? 0x8a8fe0 : 0xece6f6, dark ? 0x241f52 : 0xf3e6cf, dark ? 0.85 : 1.1),
   );
   const sun = new THREE.DirectionalLight(dark ? 0xcbb29c : 0xe9dcd2, dark ? 0.9 : 2.4);
   sun.position.set(-900, 520, -1500);
@@ -452,19 +458,24 @@ export function createCityScene(canvas: HTMLCanvasElement, opts: CityOptions) {
   const fill = new THREE.DirectionalLight(dark ? 0x6f9cc8 : 0xeef3f6, dark ? 0.8 : 1.4);
   fill.position.set(400, 300, 600);
   scene.add(fill);
+  // Violet signature: a soft lavender rim light from behind the skyline gives the towers a cool second edge.
+  const rim = new THREE.DirectionalLight(dark ? 0xa855f7 : 0xb6a8ca, dark ? 0.95 : 0.6);
+  rim.position.set(700, 260, -1600);
+  rim.target.position.set(0, 60, -500);
+  scene.add(rim, rim.target);
 
   /* materials — board palette: glass in blue/lavender, warm ivory stone, navy accents */
   const litShare = dark ? 0.18 : 0.03;
   const glassTex = facadeTexture({
     cols: 14,
     rows: 60,
-    base: dark ? "#204355" : "#c1d9ea",
+    base: dark ? "#2b2f6a" : "#d6d2ee",
     line: dark ? "rgba(169,184,255,.25)" : "rgba(13,27,63,.18)",
     lit: litShare,
     warm: true,
   });
   const glass = new THREE.MeshPhysicalMaterial({
-    color: dark ? 0x9fbad6 : 0xe3ebf0,
+    color: dark ? 0xaeb4ea : 0xece8f6,
     map: glassTex,
     emissiveMap: dark ? glassTex : null,
     emissive: dark ? 0xffffff : 0x000000,
@@ -565,7 +576,7 @@ export function createCityScene(canvas: HTMLCanvasElement, opts: CityOptions) {
       metalness: dark ? 0.15 : 0.05,
       envMapIntensity: dark ? 1.2 : 0.6,
       clearcoat: dark ? 1 : 0.35,
-      emissive: dark ? 0x204355 : 0xa9cbe5, // dark: Petrol Surface glow, never black water
+      emissive: dark ? 0x3a2f80 : 0xc9bff0, // indigo-violet water glow, never black water
       emissiveIntensity: dark ? 0.9 : 0.45,
     }),
   );
@@ -575,7 +586,14 @@ export function createCityScene(canvas: HTMLCanvasElement, opts: CityOptions) {
 
   /* convergence: the JADARAH symbol portal on the plaza */
   const portal = symbolPortal(opts.mode);
+  const portalLights: THREE.PointLight[] = [];
+  portal.traverse((o) => (o as THREE.PointLight).isPointLight && portalLights.push(o as THREE.PointLight));
   portal.scale.setScalar(1.15);
+  // Violet doorway light: the portal glows blue → violet onto the plaza and the path.
+  const portalViolet = new THREE.PointLight(0xa855f7, dark ? 1500 : 850, 180, 2);
+  portalViolet.position.set(8, 42, 28);
+  portal.add(portalViolet);
+  portalLights.push(portalViolet);
   portal.rotation.y = -0.3;
   scene.add(portal);
 
@@ -742,7 +760,7 @@ export function createCityScene(canvas: HTMLCanvasElement, opts: CityOptions) {
     panel.lookAt(0, 0, 0);
     demo.add(panel);
   }
-  const demoLight = new THREE.PointLight(0xeee4da, dark ? 3500 : 2200, 220, 2);
+  const demoLight = new THREE.PointLight(0xeee4da, dark ? 2100 : 1300, 180, 2);
   demoLight.position.set(0, 30, 0);
   demo.add(demoLight);
   scene.add(demo);
@@ -800,7 +818,7 @@ export function createCityScene(canvas: HTMLCanvasElement, opts: CityOptions) {
     new THREE.MeshBasicMaterial({
       color: 0xf1ebe5,
       transparent: true,
-      opacity: dark ? 0.85 : 0.75,
+      opacity: dark ? 0.7 : 0.6,
       toneMapped: false,
       depthWrite: false,
     }),
@@ -817,6 +835,7 @@ export function createCityScene(canvas: HTMLCanvasElement, opts: CityOptions) {
   const particles = new THREE.Points(
     pGeo,
     new THREE.PointsMaterial({
+      vertexColors: true,
       color: 0xffffff,
       size: 3.2,
       transparent: true,
@@ -826,12 +845,22 @@ export function createCityScene(canvas: HTMLCanvasElement, opts: CityOptions) {
   );
   scene.add(particles);
   const offsets = Array.from({ length: count }, () => Math.random());
+  // Light trails: each particle carries a tint between portal blue and lilac.
+  const tint = new Float32Array(count * 3);
+  const cBlue = new THREE.Color(0x9fb4ff);
+  const cLilac = new THREE.Color(0xe2c8ff);
+  const trailTint = new THREE.Color();
+  for (let i = 0; i < count; i++) {
+    trailTint.copy(cBlue).lerp(cLilac, i / Math.max(1, count - 1));
+    tint.set([trailTint.r, trailTint.g, trailTint.b], i * 3);
+  }
+  pGeo.setAttribute("color", new THREE.Float32BufferAttribute(tint, 3));
 
   /* post: bloom only on the light (path, doorway, sky bridge) */
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
   composer.addPass(
-    new UnrealBloomPass(new THREE.Vector2(256, 256), dark ? 0.55 : 0.5, 0.5, dark ? 0.9 : 0.9),
+    new UnrealBloomPass(new THREE.Vector2(256, 256), dark ? 0.42 : 0.22, 0.38, dark ? 0.92 : 0.95),
   );
   composer.addPass(new OutputPass());
 
@@ -891,6 +920,30 @@ export function createCityScene(canvas: HTMLCanvasElement, opts: CityOptions) {
     const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
     return t * t * (3 - 2 * t);
   };
+  const UP = new THREE.Vector3(0, 1, 0);
+  const orbit = new THREE.Vector3();
+  const sunBase = sun.position.clone();
+  const base = {
+    glass: glass.emissiveIntensity,
+    warm: glassWarm.emissiveIntensity,
+    bridge: bridgeGlow.emissiveIntensity,
+    water: (water.material as THREE.MeshStandardMaterial).emissiveIntensity,
+    portal: portalLights.map((l) => l.intensity),
+    rim: rim.intensity,
+  };
+  /** Environmental motion: breathing window light, a pulse in the portal and sky bridge, shimmering water and a
+   * slowly travelling sun. Uniform changes only — no new geometry, no extra draw calls. */
+  function ambient(now: number) {
+    const w = Math.sin(now / 2600);
+    glass.emissiveIntensity = base.glass * (1 + 0.14 * w);
+    glassWarm.emissiveIntensity = base.warm * (1 + 0.12 * Math.sin(now / 3100 + 1.3));
+    bridgeGlow.emissiveIntensity = base.bridge * (1 + 0.18 * Math.sin(now / 1900));
+    (water.material as THREE.MeshStandardMaterial).emissiveIntensity = base.water * (1 + 0.1 * Math.sin(now / 1500));
+    portalLights.forEach((l, i) => (l.intensity = base.portal[i] * (1 + 0.12 * Math.sin(now / 1700 + i))));
+    rim.intensity = base.rim * (1 + 0.25 * Math.sin(now / 6200));
+    const a = Math.sin(now / 24000) * 0.12;
+    sun.position.copy(sunBase).applyAxisAngle(UP, a);
+  }
   const rideP = new THREE.Vector3();
   const rideL = new THREE.Vector3();
   function render(now: number) {
@@ -917,8 +970,17 @@ export function createCityScene(canvas: HTMLCanvasElement, opts: CityOptions) {
         }
       }
     }
-    const drift = opts.reducedMotion ? 0 : Math.sin(now / 7000) * 4;
-    camera.position.set(camPos.x + pointer.x * 10 + drift, camPos.y - pointer.y * 5, camPos.z);
+    if (opts.reducedMotion) {
+      camera.position.copy(camPos);
+    } else {
+      // Idle life: a slow orbit around the subject plus a gentle rise and fall, layered under pointer parallax.
+      const yaw = Math.sin(now / 16000) * 0.045 + Math.sin(now / 5300) * 0.008;
+      orbit.subVectors(camPos, camTarget).applyAxisAngle(UP, yaw);
+      camera.position.copy(camTarget).add(orbit);
+      camera.position.x += pointer.x * 10;
+      camera.position.y += Math.sin(now / 9000) * 2.5 - pointer.y * 5;
+      ambient(now);
+    }
     camera.lookAt(camTarget);
     if (count) {
       const p = pGeo.attributes.position as THREE.BufferAttribute;
@@ -950,5 +1012,11 @@ export function createCityScene(canvas: HTMLCanvasElement, opts: CityOptions) {
     camPos.add(back).add(new THREE.Vector3(0, 70, 0));
   }
   focus("enter");
-  return { renderer, render, resize, focus, setPointer, setShift, dispose };
+  /** Adaptive resolution: the stage lowers the pixel ratio when frames take too long. */
+  function setPixelRatio(r: number) {
+    renderer.setPixelRatio(r);
+    composer.setPixelRatio(r);
+    composer.setSize(width, height);
+  }
+  return { renderer, render, resize, focus, setPointer, setShift, setPixelRatio, dispose };
 }

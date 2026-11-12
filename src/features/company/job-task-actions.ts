@@ -13,6 +13,7 @@ import { localizeError, type ActionResult } from "@/lib/errors";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient, type ServerSupabase } from "@/lib/supabase/server";
 import { jobTaskLocked } from "./job-task";
+import { copyRubrics, relinkQuestionRubric } from "@/features/assessments/rubric-copy";
 
 const DEFAULT_RUBRIC = [
   { key: "correctness", name_en: "Correctness", name_ar: "الصحة", max_points: 4 },
@@ -152,16 +153,8 @@ export async function createTaskFromTemplate(jobId: string, sourceId: string, ke
     if (again) redirect(`/company/assessments/${again}?job=${jobId}`);
     return { ok: false, error: localizeError(error, locale) };
   }
-  const { data: rub } = await supabase
-    .from("assessment_rubrics")
-    .insert({
-      assessment_id: copy.id,
-      title_en: src.assessment_rubrics[0]?.title_en ?? "Rubric",
-      title_ar: src.assessment_rubrics[0]?.title_ar ?? "المعايير",
-      criteria: src.assessment_rubrics[0]?.criteria ?? DEFAULT_RUBRIC,
-    })
-    .select("id")
-    .single();
+  // Every rubric is copied; each question keeps its own rubric.
+  const rubricMap = await copyRubrics(supabase, src.assessment_rubrics, copy.id, DEFAULT_RUBRIC);
   for (const q of [...src.assessment_questions].sort((a, b) => a.position - b.position)) {
     const { data: nq } = await supabase
       .from("assessment_questions")
@@ -173,12 +166,13 @@ export async function createTaskFromTemplate(jobId: string, sourceId: string, ke
         points: q.points,
         position: q.position,
         config: q.config,
-        rubric_id: q.rubric_id && rub ? rub.id : null,
+        rubric_id: q.rubric_id ? (rubricMap.get(q.rubric_id) ?? null) : null,
         explanation_en: q.explanation_en,
         explanation_ar: q.explanation_ar,
       })
       .select("id")
       .single();
+    if (nq && q.rubric_id) await relinkQuestionRubric(supabase, src.assessment_rubrics, q.id, rubricMap.get(q.rubric_id), nq.id);
     if (nq && q.assessment_options.length)
       await supabase.from("assessment_options").insert(
         q.assessment_options.map((o) => ({
@@ -211,10 +205,10 @@ export async function setJobTask(jobId: string, assessmentId: string | null): Pr
     message:
       assessmentId === null
         ? locale === "ar"
-          ? "أُزيلت المهمة العملية من الوظيفة."
-          : "The practical task was removed from the job."
+          ? "أُزيلت المهمة العملية من الوظيفة"
+          : "The practical task was removed from the job"
         : locale === "ar"
-          ? "رُبطت المهمة العملية بالوظيفة."
-          : "The practical task is attached to the job.",
+          ? "رُبطت المهمة العملية بالوظيفة"
+          : "The practical task is attached to the job",
   };
 }

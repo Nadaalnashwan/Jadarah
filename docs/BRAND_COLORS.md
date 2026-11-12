@@ -1,101 +1,74 @@
-# JADARAH brand colours (final)
+# JADARAH colour system — premium redesign
 
-Only the approved palette and its tonal variations are used. A **tonal variation** is the same hue at a different
-lightness (or saturation), or a blend of two approved colours — nothing else. All app colours come from the semantic
-tokens in `src/app/globals.css`; both themes use the same token names. Components never hard-code colours (the official
-logo artwork and companies' own brand colours are the only exceptions).
+One semantic token set in `src/app/globals.css`, expressed differently by each theme. Components use tokens only
+(exceptions: the official logo artwork, the 3D city scene and companies' own brand colours).
 
-## Approved palette
+## Brand families
 
-| Light identity | Hex | Dark identity | Hex |
-|---|---|---|---|
-| Deep Navy | #172F49 | Deep Midnight | #101E31 |
-| Professional Blue | #3B66F6 | Dark Navy | #172C43 |
-| Sky Blue | #A9CBE5 | Petrol Surface | #204355 |
-| Mist Blue | #D4E4EF | Blue Accent | #4B83C5 |
-| Petrol Blue | #20566A | Soft Sky | #91B9D8 |
-| Teal | #4D9996 | Teal | #5DA7A0 |
-| Warm Sand | #DCC8B5 | Warm Sand | #CBB29C |
-| Soft Beige | #E9DCD2 | Muted Lavender | #9585AD |
-| Muted Peach | #E8BFAE | | |
-| Soft Sage | #D5E5DA | | |
-| Muted Lavender | #B6A8CA | | |
-
-## Semantic tokens
-
-| Token | Role | Light | Dark |
-|---|---|---|---|
-| `--background` | Page background | `#ceccc7` | `#172C43` |
-| `--background-2` | Page background 2 | `#c4dae9` | `#101E31` |
-| `--sidebar` | Sidebar | `#cddfec` | `#101E31` |
-| `--surface` | Card surface | `#E9DCD2` | `#204355` |
-| `--surface-elevated` | Elevated surface | `#e2dfdc` | `#2e5165` |
-| `--surface-2` | Secondary surface | `#e2d1c2` | `#375b6f` |
-| `--input` | Input | `#e5ded8` | `#1b364b` |
-| `--tone-blue` | Blue card | `#c1d9ea` | `#2e537e` |
-| `--tone-mist` | Mist card | `#D4E4EF` | `#305467` |
-| `--tone-sand` | Sand card | `#DCC8B5` | `#544436` |
-| `--tone-peach` | Peach card | `#E8BFAE` | `#533b32` |
-| `--tone-sage` | Sage card | `#D5E5DA` | `#344b3b` |
-| `--tone-teal` | Teal card | `#b7d4cb` | `#2b5450` |
-| `--tone-lilac` | Lavender card (rare) | `#d2c5ce` | `#3d344b` |
-| `--foreground` | Primary text | `#172F49` | `#eaf2f7` |
-| `--muted-foreground` | Secondary text | `#344e68` | `#b6d1e5` |
-| `--subtle-foreground` | Muted text | `#20566a` | `#b2cee4` |
-| `--border` | Border | `#9cb6c9` | `#44697f` |
-| `--border-strong` | Strong border | `#7698b2` | `#537890` |
-| `--primary` | Primary action | `#3B66F6` | `#6496cc` |
-| `--primary-hover` | Primary hover | `#355cd7` | `#6e9ece` |
-| `--primary-foreground` | Text on primary | `#ffffff` | `#101E31` |
-| `--primary-ink` | Link / blue text | `#2744a5` | `#b2cee4` |
-| `--accent` | Accent | `#4D9996` | `#5DA7A0` |
-| `--accent-ink` | Accent text | `#2e5c5a` | `#b0d2d7` |
-| `--success` | Success | `#2b5553` | `#b0d2d7` |
-| `--success-soft` | Success surface | `#D5E5DA` | `#2b5450` |
-| `--warning` | Warning | `#644426` | `#CBB29C` |
-| `--warning-soft` | Warning surface | `#DCC8B5` | `#544436` |
-| `--danger` | Danger | `#824126` | `#E8BFAE` |
-| `--danger-soft` | Danger surface | `#E8BFAE` | `#533b32` |
-| `--info` | Info | `#2744a5` | `#b2cee4` |
-| `--info-soft` | Info surface | `#c1d9ea` | `#2e537e` |
-| `--chart-1` | Chart series 1 | `#3B66F6` | `#6496cc` |
-| `--chart-2` | Chart series 2 | `#4D9996` | `#5DA7A0` |
-| `--chart-3` | Chart series 3 | `#cb724d` | `#d89579` |
-| `--chart-4` | Chart series 4 | `#20566A` | `#91B9D8` |
-| `--chart-5` | Chart series 5 | `#4088bf` | `#CBB29C` |
-| `--chart-6` | Chart series 6 | `#9b724b` | `#86b695` |
-| `--chart-7` | Chart series 7 | `#172F49` | `#648aa4` |
-| `--chart-8` | Chart series 8 | `#8770a9` | `#9585AD` |
-| `--chart-success` | Chart success | `#4D9996` | `#7bb6b4` |
-| `--chart-failure` | Chart failure | `#c66239` | `#d38869` |
-
-How they are derived: light page = Mist × Warm Sand blend at lower lightness (comfortable, never white); cards = Soft
-Beige; tonal cards = the approved tints; text = Deep Navy and Navy/Sky/Petrol tones; status = darker tones of Teal (success),
-Warm Sand (warning) and Muted Peach (danger). Dark page = Dark Navy, sidebar = Deep Midnight, cards = Petrol Surface and
-lighter Petrol/Soft-Sky blends, primary = Blue Accent blended toward Soft Sky so dark text on it passes AA.
-
-## Contrast (WCAG 2.1)
-
-| Check | Light | Dark |
+| Family | Values | Role |
 |---|---|---|
-| `foreground` on `background` | 8.5:1 | 12.5:1 |
-| `foreground` on `surface` | 10.2:1 | 9.3:1 |
-| `muted-foreground` on `surface` | 6.4:1 | 6.6:1 |
-| `subtle-foreground` on `background` | 5.0:1 | 8.7:1 |
-| `primary-ink` on `surface` | 6.4:1 | 6.4:1 |
-| `primary-foreground` on `primary` | 4.8:1 | 5.4:1 |
-| `success` on `success-soft` | 6.4:1 | 5.2:1 |
-| `warning` on `warning-soft` | 5.4:1 | 4.6:1 |
-| `danger` on `danger-soft` | 4.6:1 | 6.1:1 |
+| Portal blue | #3B66F6 (dark #7A9BFF) | Start of the signature gradient, information |
+| Purple | Vibrant #8B5CF6, Electric #A855F7, Deep #7C3AED / #6D28D9, Soft Lilac #D8B4FE, Muted Lavender #B6A8CA, Deep Lavender #9585AD | Identity: primary action gradient end, links, active and selected states, focus, eyebrows, illumination |
+| Green | Deep #0B3D2E, Green #1F7A4D, Mint #A7E3C2 (dark #6FD3A0) | Brand anchor: employer identity, positive states, secondary brand action |
+| Warm neutrals | Off-white #F7F4E9, ivory #FBF8F0 / #FFFDF8, warm grey #EFE9DC | Light-mode grounds and surfaces (never a pure-white canvas) |
+| Gold | #D4AF37 (ink #7A5A0C) | Rare highlights only: items that need attention, links on green panels |
+| Indigo | #211C4A → #3A3478 | The deep layer (sidebar, spotlights) and the dark theme's surfaces |
 
-Every text role is ≥ 4.5:1 on the page, card, elevated and sidebar surfaces in both themes (checked by script during the
-change). The light primary button (white on Professional Blue) is 4.75:1.
+**Signature:** the blue → violet portal gradient (`--portal-gradient`, `.btn-primary`, `.fill-signature`,
+`.text-portal`) — primary buttons, progress, light trails in the 3D city.
 
-## Usage rules
+## Two personalities
 
-- Blue (Professional Blue / Blue Accent) is the primary action and the most recognisable colour.
-- Tonal cards carry meaning: blue = opportunities/primary metric, sage = done/positive, peach = needs action,
-  mist = growth/skills, sand = neutral context, teal = secondary insight, lavender = rare (AI notes only).
-- Status is never shown by colour alone (labels/icons accompany it).
-- The 3D landing scene uses the same palette (sky Midnight → Petrol in dark, Sky/Sand in light; water Sky Blue/Petrol;
-  portal Professional Blue). Posters in `public/city/` are rendered from that scene.
+**Light — warm editorial.** Off-white page, ivory cards, warm-grey secondary surfaces, lavender-lit section bands
+(`.section-lavender`), a deep indigo sidebar and candidate spotlight, a deep green employer panel (`.panel-green`).
+Text is deep indigo (#1F1B33), links and active states violet.
+
+**Dark — luminous indigo, never near-black.** Page #1C2045, cards #2A3060, raised #343B70, violet-tinted
+#272456 / #2E2A5C. Layers get lighter as they rise; the `.ink` spotlight is the *lightest* violet layer. Violet and
+blue light (`.ink-aura`) give depth; green becomes mint.
+
+## Semantic tokens (light / dark)
+
+| Token | Light | Dark |
+|---|---|---|
+| `--background` / `--background-2` | #f7f4e9 / #fbf8f0 | #1c2045 / #232850 |
+| `--surface` / `--surface-elevated` / `--surface-2` | #fffdf8 / #ffffff / #efe9dc | #2a3060 / #343b70 / #272456 |
+| `--surface-violet`, `--section-tint` | #f3eefa, #f1ecf7 | #2e2a5c, #262456 |
+| `--ink-bg` (deep layer) | #211c4a | #2e2a5c |
+| `--foreground` / `--muted-foreground` / `--subtle-foreground` | #1f1b33 / #4a4560 / #5f5975 | #f3f0fb / #cfc8e6 / #b2aacf |
+| `--border` / `--border-strong` | #e4dccb / #c9bca3 | #3e4580 / #525a9a |
+| `--primary` (solid) / `--primary-foreground` | #5b3fe0 / #ffffff | #a58cf8 / #140f2e |
+| `--primary-blue` → `--primary-violet` (gradient) | #3b66f6 → #7c3aed | #7a9bff → #b58cf8 |
+| `--primary-ink` (links, active text) | #6d28d9 | #d4bbff |
+| `--accent` / `--accent-ink` (green) | #1f7a4d / #17643f | #6fd3a0 / #9ee0bc |
+| `--success` on `--success-soft` | #17643f on #e2f3e9 | #9ee0bc on #1e4a3e |
+| `--warning` on `--warning-soft` | #7a5a0c on #f7edcf | #e9cf7a on #4a3f22 |
+| `--danger` on `--danger-soft` | #a8331f on #fbe3dd | #ffb4a6 on #4e2a30 |
+| `--info` on `--info-soft` | #2f48c4 on #e6eafd | #a9c1ff on #2b3a78 |
+| `--ring` (focus) | #7c3aed | #d8b4fe |
+| `--chart-1…8` | violet, blue, green, gold, lilac, mint, indigo, sand | lighter steps of the same |
+
+Single-series charts use one colour; categorical colours are for categories only.
+
+## Contrast (WCAG 2.1, checked by script)
+
+Every text role is ≥ 4.5:1 on every surface of its theme, on the indigo deep layer and on the green panel. Buttons:
+white on #3B66F6 4.75:1 and on #7C3AED 5.70:1; dark text on the dark-mode gradient ends 7.0:1; white on deep green
+12.2:1. Status pairs 5.4–7.3:1.
+
+## Visual language
+
+Personality comes from composition, typography, colour and a few intentional accents — never from graphics behind
+content.
+
+- **No watermarks.** Do not place the logo or portal symbol (or any large decorative shape) behind dashboard content,
+  sidebars, navigation, tables, charts, profiles or text, and do not repeat it as a pattern. No grid or technical
+  textures either.
+- **Where the logo belongs:** the navigation lockup, the footer, the sign-in screens, the landing hero and the app
+  icon.
+- **The portal illustration** (`components/brand/portal-art.tsx`, drawn only from the logo geometry) is reserved for
+  deliberate hero compositions where nothing sits on top of it — today only the sign-in side panel; the landing hero
+  uses the 3D city.
+- Soft colour light (`.ink-aura`, `.section-lavender`) may give panels depth; it carries no shapes.
+
+Typography (identity board): Manrope for English and IBM Plex Sans Arabic for Arabic, for headings and text alike.

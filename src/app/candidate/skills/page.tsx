@@ -32,8 +32,8 @@ export default async function SkillsPage() {
         eyebrow={t.candidate.nav.skills}
         title={L("My skills", "مهاراتي")}
         description={L(
-          "Grouped by evidence: demonstrated skills count most, CV and self-declared skills are claims until shown.",
-          "مجمّعة حسب الدليل: المهارات المُثبتة هي الأقوى، ومهارات السيرة والتصريح الذاتي ادعاءات حتى تُثبت.",
+          "Grouped by evidence: demonstrated skills count most, CV and self-declared skills are claims until shown",
+          "مجمّعة حسب الدليل: المهارات المُثبتة هي الأقوى، ومهارات السيرة والتصريح الذاتي ادعاءات حتى تُثبت",
         )}
       />
       <Card tone="mist">

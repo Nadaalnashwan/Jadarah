@@ -24,7 +24,18 @@ export const ASSESSMENT_FILE_RULES: FileRules = {
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ["docx"],
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ["xlsx"],
     "application/vnd.openxmlformats-officedocument.presentationml.presentation": ["pptx"],
+    "application/msword": ["doc"],
   },
+};
+
+/** Task Solution Files (migration 0032): same types and size as answers, up to 10 files per submission. */
+export const TASK_SOLUTION_RULES: FileRules = { ...ASSESSMENT_FILE_RULES, maxFiles: 10 };
+
+/** Windows browsers report ZIP archives under legacy types; storage only accepts application/zip. */
+const MIME_ALIASES: Record<string, string> = {
+  "application/x-zip-compressed": "application/zip",
+  "application/zip-compressed": "application/zip",
+  "application/x-zip": "application/zip",
 };
 
 export const INTERVIEW_FILE_RULES: FileRules = {
@@ -44,7 +55,8 @@ export const INTERVIEW_FILE_RULES: FileRules = {
 /** Browsers sometimes report an empty type (e.g. .md, .csv on Windows): infer from the extension. */
 export function resolveMime(file: { name: string; type: string }, rules: FileRules): string | null {
   const ext = extensionOf(file.name);
-  if (file.type && rules.mimes[file.type]?.includes(ext)) return file.type;
+  const type = MIME_ALIASES[file.type] ?? file.type;
+  if (type && rules.mimes[type]?.includes(ext)) return type;
   if (!file.type || file.type === "application/octet-stream")
     for (const [mime, exts] of Object.entries(rules.mimes)) if (exts.includes(ext)) return mime;
   return null;
@@ -92,10 +104,10 @@ export function problemMessage(p: FileProblem, rules: FileRules, locale: "ar" | 
   const mb = Math.round(rules.maxBytes / 1024 / 1024);
   const types = [...new Set(Object.values(rules.mimes).flat())].map((e) => e.toUpperCase()).join(", ");
   const m: Record<FileProblem, [string, string]> = {
-    too_large: [`The file is larger than ${mb} MB.`, `حجم الملف أكبر من ${mb} ميغابايت.`],
-    empty: ["The file is empty.", "الملف فارغ."],
-    type: [`This file type isn't accepted. Allowed: ${types}.`, `نوع الملف غير مقبول. الأنواع المسموح بها: ${types}.`],
-    too_many: [`You can attach up to ${rules.maxFiles} files.`, `يمكنك إرفاق ${rules.maxFiles} ملفات كحد أقصى.`],
+    too_large: [`The file is larger than ${mb} MB.`, `حجم الملف أكبر من ${mb} ميغابايت`],
+    empty: ["The file is empty", "الملف فارغ"],
+    type: [`This file type isn't accepted. Allowed: ${types}`, `نوع الملف غير مقبول. الأنواع المسموح بها: ${types}`],
+    too_many: [`You can attach up to ${rules.maxFiles} files.`, `يمكنك إرفاق ${rules.maxFiles} ملفات كحد أقصى`],
   };
   return m[p][locale === "ar" ? 1 : 0];
 }

@@ -29,20 +29,20 @@ export default async function DiscoverPage() {
         eyebrow={L("Career discovery", "اكتشاف المسار")}
         title={L("Try the field before you choose it", "جرّب المجال قبل تختاره")}
         description={L(
-          "Fields that fit what your profile shows, why they fit, what's missing — and a short real-world task to feel what the work is like.",
-          "مجالات تناسب ما يُظهره ملفك، ولماذا تناسبك، وما ينقصك، ومهمة قصيرة واقعية لتعيش طبيعة العمل.",
+          "Fields that fit what your profile shows, why they fit, what's missing — and a short real-world task to feel what the work is like",
+          "مجالات تناسب ما يُظهره ملفك، ولماذا تناسبك، وما ينقصك، ومهمة قصيرة واقعية لتعيش طبيعة العمل",
         )}
       />
       <section className="mb-8" aria-labelledby="rec-title">
         <h2 id="rec-title" className="mb-3 flex items-center gap-2 font-bold">
-          <Compass className="text-primary size-5 dark:text-lavender" /> {L("Recommended for you", "مقترحة لك")}
+          <Compass className="text-primary size-5" /> {L("Recommended for you", "مقترحة لك")}
         </h2>
         {d.recommendations.length === 0 ? (
           <Card>
             <CardBody className="text-muted flex flex-wrap items-center justify-between gap-3 text-sm">
               {d.hasSkills
-                ? L("Your current skills don't overlap with the fields that have open roles yet. Explore any field below.", "لا تتقاطع مهاراتك الحالية بعد مع المجالات التي لديها وظائف متاحة. استكشف أي مجال أدناه.")
-                : L("Add skills (or upload your CV) to get recommendations based on your profile.", "أضف مهاراتك (أو ارفع سيرتك) لتحصل على اقتراحات مبنية على ملفك.")}
+                ? L("Your current skills don't overlap with the fields that have open roles yet. Explore any field below", "لا تتقاطع مهاراتك الحالية بعد مع المجالات التي لديها وظائف متاحة. استكشف أي مجال أدناه")
+                : L("Add skills (or upload your CV) to get recommendations based on your profile", "أضف مهاراتك (أو ارفع سيرتك) لتحصل على اقتراحات مبنية على ملفك")}
               <Button asChild size="sm" variant="outline">
                 <Link href="/candidate/cvs">{L("Upload CV", "رفع السيرة")}</Link>
               </Button>
@@ -59,10 +59,10 @@ export default async function DiscoverPage() {
                     description={
                       r.matched.length
                         ? L(
-                            `You already have ${r.matched.length} of the skills open roles in this field ask for.`,
-                            `لديك ${r.matched.length} من المهارات التي تطلبها الوظائف المتاحة في هذا المجال.`,
+                            `You already have ${r.matched.length} of the skills open roles in this field ask for`,
+                            `لديك ${r.matched.length} من المهارات التي تطلبها الوظائف المتاحة في هذا المجال`,
                           )
-                        : L("Matches an interest in your profile.", "يطابق اهتمامًا مذكورًا في ملفك.")
+                        : L("Matches an interest in your profile", "يطابق اهتمامًا مذكورًا في ملفك")
                     }
                     action={r.interest ? <Badge tone="info">{L("Your interest", "من اهتماماتك")}</Badge> : undefined}
                   />
@@ -99,7 +99,7 @@ export default async function DiscoverPage() {
                         <ul className="flex flex-col gap-1">
                           {r.jobs.map((j) => (
                             <li key={j.id}>
-                              <Link href={`/candidate/jobs/${j.id}`} className="text-primary inline-flex items-center gap-1 font-semibold dark:text-lavender">
+                              <Link href={`/candidate/jobs/${j.id}`} className="text-primary inline-flex items-center gap-1 font-semibold">
                                 {j.title} <ArrowUpRight className="size-3.5" />
                               </Link>
                             </li>
@@ -141,7 +141,7 @@ export default async function DiscoverPage() {
                 {f.task && <> · {f.task.minutes} {L("min task", "دقيقة للمهمة")}</>}
               </p>
               {f.task && (
-                <Link href={`/candidate/discover/${f.task.slug}`} className="text-primary mt-auto text-sm font-semibold dark:text-lavender">
+                <Link href={`/candidate/discover/${f.task.slug}`} className="text-primary mt-auto text-sm font-semibold">
                   {f.task.title} →
                 </Link>
               )}
@@ -152,7 +152,7 @@ export default async function DiscoverPage() {
 
       {d.attempts.length > 0 && (
         <Card>
-          <CardHeader title={L("Your exploratory tasks", "مهامك الاستكشافية")} description={L("Private to you — never shared with employers.", "خاصة بك — لا تُشارك مع أي جهة توظيف.")} />
+          <CardHeader title={L("Your exploratory tasks", "مهامك الاستكشافية")} description={L("Private to you — never shared with employers", "خاصة بك — لا تُشارك مع أي جهة توظيف")} />
           <CardBody>
             <ul className="flex flex-col gap-2 text-sm">
               {d.attempts.map((a) => (

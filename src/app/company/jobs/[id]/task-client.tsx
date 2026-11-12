@@ -67,14 +67,14 @@ export function TaskCreationPaths({ jobId, templates }: { jobId: string; templat
   return (
     <div className="grid gap-4 lg:grid-cols-3">
       <section className="surface-card flex flex-col gap-3 p-5">
-        <span className="bg-accent-soft text-primary grid size-10 place-items-center rounded-xl dark:text-lavender">
+        <span className="bg-accent-soft text-primary grid size-10 place-items-center rounded-xl">
           <Sparkles className="size-5" />
         </span>
         <h2 className="font-bold">{L("AI-assisted draft", "مسودة بمساعدة الذكاء الاصطناعي")}</h2>
         <p className="text-muted text-sm">
           {L(
-            "Generates a realistic task, deliverables and a rubric from this job. You review and edit everything before publishing.",
-            "يولّد مهمة واقعية ومخرجات ومعايير تقييم من بيانات الوظيفة. تراجع كل شيء وتعدّله قبل النشر.",
+            "Generates a realistic task, deliverables and a rubric from this job. You review and edit everything before publishing",
+            "يولّد مهمة واقعية ومخرجات ومعايير تقييم من بيانات الوظيفة. تراجع كل شيء وتعدّله قبل النشر",
           )}
         </p>
         <Button asChild className="mt-auto">
@@ -88,8 +88,8 @@ export function TaskCreationPaths({ jobId, templates }: { jobId: string; templat
         <h2 className="font-bold">{L("Create manually", "إنشاء يدوي")}</h2>
         <p className="text-muted text-sm">
           {L(
-            "Start from an empty draft prefilled with the job title and description, then add your own items.",
-            "ابدأ بمسودة فارغة تحمل مسمى الوظيفة ووصفها، ثم أضف بنودك الخاصة.",
+            "Start from an empty draft prefilled with the job title and description, then add your own items",
+            "ابدأ بمسودة فارغة تحمل مسمى الوظيفة ووصفها، ثم أضف بنودك الخاصة",
           )}
         </p>
         <Button
@@ -109,12 +109,12 @@ export function TaskCreationPaths({ jobId, templates }: { jobId: string; templat
         <h2 className="font-bold">{L("From a template", "من قالب جاهز")}</h2>
         <p className="text-muted text-sm">
           {L(
-            "Copy a published task into an editable draft for this job.",
-            "انسخ مهمة منشورة إلى مسودة قابلة للتعديل لهذه الوظيفة.",
+            "Copy a published task into an editable draft for this job",
+            "انسخ مهمة منشورة إلى مسودة قابلة للتعديل لهذه الوظيفة",
           )}
         </p>
         {templates.length === 0 ? (
-          <p className="text-subtle text-sm">{L("No published templates yet.", "لا توجد قوالب منشورة بعد.")}</p>
+          <p className="text-subtle text-sm">{L("No published templates yet", "لا توجد قوالب منشورة بعد")}</p>
         ) : (
           <ul className="flex flex-col gap-2">
             {shown.map((t) => (

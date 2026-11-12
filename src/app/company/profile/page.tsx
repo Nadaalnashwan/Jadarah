@@ -34,7 +34,7 @@ export default async function CompanyProfilePage() {
             <CompanyStatusBadge status={c!.status} t={t} />
             <Link
               href="/company/verification"
-              className="text-primary dark:text-lavender text-sm font-semibold"
+              className="text-primary text-sm font-semibold"
             >
               {L("Verification", "التحقق")}
             </Link>
@@ -45,8 +45,8 @@ export default async function CompanyProfilePage() {
         <CardHeader
           title={L("Company identity", "هوية الشركة")}
           description={L(
-            "How candidates recognise you across JADARAH: logo, cover, colours and a short description.",
-            "كيف يتعرّف عليك المرشحون في جدارة: الشعار والغلاف والألوان ووصف مختصر.",
+            "How candidates recognise you across JADARAH: logo, cover, colours and a short description",
+            "كيف يتعرّف عليك المرشحون في جدارة: الشعار والغلاف والألوان ووصف مختصر",
           )}
         />
         <CardBody>
@@ -69,8 +69,8 @@ export default async function CompanyProfilePage() {
         <CardHeader
           title={L("Company details", "بيانات الشركة")}
           description={L(
-            "Names, description and public contact details. Only add contact details meant for the public.",
-            "الأسماء والوصف وبيانات التواصل العامة. أضف فقط بيانات التواصل المخصصة للعموم.",
+            "Names, description and public contact details. Only add contact details meant for the public",
+            "الأسماء والوصف وبيانات التواصل العامة. أضف فقط بيانات التواصل المخصصة للعموم",
           )}
         />
         <CardBody>

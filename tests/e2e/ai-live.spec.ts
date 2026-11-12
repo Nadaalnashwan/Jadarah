@@ -70,7 +70,7 @@ test("candidate: job detail shows semantic similarity as labelled AI inference",
   await page.goto("/candidate/jobs");
   await page.locator('a[href^="/candidate/jobs/"]').first().click();
   await expect(page.getByText("Overall fit with the role")).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText("AI inference — context only, not part of the score.")).toBeVisible();
+  await expect(page.getByText("AI inference — context only, not part of the score")).toBeVisible();
 });
 
 test("company: AI job draft (Gemini) fills the form for human review", async ({ page }) => {
@@ -132,7 +132,7 @@ test("company: job → AI-generated assessment with a job-tailored, editable rub
   await expect(firstCriterion).not.toHaveValue("");
   await firstCriterion.fill("Technical accuracy (edited)");
   await page.getByRole("button", { name: "Save rubric" }).click();
-  await expect(page.getByText("Rubric saved.")).toBeVisible();
+  await expect(page.getByText("Rubric saved")).toBeVisible();
   await page.reload();
   await expect(page.getByLabel("Criterion (English)").first()).toHaveValue("Technical accuracy (edited)");
 });
@@ -164,7 +164,7 @@ test("company: Final Candidate Evaluation Report with AI-assisted recommendation
   const started = Date.now();
   await page.getByRole("button", { name: /Generate AI-assisted analysis|Regenerate AI analysis/ }).click();
   // Fresh result: wait for this run's confirmation (the previous report may already be on screen).
-  await expect(page.getByText("AI analysis ready. Review it before deciding.")).toBeVisible({ timeout: 120_000 });
+  await expect(page.getByText("AI analysis ready. Review it before deciding")).toBeVisible({ timeout: 120_000 });
   await expect(page.getByText("AI recommendation")).toBeVisible();
   console.log(`final_evaluation UI round-trip ${Date.now() - started} ms`);
   await expect(page.getByText(/Strengths \(evidence-backed\)/)).toBeVisible();

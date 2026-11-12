@@ -6,6 +6,7 @@ import { requireCompanyMember } from "@/lib/auth/session";
 import { localizeError, type ActionResult } from "@/lib/errors";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
+import { copyRubrics, relinkQuestionRubric } from "./rubric-copy";
 import { AIUnavailableError, generateJSON } from "@/services/ai/provider";
 
 const DEFAULT_RUBRIC = [
@@ -33,7 +34,7 @@ const metaSchema = z.object({
 export async function createAssessment(_: ActionResult | null, form: FormData): Promise<ActionResult> {
   const { s, cid, supabase, locale } = await ctx();
   const parsed = metaSchema.safeParse(Object.fromEntries(form));
-  if (!parsed.success) return { ok: false, error: locale === "ar" ? "أكمل الحقول." : "Complete the fields." };
+  if (!parsed.success) return { ok: false, error: locale === "ar" ? "أكمل الحقول" : "Complete the fields" };
   const { data, error } = await supabase
     .from("assessments")
     .insert({ ...parsed.data, company_id: cid, created_by: s.userId, status: "draft" })
@@ -79,16 +80,8 @@ export async function cloneAssessment(sourceId: string): Promise<void> {
     })
     .select("id")
     .single();
-  const { data: rub } = await supabase
-    .from("assessment_rubrics")
-    .insert({
-      assessment_id: copy!.id,
-      title_en: src.assessment_rubrics[0]?.title_en ?? "Rubric",
-      title_ar: src.assessment_rubrics[0]?.title_ar ?? "المعايير",
-      criteria: src.assessment_rubrics[0]?.criteria ?? DEFAULT_RUBRIC,
-    })
-    .select("id")
-    .single();
+  // Every rubric is copied and each question keeps ITS rubric (question-scoped rubrics are re-linked below).
+  const rubricMap = await copyRubrics(supabase, src.assessment_rubrics, copy!.id, DEFAULT_RUBRIC);
   for (const q of src.assessment_questions) {
     const { data: nq } = await supabase
       .from("assessment_questions")
@@ -100,12 +93,13 @@ export async function cloneAssessment(sourceId: string): Promise<void> {
         points: q.points,
         position: q.position,
         config: q.config,
-        rubric_id: q.rubric_id ? rub!.id : null,
+        rubric_id: q.rubric_id ? (rubricMap.get(q.rubric_id) ?? null) : null,
         explanation_en: q.explanation_en,
         explanation_ar: q.explanation_ar,
       })
       .select("id")
       .single();
+    if (nq && q.rubric_id) await relinkQuestionRubric(supabase, src.assessment_rubrics, q.id, rubricMap.get(q.rubric_id), nq.id);
     if (q.assessment_options.length)
       await supabase
         .from("assessment_options")
@@ -154,7 +148,7 @@ export async function addQuestion(
     return {
       ok: false,
       error:
-        locale === "ar" ? "أكمل نص السؤال بالعربية والإنجليزية." : "Write the question in both languages.",
+        locale === "ar" ? "أكمل نص السؤال بالعربية والإنجليزية" : "Write the question in both languages",
     };
   const v = parsed.data;
   const objective = ["multiple_choice", "multiple_select", "true_false"].includes(v.type);
@@ -176,14 +170,14 @@ export async function addQuestion(
   if (objective) {
     const nCorrect = options.filter((o) => o.correct).length;
     if (options.length < 2)
-      return { ok: false, error: locale === "ar" ? "أضف خيارين على الأقل." : "Add at least two options." };
+      return { ok: false, error: locale === "ar" ? "أضف خيارين على الأقل" : "Add at least two options" };
     if (nCorrect === 0 || (v.type !== "multiple_select" && nCorrect !== 1))
       return {
         ok: false,
         error:
           locale === "ar"
-            ? "حدّد الإجابة الصحيحة (واحدة فقط للاختيار المفرد)."
-            : "Mark the correct answer (exactly one for single choice).",
+            ? "حدّد الإجابة الصحيحة (واحدة فقط للاختيار المفرد)"
+            : "Mark the correct answer (exactly one for single choice)",
       };
   }
   const { data: rub } = await supabase
@@ -255,7 +249,7 @@ export async function setAssessmentStatus(
   if (status === "published" && !count)
     return {
       ok: false,
-      error: locale === "ar" ? "أضف سؤالًا واحدًا على الأقل." : "Add at least one question.",
+      error: locale === "ar" ? "أضف سؤالًا واحدًا على الأقل" : "Add at least one question",
     };
   const { error } = await supabase
     .from("assessments")
@@ -305,23 +299,28 @@ const rubricSchema = z
       name_ar: z.string().trim().min(2).max(60),
       description_en: z.string().trim().max(240).optional().default(""),
       description_ar: z.string().trim().max(240).optional().default(""),
-      max_points: z.number().int().min(1).max(10),
+      // Half points allowed: a criterion shared by several tasks is split between their rubrics.
+      max_points: z.number().min(0.5).max(10).refine((n) => Number.isInteger(n * 2)),
     }),
   )
   .min(1)
   .max(8);
 
 /** Edit the open-answer rubric of a DRAFT assessment (human review of AI or default criteria). */
-export async function updateRubric(assessmentId: string, criteria: unknown): Promise<ActionResult> {
+export async function updateRubric(assessmentId: string, criteria: unknown, rubricId?: string): Promise<ActionResult> {
   const { supabase, locale } = await ctx();
   const L = (en: string, ar: string) => (locale === "ar" ? ar : en);
   const parsed = rubricSchema.safeParse(criteria);
-  if (!parsed.success) return { ok: false, error: L("Check each criterion (name, 1–10 points).", "تحقق من كل معيار (الاسم، 1–10 نقاط).") };
+  if (!parsed.success) return { ok: false, error: L("Check each criterion (name, 0.5–10 points)", "تحقق من كل معيار (الاسم، 0.5–10 نقاط)") };
   if (new Set(parsed.data.map((c) => c.key)).size !== parsed.data.length)
-    return { ok: false, error: L("Criteria must be unique.", "يجب ألا تتكرر المعايير.") };
+    return { ok: false, error: L("Criteria must be unique", "يجب ألا تتكرر المعايير") };
   const { data: a } = await supabase.from("assessments").select("status").eq("id", assessmentId).single();
-  if (a?.status !== "draft") return { ok: false, error: L("Only drafts can be edited.", "يمكن تعديل المسودات فقط.") };
-  const { data: rub } = await supabase.from("assessment_rubrics").select("id").eq("assessment_id", assessmentId).limit(1).maybeSingle();
+  if (a?.status !== "draft") return { ok: false, error: L("Only drafts can be edited", "يمكن تعديل المسودات فقط") };
+  // A question's own rubric when given; otherwise the assessment-wide rubric (the one not tied to a question).
+  const { data: rub } = rubricId
+    ? await supabase.from("assessment_rubrics").select("id").eq("id", rubricId).eq("assessment_id", assessmentId).maybeSingle()
+    : await supabase.from("assessment_rubrics").select("id").eq("assessment_id", assessmentId).is("question_id", null).limit(1).maybeSingle();
+  if (rubricId && !rub) return { ok: false, error: L("Not found", "غير موجود") };
   const { error } = rub
     ? await supabase.from("assessment_rubrics").update({ criteria: parsed.data }).eq("id", rub.id)
     : await supabase.from("assessment_rubrics").insert({
@@ -332,7 +331,7 @@ export async function updateRubric(assessmentId: string, criteria: unknown): Pro
       });
   if (error) return { ok: false, error: localizeError(error, locale) };
   revalidatePath(`/company/assessments/${assessmentId}`);
-  return { ok: true, message: L("Rubric saved.", "حُفظت المعايير.") };
+  return { ok: true, message: L("Rubric saved", "حُفظت المعايير") };
 }
 
 /**
@@ -354,7 +353,7 @@ export async function generateQuestionsWithAI(
       .eq("id", jobId)
       .eq("company_id", cid)
       .maybeSingle();
-    if (!job) return { ok: false, error: locale === "ar" ? "الوظيفة غير موجودة." : "Job not found." };
+    if (!job) return { ok: false, error: locale === "ar" ? "الوظيفة غير موجودة" : "Job not found" };
     jobBrief = `Job: ${job.title_en} (${job.experience_level}, ${job.min_years}+ years).
 Required skills: ${job.job_skills.filter((x) => x.importance === "required").map((x) => `${x.skill?.name_en} (level ${x.min_level}/5)`).join(", ")}.
 Preferred skills: ${job.job_skills.filter((x) => x.importance !== "required").map((x) => x.skill?.name_en).join(", ") || "none"}.
@@ -367,10 +366,10 @@ Responsibilities: ${(job.responsibilities_en ?? []).slice(0, 6).join("; ")}.`;
         userId: s.userId,
         system: `You write fair, practical bilingual (English + Modern Standard Arabic) hiring assessments.
 Objective questions need exactly-specified correct options. Open questions must be realistic work tasks for the role, not trivia.
-Avoid questions about protected characteristics. ${jobId ? "Also return a rubric (3-5 criteria, snake_case keys, max_points 1-10 each) for grading the open answers for THIS job." : ""}
+Avoid questions about protected characteristics. ${jobId ? "Also return a rubric (3-5 criteria, snake_case keys, max_points 1-10 each) for grading the open answers for THIS job" : ""}
 Return JSON {questions:[...]${jobId ? ", rubric:[...]" : ""}}.`,
         prompt: `${jobBrief}${topic.trim() ? `\nFocus: ${topic.slice(0, 200)}` : ""}
-Create 5 questions: 3 objective (multiple_choice/true_false/multiple_select) and 2 open (long_answer or case_study) with points.`,
+Create 5 questions: 3 objective (multiple_choice/true_false/multiple_select) and 2 open (long_answer or case_study) with points`,
       },
       aiQuestionsSchema,
     );
@@ -378,7 +377,7 @@ Create 5 questions: 3 objective (multiple_choice/true_false/multiple_select) and
     if (a?.status !== "draft")
       return {
         ok: false,
-        error: locale === "ar" ? "يمكن الإضافة إلى المسودات فقط." : "Questions can only be added to drafts.",
+        error: locale === "ar" ? "يمكن الإضافة إلى المسودات فقط" : "Questions can only be added to drafts",
       };
     const { data: rub } = await supabase
       .from("assessment_rubrics")
@@ -454,8 +453,8 @@ Create 5 questions: 3 objective (multiple_choice/true_false/multiple_select) and
       ok: true,
       message:
         locale === "ar"
-          ? `أُضيفت أسئلة مقترحة${rubricReplaced ? " ومعايير مخصّصة للوظيفة" : ""} إلى المسودة. راجعها قبل النشر.`
-          : `Draft questions${rubricReplaced ? " and a job-tailored rubric" : ""} added. Review before publishing.`,
+          ? `أُضيفت أسئلة مقترحة${rubricReplaced ? " ومعايير مخصّصة للوظيفة" : ""} إلى المسودة. راجعها قبل النشر`
+          : `Draft questions${rubricReplaced ? " and a job-tailored rubric" : ""} added. Review before publishing`,
     };
   } catch (e) {
     if (e instanceof AIUnavailableError)
@@ -464,12 +463,13 @@ Create 5 questions: 3 objective (multiple_choice/true_false/multiple_select) and
         error:
           e.message === "not_configured"
             ? locale === "ar"
-              ? "لم يُضبط مزوّد ذكاء اصطناعي على المنصة."
-              : "No AI provider is configured on this platform."
+              ? "لم يُضبط مزوّد ذكاء اصطناعي على المنصة"
+              : "No AI provider is configured on this platform"
             : locale === "ar"
-              ? "تعذّر توليد أسئلة صالحة."
-              : "The AI provider did not return usable questions.",
+              ? "تعذّر توليد أسئلة صالحة"
+              : "The AI provider did not return usable questions",
       };
     throw e;
   }
 }
+

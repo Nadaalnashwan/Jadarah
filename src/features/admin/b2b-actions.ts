@@ -33,7 +33,7 @@ export async function reviewAccessRequest(requestId: string, input: unknown): Pr
   if (error) return { ok: false, error: localizeError(error, locale) };
   kickEmailDispatch();
   revalidatePath("/admin/access-requests");
-  return p.data.decision === "approve" ? ok(locale, "Access approved.", "تمت الموافقة.") : ok(locale, "Request rejected.", "تم رفض الطلب.");
+  return p.data.decision === "approve" ? ok(locale, "Access approved", "تمت الموافقة") : ok(locale, "Request rejected", "تم رفض الطلب");
 }
 
 const provisionSchema = z.object({
@@ -50,7 +50,7 @@ const provisionSchema = z.object({
 export async function provisionCompany(_: ActionResult | null, form: FormData): Promise<ActionResult> {
   const { supabase, locale } = await ctx();
   const p = provisionSchema.safeParse(Object.fromEntries(form));
-  if (!p.success) return { ok: false, error: locale === "ar" ? "أكمل الاسم بالعربية والإنجليزية." : "Enter the name in Arabic and English." };
+  if (!p.success) return { ok: false, error: locale === "ar" ? "أكمل الاسم بالعربية والإنجليزية" : "Enter the name in Arabic and English" };
   const v = p.data;
   const { data, error } = await supabase.rpc("admin_provision_company", {
     p_name_en: v.name_en,
@@ -64,7 +64,7 @@ export async function provisionCompany(_: ActionResult | null, form: FormData): 
   if (error) return { ok: false, error: localizeError(error, locale) };
   revalidatePath("/admin/subscriptions");
   revalidatePath("/admin/companies");
-  return { ok: true, data: undefined, message: locale === "ar" ? "تمت تهيئة الجهة." : `Organization provisioned (${String(data).slice(0, 8)}).` };
+  return { ok: true, data: undefined, message: locale === "ar" ? "تمت تهيئة الجهة" : `Organization provisioned (${String(data).slice(0, 8)}).` };
 }
 
 const num = (v: unknown) => (v === "" || v === null || v === undefined ? null : Number(v));
@@ -95,8 +95,8 @@ export async function saveSubscription(companyId: string, _: ActionResult | null
       ok: false,
       error:
         locale === "ar"
-          ? "تحقق من التواريخ والقيم. الاشتراك التجريبي يجب أن تكون حالة دفعه «تجريبي»."
-          : "Check dates and values. Demonstration access must use payment status ‘demo’.",
+          ? "تحقق من التواريخ والقيم. الاشتراك التجريبي يجب أن تكون حالة دفعه «تجريبي»"
+          : "Check dates and values. Demonstration access must use payment status ‘demo’",
     };
   const { listed, accepts_access_requests, ...sub } = p.data;
   const { error } = await supabase.from("company_subscriptions").upsert({ company_id: companyId, ...sub }, { onConflict: "company_id" });
@@ -104,7 +104,7 @@ export async function saveSubscription(companyId: string, _: ActionResult | null
   const { error: cErr } = await supabase.from("company_profiles").update({ listed, accepts_access_requests }).eq("id", companyId);
   if (cErr) return { ok: false, error: localizeError(cErr, locale) };
   revalidatePath("/admin/subscriptions");
-  return ok(locale, "Subscription saved.", "حُفظ الاشتراك.");
+  return ok(locale, "Subscription saved", "حُفظ الاشتراك");
 }
 
 const paymentSchema = z.object({
@@ -119,14 +119,14 @@ const paymentSchema = z.object({
 export async function recordPayment(companyId: string, _: ActionResult | null, form: FormData): Promise<ActionResult> {
   const { supabase, locale } = await ctx();
   const p = paymentSchema.safeParse(Object.fromEntries(form));
-  if (!p.success) return { ok: false, error: locale === "ar" ? "أدخل المبلغ والتاريخ." : "Enter amount and date." };
+  if (!p.success) return { ok: false, error: locale === "ar" ? "أدخل المبلغ والتاريخ" : "Enter amount and date" };
   const { data: sub } = await supabase.from("company_subscriptions").select("id, is_demo").eq("company_id", companyId).maybeSingle();
   if (sub?.is_demo)
-    return { ok: false, error: locale === "ar" ? "لا تُسجَّل مدفوعات على وصول تجريبي." : "Payments can't be recorded on demonstration access." };
+    return { ok: false, error: locale === "ar" ? "لا تُسجَّل مدفوعات على وصول تجريبي" : "Payments can't be recorded on demonstration access" };
   const { error } = await supabase.from("company_payments").insert({ company_id: companyId, subscription_id: sub?.id ?? null, ...p.data });
   if (error) return { ok: false, error: localizeError(error, locale) };
   revalidatePath("/admin/subscriptions");
-  return ok(locale, "Payment recorded.", "سُجّلت الدفعة.");
+  return ok(locale, "Payment recorded", "سُجّلت الدفعة");
 }
 
 const hex = z.preprocess((v) => (v === "" ? null : v), z.string().regex(/^#[0-9A-Fa-f]{6}$/).nullable());
@@ -144,11 +144,11 @@ const brandSchema = z.object({
 export async function saveBrandProfile(companyId: string, _: ActionResult | null, form: FormData): Promise<ActionResult> {
   const { supabase, locale } = await ctx();
   const p = brandSchema.safeParse(Object.fromEntries(form));
-  if (!p.success) return { ok: false, error: locale === "ar" ? "تحقق من الألوان (#RRGGBB) والروابط." : "Check colours (#RRGGBB) and links." };
+  if (!p.success) return { ok: false, error: locale === "ar" ? "تحقق من الألوان (#RRGGBB) والروابط" : "Check colours (#RRGGBB) and links" };
   const { error } = await supabase
     .from("company_brand_profiles")
     .upsert({ company_id: companyId, ...p.data, updated_at: new Date().toISOString() }, { onConflict: "company_id" });
   if (error) return { ok: false, error: localizeError(error, locale) };
   revalidatePath("/admin/subscriptions");
-  return ok(locale, "Brand profile saved.", "حُفظت الهوية.");
+  return ok(locale, "Brand profile saved", "حُفظت الهوية");
 }

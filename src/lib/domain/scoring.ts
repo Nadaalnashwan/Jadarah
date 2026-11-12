@@ -65,3 +65,52 @@ export function passed(pct: number | null, passingScore: number): boolean | null
 function round2(n: number) {
   return Math.round(n * 100) / 100;
 }
+
+/**
+ * Overall result from per-question results. Mirror of public._recompute_submission_score() (migration 0033):
+ * a human review replaces that question's automatic score (it is never added on top), each question's points are its
+ * weight, and an open question without a human review is pending — it is never counted as 0 or as correct.
+ */
+export interface QuestionScoreInput {
+  points: number;
+  type: QuestionType;
+  config?: { accepted_answers?: unknown } | null;
+  /** Human-approved points, when a reviewer saved an evaluation for this question. */
+  reviewedPoints?: number | null;
+  /** Points set automatically at submission (objective questions). */
+  autoPoints?: number | null;
+}
+
+export interface SubmissionScore {
+  autoScore: number;
+  manualScore: number;
+  maxScore: number;
+  pending: number;
+  /** null while any question still needs a human review. */
+  percentage: number | null;
+}
+
+export function aggregateQuestionScores(questions: readonly QuestionScoreInput[]): SubmissionScore {
+  let autoScore = 0;
+  let manualScore = 0;
+  let maxScore = 0;
+  let pending = 0;
+  for (const q of questions) {
+    maxScore += q.points;
+    if (q.reviewedPoints !== null && q.reviewedPoints !== undefined) manualScore += q.reviewedPoints;
+    else if (isAutoScored(q.type, q.config)) autoScore += q.autoPoints ?? 0;
+    else pending += 1;
+  }
+  return {
+    autoScore: round2(autoScore),
+    manualScore: round2(manualScore),
+    maxScore,
+    pending,
+    percentage: pending === 0 ? percentage(autoScore + manualScore, maxScore) : null,
+  };
+}
+
+/** Open questions accept files (mirror of public.question_accepts_files). */
+export function questionAcceptsFiles(type: QuestionType): boolean {
+  return !OBJECTIVE_TYPES.includes(type);
+}

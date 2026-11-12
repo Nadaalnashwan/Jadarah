@@ -35,16 +35,16 @@ export default async function AcceptInvitationPage({
     body = (
       <p className="text-muted">
         {L(
-          "This invitation link isn't valid. Ask the company admin to send a new invitation.",
-          "رابط الدعوة غير صالح. اطلب من مدير الشركة إرسال دعوة جديدة.",
+          "This invitation link isn't valid. Ask the company admin to send a new invitation",
+          "رابط الدعوة غير صالح. اطلب من مدير الشركة إرسال دعوة جديدة",
         )}
       </p>
     );
   } else if (inv.state !== "pending") {
     const msg: Record<string, [string, string]> = {
-      accepted: ["This invitation has already been accepted.", "قُبلت هذه الدعوة مسبقًا."],
-      revoked: ["The company cancelled this invitation.", "ألغت الشركة هذه الدعوة."],
-      expired: ["This invitation has expired. Ask the company admin to send a new one.", "انتهت صلاحية هذه الدعوة. اطلب من مدير الشركة إرسال دعوة جديدة."],
+      accepted: ["This invitation has already been accepted", "قُبلت هذه الدعوة مسبقًا"],
+      revoked: ["The company cancelled this invitation", "ألغت الشركة هذه الدعوة"],
+      expired: ["This invitation has expired. Ask the company admin to send a new one", "انتهت صلاحية هذه الدعوة. اطلب من مدير الشركة إرسال دعوة جديدة"],
     };
     const m = msg[inv.state] ?? msg.expired;
     body = <p className="text-muted">{locale === "ar" ? m[1] : m[0]}</p>;
@@ -53,14 +53,14 @@ export default async function AcceptInvitationPage({
       <div className="flex flex-col gap-3">
         <p className="text-muted">
           {L(
-            `This invitation was sent to ${inv.email_masked}. You're signed in as ${session.email}.`,
-            `أُرسلت هذه الدعوة إلى ${inv.email_masked}، وأنت مسجّل الدخول بحساب ${session.email}.`,
+            `This invitation was sent to ${inv.email_masked}. You're signed in as ${session.email}`,
+            `أُرسلت هذه الدعوة إلى ${inv.email_masked}، وأنت مسجّل الدخول بحساب ${session.email}`,
           )}
         </p>
         <p className="text-muted text-sm">
           {L(
-            "Sign out, then sign in (or create an account) with the invited email address.",
-            "سجّل الخروج، ثم سجّل الدخول (أو أنشئ حسابًا) بالبريد الذي وصلته الدعوة.",
+            "Sign out, then sign in (or create an account) with the invited email address",
+            "سجّل الخروج، ثم سجّل الدخول (أو أنشئ حسابًا) بالبريد الذي وصلته الدعوة",
           )}
         </p>
         <form action={signOutAction}>
@@ -70,10 +70,10 @@ export default async function AcceptInvitationPage({
         </form>
       </div>
     );
-  } else if (!session.emailConfirmed) {
+  } else if (!session.emailConfirmed && !(await supabase.auth.getUser()).data.user?.email_confirmed_at) {
     body = (
       <p className="text-muted">
-        {L("Confirm your email address first, then open this link again.", "أكّد بريدك الإلكتروني أولًا، ثم افتح هذا الرابط مجددًا.")}
+        {L("Confirm your email address first, then open this link again", "أكّد بريدك الإلكتروني أولًا، ثم افتح هذا الرابط مجددًا")}
       </p>
     );
   } else {
@@ -81,8 +81,8 @@ export default async function AcceptInvitationPage({
       <form action={acceptInvitationByToken.bind(null, token!)} className="flex flex-col gap-3">
         <p className="text-muted">
           {L(
-            "Accepting gives you access to this organization's JADARAH workspace with the role shown.",
-            "بقبول الدعوة تحصل على صلاحية الوصول إلى مساحة عمل هذه الجهة على جدارة بالدور الموضح.",
+            "Accepting gives you access to this organization's JADARAH workspace with the role shown",
+            "بقبول الدعوة تحصل على صلاحية الوصول إلى مساحة عمل هذه الجهة على جدارة بالدور الموضح",
           )}
         </p>
         <Button type="submit" size="lg">
@@ -98,7 +98,7 @@ export default async function AcceptInvitationPage({
       <h1 className="editorial text-3xl font-extrabold">{L("Team invitation", "دعوة للانضمام إلى فريق")}</h1>
       {sp.error && (
         <p role="alert" className="text-danger text-sm">
-          {L("That invitation could not be accepted.", "تعذّر قبول تلك الدعوة.")}
+          {L("That invitation could not be accepted", "تعذّر قبول تلك الدعوة")}
         </p>
       )}
       <Card>

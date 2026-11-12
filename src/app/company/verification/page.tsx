@@ -38,8 +38,8 @@ export default async function VerificationPage() {
             <CardHeader
               title={L("Submit verification", "إرسال طلب التحقق")}
               description={L(
-                "Commercial registration and supporting documents (PDF or image, private).",
-                "السجل التجاري والمستندات الداعمة (PDF أو صورة، خاصة).",
+                "Commercial registration and supporting documents (PDF or image, private)",
+                "السجل التجاري والمستندات الداعمة (PDF أو صورة، خاصة)",
               )}
             />
             <CardBody>
@@ -51,7 +51,7 @@ export default async function VerificationPage() {
           <CardHeader title={L("History", "السجل")} />
           <CardBody>
             {(requests ?? []).length === 0 ? (
-              <p className="text-subtle text-sm">{L("No submissions yet.", "لا توجد طلبات بعد.")}</p>
+              <p className="text-subtle text-sm">{L("No submissions yet", "لا توجد طلبات بعد")}</p>
             ) : (
               <ul className="flex flex-col gap-3">
                 {requests!.map((r) => (

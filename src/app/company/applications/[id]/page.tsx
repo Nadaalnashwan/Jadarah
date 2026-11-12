@@ -10,15 +10,16 @@ import { canCreateInterview, employerTargets, type ApplicationStatus } from "@/l
 import { formatDate, formatDateTime, formatNumber, pick, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
-import { assessmentFileUrl } from "@/features/assessments/file-actions";
-import { SignedFileLink } from "@/features/assessments/file-download";
+import { isAutoScored, type QuestionType } from "@/lib/domain/scoring";
+import { taskRefsFromGuide } from "@/lib/domain/question-evaluation";
+import { QuestionReviewPanel } from "./question-review";
+import { buildQuestionViews, type EvalExtra, type FileRow, type HistoryRow } from "./question-views";
 import { matchJob } from "@/services/candidate";
 import { withSemantics } from "@/services/semantic";
 import type { CandidateSkillRecord } from "@/lib/domain/matching";
 import {
   AssignAssessmentForm,
   CvButton,
-  EvaluateAnswerForm,
   InterviewForm,
   NoteForm,
   ShareFeedbackForm,
@@ -94,7 +95,7 @@ export default async function CompanyApplicationDetail({
     supabase
       .from("assessment_assignments")
       .select(
-        "id, status, due_at, assessment:assessments(id, title_en, title_ar, assessment_questions(id, type, prompt_en, prompt_ar, points, config, rubric:assessment_rubrics(criteria))), submission:assessment_submissions(id, status, auto_score, manual_score, max_score, percentage, needs_review, candidate_feedback, feedback_shared, assessment_answers(question_id, text_answer, points_awarded, is_correct), assessment_evaluations(question_id, points, comments))",
+        "id, status, due_at, assessment:assessments(id, title_en, title_ar, assessment_questions(id, type, prompt_en, prompt_ar, points, position, config, rubric_id, rubric:assessment_rubrics(criteria), assessment_options(id, label_en, label_ar, is_correct))), submission:assessment_submissions(id, status, auto_score, manual_score, max_score, percentage, needs_review, candidate_feedback, feedback_shared, assessment_answers(question_id, text_answer, selected_option_ids, points_awarded, is_correct), assessment_evaluations(question_id, points, comments))",
       )
       .eq("application_id", id),
     supabase
@@ -117,13 +118,35 @@ export default async function CompanyApplicationDetail({
   // Submitted deliverables (file_upload answers). Separate query: if the files table is not available
   // yet, the rest of the page still renders.
   const submissionIds = (asg ?? []).map((x) => x.submission?.id).filter((x): x is string => Boolean(x));
-  const { data: answerFiles } = submissionIds.length
-    ? await supabase
-        .from("assessment_answer_files")
-        .select("id, submission_id, question_id, file_name, size_bytes")
-        .in("submission_id", submissionIds)
-        .order("created_at")
-    : { data: [] as { id: string; submission_id: string; question_id: string; file_name: string; size_bytes: number }[] };
+  // Question-level review data (migration 0033). Separate queries: without that migration the page still renders and
+  // falls back to the scores alone.
+  const none = { data: null, error: null };
+  const [{ data: answerFiles }, extrasRes, aiRes, histRes] = submissionIds.length
+    ? await Promise.all([
+        supabase
+          .from("assessment_answer_files")
+          .select("id, submission_id, question_id, file_name, size_bytes, mime_type")
+          .in("submission_id", submissionIds)
+          .order("created_at"),
+        supabase
+          .from("assessment_evaluations")
+          .select("submission_id, question_id, rubric_scores, candidate_feedback, source, ai_evaluation_id, created_at, updated_at, evaluator:profiles(full_name)")
+          .in("submission_id", submissionIds),
+        supabase.from("assessment_ai_evaluations").select("*").in("submission_id", submissionIds).order("created_at", { ascending: false }),
+        supabase
+          .from("assessment_evaluation_history")
+          .select("submission_id, question_id, action, points, previous_points, source, changed_at")
+          .in("submission_id", submissionIds)
+          .order("changed_at", { ascending: false })
+          .limit(300),
+      ])
+    : [none, none, none, none];
+  const questionLevel = !extrasRes.error && !aiRes.error;
+  // The task builder's criterion → task mapping (assessor guides; recruiters of the company can read them).
+  const assessmentIds = (asg ?? []).map((x) => x.assessment?.id).filter((x): x is string => Boolean(x));
+  const { data: guides } = assessmentIds.length
+    ? await supabase.from("assessment_assessor_guides").select("assessment_id, guide").in("assessment_id", assessmentIds)
+    : { data: [] as { assessment_id: string; guide: unknown }[] };
   // Inline CV preview (PDF only) through a short-lived signed URL; storage RLS lets only this company's recruiters read it.
   const cvPreview =
     app.cv && app.cv.mime_type === "application/pdf"
@@ -166,8 +189,8 @@ export default async function CompanyApplicationDetail({
       {sp.scheduled && (
         <p className="bg-success-soft text-success mb-4 rounded-xl px-4 py-3 text-sm font-semibold">
           {L(
-            "Interview scheduled. The candidate and the interviewers were notified.",
-            "جُدولت المقابلة وأُبلغ المرشح والمُقابِلون.",
+            "Interview scheduled. The candidate and the interviewers were notified",
+            "جُدولت المقابلة وأُبلغ المرشح والمُقابِلون",
           )}{" "}
           <Link href={`/company/interviews/${sp.scheduled}`} className="underline">
             {L("Open interview", "فتح المقابلة")}
@@ -177,8 +200,8 @@ export default async function CompanyApplicationDetail({
       {taskPending && (
         <p className="bg-surface-2 text-muted mb-4 rounded-xl px-4 py-3 text-sm">
           {L(
-            "This candidate applied and received the job's practical task automatically, but hasn't submitted it yet. The application becomes complete — and ready for your evaluation — when the task is submitted.",
-            "تقدّم هذا المرشح واستلم المهمة العملية للوظيفة تلقائيًا، لكنه لم يسلّمها بعد. يكتمل الطلب ويصبح جاهزًا لتقييمك عند تسليم المهمة.",
+            "This candidate applied and received the job's practical task automatically, but hasn't submitted it yet. The application becomes complete — and ready for your evaluation — when the task is submitted",
+            "تقدّم هذا المرشح واستلم المهمة العملية للوظيفة تلقائيًا، لكنه لم يسلّمها بعد. يكتمل الطلب ويصبح جاهزًا لتقييمك عند تسليم المهمة",
           )}
         </p>
       )}
@@ -228,8 +251,8 @@ export default async function CompanyApplicationDetail({
             <CardHeader
               title={L("CV and profile", "السيرة والملف")}
               description={L(
-                "From the candidate's CV and profile: claims until demonstrated in an assessment.",
-                "من سيرة المرشح وملفه: ادعاءات حتى تُثبت في تقييم.",
+                "From the candidate's CV and profile: claims until demonstrated in an assessment",
+                "من سيرة المرشح وملفه: ادعاءات حتى تُثبت في تقييم",
               )}
             />
             <CardBody className="flex flex-col gap-4 text-sm">
@@ -241,11 +264,11 @@ export default async function CompanyApplicationDetail({
                 />
               ) : app.cv ? (
                 <p className="text-subtle text-xs">
-                  {L("Preview is available for PDF files. Download the CV to read it.", "المعاينة متاحة لملفات PDF. نزّل السيرة لقراءتها.")}
+                  {L("Preview is available for PDF files. Download the CV to read it", "المعاينة متاحة لملفات PDF. نزّل السيرة لقراءتها")}
                 </p>
               ) : (
                 <p className="bg-surface-2 text-muted rounded-xl px-3 py-2 text-xs">
-                  {L("No CV was attached to this application.", "لم تُرفق سيرة ذاتية بهذا الطلب.")}
+                  {L("No CV was attached to this application", "لم تُرفق سيرة ذاتية بهذا الطلب")}
                 </p>
               )}
               <div className="text-muted flex flex-wrap gap-x-4 gap-y-1">
@@ -332,13 +355,13 @@ export default async function CompanyApplicationDetail({
             <CardHeader
               title={L("Skills match", "مطابقة المهارات")}
               description={L(
-                "Requirement-by-requirement comparison of stated and demonstrated skills. Similarity is not proof of competence.",
-                "مقارنة متطلبًا بمتطلب بين المهارات المُصرّح بها والمُثبتة. التشابه ليس دليلًا على الكفاءة.",
+                "Requirement-by-requirement comparison of stated and demonstrated skills. Similarity is not proof of competence",
+                "مقارنة متطلبًا بمتطلب بين المهارات المُصرّح بها والمُثبتة. التشابه ليس دليلًا على الكفاءة",
               )}
               action={
                 <Link
                   href={`/company/compare?ids=${id}`}
-                  className="text-primary dark:text-lavender text-xs font-semibold"
+                  className="text-primary text-xs font-semibold"
                 >
                   {L("Compare", "قارن")}
                 </Link>
@@ -378,64 +401,42 @@ export default async function CompanyApplicationDetail({
                 />
                 {sub && sub.status !== "in_progress" && (
                   <CardBody className="flex flex-col gap-4">
-                    <p className="ltr-nums text-subtle text-xs">
-                      {L("Auto", "آلي")} {sub.auto_score} + {L("Reviewed", "مراجَع")} {sub.manual_score} /{" "}
-                      {sub.max_score}
-                    </p>
-                    {(a.assessment?.assessment_questions ?? [])
-                      .filter(
-                        (q) =>
-                          !["multiple_choice", "multiple_select", "true_false"].includes(q.type) &&
-                          !(
-                            q.type === "short_answer" &&
-                            Array.isArray((q.config as { accepted_answers?: unknown })?.accepted_answers)
-                          ),
-                      )
-                      .map((q) => {
-                        const ans = sub.assessment_answers.find((x) => x.question_id === q.id);
-                        const ev = sub.assessment_evaluations.find((x) => x.question_id === q.id);
-                        return (
-                          <div key={q.id} className="rounded-2xl border p-4">
-                            <p className="text-sm font-semibold">{pick(q, "prompt", locale)}</p>
-                            <pre
-                              className="bg-surface-2 mt-2 max-h-60 overflow-auto rounded-xl p-3 font-mono text-xs whitespace-pre-wrap"
-                              dir="auto"
-                            >
-                              {ans?.text_answer || (q.type === "file_upload" ? L("(no note)", "(بلا ملاحظة)") : L("(no answer)", "(بلا إجابة)"))}
-                            </pre>
-                            {q.type === "file_upload" && (
-                              <div className="mt-2 flex flex-col gap-2">
-                                {(answerFiles ?? []).filter((f) => f.submission_id === sub.id && f.question_id === q.id).length === 0 ? (
-                                  <p className="text-subtle text-xs">{L("No files submitted.", "لم تُرفع ملفات.")}</p>
-                                ) : (
-                                  (answerFiles ?? [])
-                                    .filter((f) => f.submission_id === sub.id && f.question_id === q.id)
-                                    .map((f) => (
-                                      <SignedFileLink key={f.id} name={f.file_name} size={f.size_bytes} getUrl={assessmentFileUrl.bind(null, f.id)} />
-                                    ))
-                                )}
-                              </div>
-                            )}
-                            <EvaluateAnswerForm
-                              applicationId={id}
-                              submissionId={sub.id}
-                              questionId={q.id}
-                              max={q.points}
-                              criteria={
-                                (q.rubric?.criteria as {
-                                  key: string;
-                                  name_en: string;
-                                  name_ar: string;
-                                  max_points: number;
-                                }[]) ?? []
-                              }
-                              existing={
-                                ev ? { points: Number(ev.points), comments: ev.comments ?? "" } : null
-                              }
-                            />
-                          </div>
-                        );
-                      })}
+                    {!questionLevel && (
+                      <p className="bg-warning-soft rounded-xl p-3 text-xs">
+                        {L(
+                          "Question-level AI evaluation and review history need database migration 0033. Scores can still be recorded",
+                          "يتطلب التقييم الآلي لكل سؤال وسجل المراجعة ترحيل قاعدة البيانات 0033. يمكن تسجيل الدرجات",
+                        )}
+                      </p>
+                    )}
+                    <QuestionReviewPanel
+                      applicationId={id}
+                      submissionId={sub.id}
+                      questions={buildQuestionViews(
+                        locale,
+                        sub.id,
+                        a.assessment?.assessment_questions ?? [],
+                        sub.assessment_answers,
+                        sub.assessment_evaluations,
+                        (extrasRes.data ?? []) as EvalExtra[],
+                        (answerFiles ?? []) as FileRow[],
+                        (aiRes.data ?? []) as never[],
+                        (histRes.data ?? []) as HistoryRow[],
+                        taskRefsFromGuide((guides ?? []).find((g) => g.assessment_id === a.assessment?.id)?.guide),
+                      )}
+                      unlinkedFiles={((answerFiles ?? []) as FileRow[]).filter((f) => f.submission_id === sub.id && f.question_id === null)}
+                      totals={{
+                        auto: Number(sub.auto_score),
+                        manual: Number(sub.manual_score),
+                        max: Number(sub.max_score),
+                        percentage: sub.percentage === null ? null : Number(sub.percentage),
+                        pending: (a.assessment?.assessment_questions ?? []).filter(
+                          (q) =>
+                            !isAutoScored(q.type as QuestionType, q.config as { accepted_answers?: unknown }) &&
+                            !sub.assessment_evaluations.some((e) => e.question_id === q.id),
+                        ).length,
+                      }}
+                    />
                     <ShareFeedbackForm
                       applicationId={id}
                       submissionId={sub.id}
@@ -451,7 +452,7 @@ export default async function CompanyApplicationDetail({
             <Card>
               <CardBody>
                 <p className="text-muted text-sm">
-                  {L("No assessment is attached to this application.", "لا يوجد تقييم مرتبط بهذا الطلب.")}
+                  {L("No assessment is attached to this application", "لا يوجد تقييم مرتبط بهذا الطلب")}
                 </p>
               </CardBody>
             </Card>
@@ -465,8 +466,8 @@ export default async function CompanyApplicationDetail({
             <CardHeader
               title={L("Decision", "القرار")}
               description={L(
-                "Validated against the recruitment rules. The candidate sees only the message you choose to share.",
-                "يُتحقق منه وفق قواعد التوظيف. لا يرى المرشح إلا الرسالة التي تختار مشاركتها.",
+                "Validated against the recruitment rules. The candidate sees only the message you choose to share",
+                "يُتحقق منه وفق قواعد التوظيف. لا يرى المرشح إلا الرسالة التي تختار مشاركتها",
               )}
             />
             <CardBody>
@@ -482,7 +483,7 @@ export default async function CompanyApplicationDetail({
                   href={`/company/interviews/${iv.id}`}
                   className="hover:border-primary/40 flex items-center gap-3 rounded-xl border p-3"
                 >
-                  <CalendarClock className="text-primary dark:text-lavender size-4" />
+                  <CalendarClock className="text-primary size-4" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-semibold">{iv.title}</span>
                     <span className="text-subtle text-xs">
@@ -516,8 +517,8 @@ export default async function CompanyApplicationDetail({
                 <div className="flex flex-col items-start gap-2">
                   <p className="text-muted text-sm">
                     {L(
-                      "Interviews require a shortlist first. One click does both: shortlist, then schedule here.",
-                      "تتطلب المقابلة إضافة المرشح إلى القائمة المختصرة أولًا. بنقرة واحدة: ترشيح ثم جدولة هنا.",
+                      "Interviews require a shortlist first. One click does both: shortlist, then schedule here",
+                      "تتطلب المقابلة إضافة المرشح إلى القائمة المختصرة أولًا. بنقرة واحدة: ترشيح ثم جدولة هنا",
                     )}
                   </p>
                   <ShortlistForInterviewButton applicationId={id} />
@@ -526,8 +527,8 @@ export default async function CompanyApplicationDetail({
                 <p className="bg-surface-2 text-muted flex items-start gap-2 rounded-xl p-3 text-sm">
                   <Lock className="mt-0.5 size-4 shrink-0" />{" "}
                   {L(
-                    "Shortlist this candidate before scheduling an interview.",
-                    "أضف المرشح إلى القائمة المختصرة قبل جدولة مقابلة.",
+                    "Shortlist this candidate before scheduling an interview",
+                    "أضف المرشح إلى القائمة المختصرة قبل جدولة مقابلة",
                   )}
                 </p>
               )}
@@ -539,8 +540,8 @@ export default async function CompanyApplicationDetail({
               description={
                 app.requires_task
                   ? L(
-                      "The job's practical task was assigned automatically when the candidate applied.",
-                      "أُسندت المهمة العملية للوظيفة تلقائيًا عند التقديم.",
+                      "The job's practical task was assigned automatically when the candidate applied",
+                      "أُسندت المهمة العملية للوظيفة تلقائيًا عند التقديم",
                     )
                   : undefined
               }
@@ -560,8 +561,8 @@ export default async function CompanyApplicationDetail({
             <CardHeader
               title={L("Internal notes", "ملاحظات داخلية")}
               description={L(
-                "Visible to your recruiters only — never to candidates or interviewers.",
-                "مرئية لمسؤولي التوظيف فقط — لا للمرشحين ولا للمُقابِلين.",
+                "Visible to your recruiters only — never to candidates or interviewers",
+                "مرئية لمسؤولي التوظيف فقط — لا للمرشحين ولا للمُقابِلين",
               )}
             />
             <CardBody className="flex flex-col gap-3">
@@ -592,7 +593,7 @@ export default async function CompanyApplicationDetail({
                       </p>
                     )}
                     {h.candidate_message && (
-                      <p className="text-primary dark:text-lavender mt-1">
+                      <p className="text-primary mt-1">
                         {L("Shared", "مُشارَك")}: {h.candidate_message}
                       </p>
                     )}

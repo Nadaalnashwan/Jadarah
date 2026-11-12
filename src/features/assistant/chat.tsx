@@ -73,7 +73,7 @@ export function AssistantChat({ scope, starters }: { scope: "candidate" | "compa
       <div className="flex-1 space-y-4 overflow-y-auto p-5" aria-live="polite">
         {msgs.length === 0 && (
           <div className="flex h-full flex-col items-center justify-center text-center">
-            <span className="bg-navy text-lavender flex size-14 items-center justify-center rounded-2xl">
+            <span className="ink text-primary-ink flex size-14 items-center justify-center rounded-2xl">
               <Bot className="size-7" />
             </span>
             <p className="mt-4 font-bold">{L("Ask about your journey", "اسأل عن رحلتك")}</p>

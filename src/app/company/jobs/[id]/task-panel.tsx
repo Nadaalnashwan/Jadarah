@@ -28,8 +28,8 @@ export async function JobTaskPanel({
         <CardHeader
           title={L("Practical task", "المهمة العملية")}
           description={L(
-            "Applicants complete the job's practical task right after applying — no manual assignment needed.",
-            "يكمل المتقدمون المهمة العملية مباشرة بعد التقديم، دون الحاجة إلى إسنادها يدويًا.",
+            "Applicants complete the job's practical task right after applying — no manual assignment needed",
+            "يكمل المتقدمون المهمة العملية مباشرة بعد التقديم، دون الحاجة إلى إسنادها يدويًا",
           )}
           action={
             <Button asChild size="sm">
@@ -40,7 +40,7 @@ export async function JobTaskPanel({
           }
         />
         <CardBody className="text-subtle pt-3 text-xs">
-          {L("Optional. Jobs without a task receive applications directly.", "اختياري. الوظائف دون مهمة تستقبل الطلبات مباشرة.")}
+          {L("Optional. Jobs without a task receive applications directly", "اختياري. الوظائف دون مهمة تستقبل الطلبات مباشرة")}
         </CardBody>
       </Card>
     );
@@ -92,18 +92,18 @@ export async function JobTaskPanel({
         {!published && (
           <p className="bg-sky-soft text-navy rounded-xl px-3 py-2 text-sm dark:text-sky">
             {jobStatus === "published"
-              ? L("Publish this task so new applicants receive it.", "انشر هذه المهمة ليستلمها المتقدمون الجدد.")
+              ? L("Publish this task so new applicants receive it", "انشر هذه المهمة ليستلمها المتقدمون الجدد")
               : L(
-                  "Review and publish the task, then publish the job. Both stay private until then.",
-                  "راجع المهمة وانشرها، ثم انشر الوظيفة. يبقى الاثنان غير منشورين حتى ذلك الحين.",
+                  "Review and publish the task, then publish the job. Both stay private until then",
+                  "راجع المهمة وانشرها، ثم انشر الوظيفة. يبقى الاثنان غير منشورين حتى ذلك الحين",
                 )}
           </p>
         )}
         {locked && (
           <p className="text-subtle text-xs">
             {L(
-              "Candidates have received this exact version. It can no longer be edited or replaced, so every applicant is assessed on the same task.",
-              "استلم المرشحون هذه النسخة تحديدًا، فلا يمكن تعديلها أو استبدالها بعد الآن، ليُقيَّم جميع المتقدمين على المهمة نفسها.",
+              "Candidates have received this exact version. It can no longer be edited or replaced, so every applicant is assessed on the same task",
+              "استلم المرشحون هذه النسخة تحديدًا، فلا يمكن تعديلها أو استبدالها بعد الآن، ليُقيَّم جميع المتقدمين على المهمة نفسها",
             )}
           </p>
         )}

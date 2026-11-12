@@ -130,15 +130,15 @@ export function CandidateOnboardingForm({
             {existingSkills > 0 && (
               <p className="bg-sky-soft text-navy mb-3 rounded-xl px-3 py-2 text-sm dark:text-sky">
                 {L(
-                  `${existingSkills} skills are already in your profile. Add others only if they are missing.`,
-                  `لديك ${existingSkills} مهارة في ملفك بالفعل. أضف غيرها فقط إن كانت ناقصة.`,
+                  `${existingSkills} skills are already in your profile. Add others only if they are missing`,
+                  `لديك ${existingSkills} مهارة في ملفك بالفعل. أضف غيرها فقط إن كانت ناقصة`,
                 )}
               </p>
             )}
             <p className="text-muted mb-3 text-sm">
               {L(
-                "Pick up to 15 skills. They start as self-declared — add evidence later through your CV or assessments.",
-                "اختر حتى 15 مهارة. تبدأ كتصريح ذاتي — أضف الأدلة لاحقًا عبر سيرتك أو التقييمات.",
+                "Pick up to 15 skills. They start as self-declared — add evidence later through your CV or assessments",
+                "اختر حتى 15 مهارة. تبدأ كتصريح ذاتي — أضف الأدلة لاحقًا عبر سيرتك أو التقييمات",
               )}
             </p>
             <Input

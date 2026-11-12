@@ -57,7 +57,7 @@ export default async function EmployerAccessStatus() {
       <main id="main" className="mx-auto flex max-w-xl flex-col gap-6 px-4 pb-20">
         {pending && latest && (
           <div className="surface-card flex flex-col items-center gap-3 p-8 text-center">
-            <span className="bg-navy text-lavender flex size-14 items-center justify-center rounded-2xl">
+            <span className="ink text-primary-ink flex size-14 items-center justify-center rounded-2xl">
               <Clock className="size-7" />
             </span>
             <h1 className="text-2xl font-extrabold">{L("Pending approval", "بانتظار الموافقة")}</h1>

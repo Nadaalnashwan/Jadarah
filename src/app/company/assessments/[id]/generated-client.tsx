@@ -169,7 +169,7 @@ export function MaterialLink({ id, name }: { id: string; name: string }) {
           else toast.error(r.error);
         })
       }
-      className="text-primary dark:text-lavender inline-flex items-center gap-1.5 text-sm font-semibold hover:underline"
+      className="text-primary inline-flex items-center gap-1.5 text-sm font-semibold hover:underline"
     >
       <Download className="size-4" /> {name}
     </button>

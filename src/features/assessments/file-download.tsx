@@ -27,7 +27,7 @@ export function SignedFileLink({
         setBusy(true);
         const res = await getUrl();
         setBusy(false);
-        if (!res.ok || !res.data) return toast.error(res.ok ? L("Download failed.", "تعذّر التنزيل.") : res.error);
+        if (!res.ok || !res.data) return toast.error(res.ok ? L("Download failed", "تعذّر التنزيل") : res.error);
         window.location.assign(res.data.url);
       }}
       className="bg-surface-2 hover:bg-accent-soft flex w-full items-center gap-3 rounded-xl px-3 py-2 text-start text-sm transition"

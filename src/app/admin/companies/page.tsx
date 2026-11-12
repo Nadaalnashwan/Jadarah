@@ -33,7 +33,7 @@ export default async function AdminCompanies({
           <Link
             key={st}
             href={st ? `?status=${st}` : "?"}
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${(sp.status ?? "") === st ? "bg-navy text-ivory dark:bg-royal" : "bg-surface-2"}`}
+            className={`rounded-full px-3 py-1 text-xs font-semibold ${(sp.status ?? "") === st ? "bg-foreground text-background" : "bg-surface-2"}`}
           >
             {st ? t.companyStatus[st as keyof typeof t.companyStatus] : t.common.all}
           </Link>
@@ -60,7 +60,7 @@ export default async function AdminCompanies({
                     <td className="p-4">
                       <Link
                         href={`/admin/companies/${c.id}`}
-                        className="hover:text-primary dark:hover:text-lavender font-semibold"
+                        className="hover:text-primary font-semibold"
                       >
                         {locale === "ar" ? c.name_ar : c.name_en}
                       </Link>

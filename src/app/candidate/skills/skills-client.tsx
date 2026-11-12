@@ -50,7 +50,7 @@ export function SkillsExplorer({
     {
       key: "demonstrated",
       title: L("Demonstrated", "مُثبتة"),
-      hint: L("Shown in an assessment or verified by a reviewer.", "ظهرت في تقييم أو تحقق منها مراجع."),
+      hint: L("Shown in an assessment or verified by a reviewer", "ظهرت في تقييم أو تحقق منها مراجع"),
       tone: "positive",
       items: skills.filter((s) => s.source === "assessment" || s.source === "verified"),
     },
@@ -58,8 +58,8 @@ export function SkillsExplorer({
       key: "cv",
       title: L("From your CV", "من سيرتك الذاتية"),
       hint: L(
-        "Extracted from your CV and confirmed by you — a claim until demonstrated.",
-        "مستخرجة من سيرتك وأكدتها — ادعاء حتى تُثبت.",
+        "Extracted from your CV and confirmed by you — a claim until demonstrated",
+        "مستخرجة من سيرتك وأكدتها — ادعاء حتى تُثبت",
       ),
       tone: "info",
       items: skills.filter((s) => s.source === "cv"),
@@ -68,8 +68,8 @@ export function SkillsExplorer({
       key: "self",
       title: L("Self-declared", "مصرّح بها ذاتيًا"),
       hint: L(
-        "Added by you. Add evidence or take an assessment to strengthen them.",
-        "أضفتها بنفسك. أضف دليلًا أو أكمل تقييمًا لتقويتها.",
+        "Added by you. Add evidence or take an assessment to strengthen them",
+        "أضفتها بنفسك. أضف دليلًا أو أكمل تقييمًا لتقويتها",
       ),
       tone: "neutral",
       items: skills.filter((s) => s.source === "self"),
@@ -95,8 +95,8 @@ export function SkillsExplorer({
       {skills.length === 0 && !adding && (
         <p className="text-subtle py-8 text-center text-sm">
           {L(
-            "No skills yet. Upload your CV or add skills manually.",
-            "لا توجد مهارات بعد. ارفع سيرتك أو أضف المهارات يدويًا.",
+            "No skills yet. Upload your CV or add skills manually",
+            "لا توجد مهارات بعد. ارفع سيرتك أو أضف المهارات يدويًا",
           )}
         </p>
       )}

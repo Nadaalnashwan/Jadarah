@@ -4,7 +4,7 @@ import { CompanyBanner, CompanyIdentity, identityOf, ListingBadge } from "@/comp
 import type { Messages } from "@/lib/i18n/messages";
 import { pick } from "@/lib/i18n/config";
 import type { createClient } from "@/lib/supabase/server";
-import { LISTED_JOB_FILTER } from "@/lib/domain/listings";
+import { LISTED_JOB_FILTER, openDeadlineFilter } from "@/lib/domain/listings";
 
 type ServerSupabase = Awaited<ReturnType<typeof createClient>>;
 
@@ -41,7 +41,7 @@ export function verifiedContacts(c: DirectoryCompany, selfPublished: boolean) {
 export async function loadDirectory(supabase: ServerSupabase) {
   const [{ data: companies }, { data: jobs }] = await Promise.all([
     supabase.from("company_profiles").select(COMPANY_SELECT).eq("listed", true).eq("status", "approved").order("name_en"),
-    supabase.from("jobs").select("company_id").eq("status", "published").or(LISTED_JOB_FILTER),
+    supabase.from("jobs").select("company_id").eq("status", "published").or(LISTED_JOB_FILTER).or(openDeadlineFilter()),
   ]);
   const count = new Map<string, number>();
   for (const j of jobs ?? []) count.set(j.company_id, (count.get(j.company_id) ?? 0) + 1);
@@ -56,7 +56,7 @@ export async function loadCompany(supabase: ServerSupabase, slug: string) {
     .select("id, title_en, title_ar, city, work_mode, experience_level, listing_type, created_by")
     .eq("company_id", company.id)
     .eq("status", "published")
-    .or(LISTED_JOB_FILTER)
+    .or(LISTED_JOB_FILTER).or(openDeadlineFilter())
     .order("published_at", { ascending: false });
   return { company, jobs: jobs ?? [] };
 }
@@ -165,20 +165,20 @@ export function CompanyProfile({
         )}
         <p className="text-subtle text-xs">
           {c.verification_status === "verified_official"
-            ? L("Public information verified from official sources.", "معلومات عامة تم التحقق منها من مصادر رسمية.")
+            ? L("Public information verified from official sources", "معلومات عامة تم التحقق منها من مصادر رسمية")
             : selfPublished
-              ? L("Details published by the organization's own account on JADARAH.", "بيانات نشرها حساب الجهة نفسها على جدارة.")
-              : L("Contact details are shown once verified.", "تُعرض بيانات التواصل بعد التحقق منها.")}{" "}
+              ? L("Details published by the organization's own account on JADARAH", "بيانات نشرها حساب الجهة نفسها على جدارة")
+              : L("Contact details are shown once verified", "تُعرض بيانات التواصل بعد التحقق منها")}{" "}
           {L(
-            "Being listed does not mean a partnership with or endorsement by JADARAH.",
-            "لا يعني الإدراج في الدليل شراكة مع جدارة أو تزكية منها.",
+            "Being listed does not mean a partnership with or endorsement by JADARAH",
+            "لا يعني الإدراج في الدليل شراكة مع جدارة أو تزكية منها",
           )}
         </p>
       </section>
       <section>
         <h2 className="mb-4 text-lg font-bold">{L("Opportunities", "الفرص")}</h2>
         {jobs.length === 0 ? (
-          <p className="text-muted text-sm">{L("No open opportunities.", "لا توجد فرص متاحة.")}</p>
+          <p className="text-muted text-sm">{L("No open opportunities", "لا توجد فرص متاحة")}</p>
         ) : (
           <ul className="grid gap-3 md:grid-cols-2">
             {jobs.map((j) => (

@@ -24,7 +24,7 @@ export default async function AvailabilityPage() {
       <GroupTabs group="company-interviews" />
       <PageHeader
         title={L("My availability", "أوقات توفّري")}
-        description={L("Weekly interview hours. If none are set, Sunday–Thursday 09:00–17:00 is used.", "ساعات المقابلات الأسبوعية. إن لم تُحدَّد يُعتمد الأحد–الخميس 09:00–17:00.")}
+        description={L("Weekly interview hours. If none are set, Sunday–Thursday 09:00–17:00 is used", "ساعات المقابلات الأسبوعية. إن لم تُحدَّد يُعتمد الأحد–الخميس 09:00–17:00")}
       />
       <AvailabilityEditor
         initial={(data ?? []).map((w) => ({ weekday: w.weekday, start_minute: w.start_minute, end_minute: w.end_minute }))}

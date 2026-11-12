@@ -4,23 +4,24 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const buttonVariants = cva(
-  "relative inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-semibold transition-[background,color,box-shadow,transform] duration-200 ease-[cubic-bezier(.22,1,.36,1)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 active:scale-[0.97] [&_svg]:size-4 [&_svg]:shrink-0",
+  "relative inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[0.625rem] font-semibold transition-[background-color,color,box-shadow,transform,border-color] duration-200 ease-[cubic-bezier(.22,1,.36,1)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 active:translate-y-px [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         primary:
-          "bg-primary text-primary-foreground shadow-[0_8px_24px_-10px_rgb(59_108_255/0.7)] hover:bg-primary-hover hover:shadow-[0_10px_28px_-10px_rgb(59_108_255/0.85)]",
+          "btn-primary bg-primary text-primary-foreground shadow-[0_1px_0_rgb(255_255_255/0.18)_inset,0_6px_16px_-8px_rgb(var(--shadow-color)/0.55)] hover:bg-primary-hover hover:shadow-[0_1px_0_rgb(255_255_255/0.18)_inset,0_10px_22px_-10px_rgb(var(--shadow-color)/0.6)]",
         secondary: "bg-foreground text-background hover:opacity-90",
-        outline: "border border-border-strong bg-transparent hover:bg-surface-2 hover:border-foreground/40",
+        brand: "btn-brand hover:opacity-90",
+        outline: "border border-border-strong bg-surface-elevated/60 hover:border-primary/50 hover:bg-surface-elevated",
         ghost: "bg-transparent hover:bg-surface-2",
-        soft: "bg-accent-soft text-primary hover:bg-accent/40 dark:text-lavender",
-        danger: "bg-danger text-white hover:opacity-90",
-        link: "rounded-none px-0 text-primary underline-offset-4 hover:underline dark:text-lavender",
+        soft: "bg-accent-soft text-primary-ink hover:bg-tone-blue",
+        danger: "bg-danger text-danger-soft hover:opacity-90",
+        link: "rounded-none px-0 text-primary-ink underline-offset-4 hover:underline",
       },
       size: {
         sm: "h-8 px-3 text-xs",
-        md: "h-10 px-5 text-sm",
-        lg: "h-12 px-7 text-base",
+        md: "h-10 px-4 text-sm",
+        lg: "h-12 px-6 text-[0.95rem]",
         icon: "size-9 rounded-full",
       },
     },

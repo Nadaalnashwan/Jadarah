@@ -40,7 +40,7 @@ export function RecruitmentView({
   const f = d.funnel;
   const cohort = `${L("Cohort", "المجموعة")}: ${n(d.applications)} ${L("applications submitted in", "طلبًا قُدّم خلال")} ${L(period.label_en, period.label_ar).toLowerCase()}`;
   const empty = !d.applications;
-  const emptyText = L("No applications were submitted in this period.", "لم تُقدَّم طلبات في هذه الفترة.");
+  const emptyText = L("No applications were submitted in this period", "لم تُقدَّم طلبات في هذه الفترة");
   const trend = d.trend.map((t) => ({
     label: bucketLabel(t.day, "day", locale),
     applications: t.applications,
@@ -59,19 +59,16 @@ export function RecruitmentView({
     <div className="flex flex-col gap-6">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          tone="blue"
           label={L("Applications", "الطلبات")}
           value={n(d.applications)}
           hint={`${n(d.publishedJobs)} ${L("jobs published now", "وظيفة منشورة حاليًا")}`}
         />
         <KpiCard
-          tone="sage"
           label={L("Assessment completion", "إكمال التقييمات")}
           value={pct(d.assessmentCompletionRate, locale)}
           hint={`${n(f.assessed)}/${n(f.invited)} ${L("invited candidates submitted", "مرشحًا مدعوًا قدّم")}`}
         />
         <KpiCard
-          tone="mist"
           label={L("Average assessment score", "متوسط درجة التقييم")}
           value={d.avgScore ? `${formatNumber(Math.round(d.avgScore.value), locale)}%` : "—"}
           hint={
@@ -81,7 +78,6 @@ export function RecruitmentView({
           }
         />
         <KpiCard
-          tone="sand"
           label={L("Time to hire", "مدة التوظيف")}
           value={days(hire?.avgHours ?? null)}
           hint={`${n(f.hired)} ${L("hired", "معيّن")} · ${n(f.rejected)} ${L("rejected", "مرفوض")}`}
@@ -112,8 +108,8 @@ export function RecruitmentView({
           empty={empty}
           emptyText={emptyText}
           definition={L(
-            "Each step counts applications from the cohort that reached it at any time.",
-            "كل خطوة تعد طلبات المجموعة التي وصلت إليها في أي وقت.",
+            "Each step counts applications from the cohort that reached it at any time",
+            "كل خطوة تعد طلبات المجموعة التي وصلت إليها في أي وقت",
           )}
         >
           <Funnel
@@ -149,8 +145,8 @@ export function RecruitmentView({
           empty={empty}
           emptyText={emptyText}
           definition={L(
-            "Invitations by the day they were sent; completions by the day the candidate submitted.",
-            "الدعوات حسب يوم إرسالها؛ والإكمال حسب يوم تقديم المرشح.",
+            "Invitations by the day they were sent; completions by the day the candidate submitted",
+            "الدعوات حسب يوم إرسالها؛ والإكمال حسب يوم تقديم المرشح",
           )}
         >
           <StackedBars
@@ -167,12 +163,12 @@ export function RecruitmentView({
           title={L("17 · Interview status", "17 · حالة المقابلات")}
           sample={`${n(iv.total)} ${L("interviews for the cohort", "مقابلة للمجموعة")}`}
           empty={!iv.total}
-          emptyText={L("No interviews for this cohort.", "لا توجد مقابلات لهذه المجموعة.")}
+          emptyText={L("No interviews for this cohort", "لا توجد مقابلات لهذه المجموعة")}
           definition={
             att
               ? L(
-                  `Video joins recorded for ${att.interviewsWithJoin} interviews (candidate joined: ${att.candidateJoined}, interviewer joined: ${att.interviewerJoined}). A created room is not proof an interview happened.`,
-                  `سُجّل الانضمام بالفيديو لـ ${att.interviewsWithJoin} مقابلة (انضم المرشح: ${att.candidateJoined}، انضم المقابل: ${att.interviewerJoined}). إنشاء الغرفة ليس دليلًا على حدوث المقابلة.`,
+                  `Video joins recorded for ${att.interviewsWithJoin} interviews (candidate joined: ${att.candidateJoined}, interviewer joined: ${att.interviewerJoined}). A created room is not proof an interview happened`,
+                  `سُجّل الانضمام بالفيديو لـ ${att.interviewsWithJoin} مقابلة (انضم المرشح: ${att.candidateJoined}، انضم المقابل: ${att.interviewerJoined}). إنشاء الغرفة ليس دليلًا على حدوث المقابلة`,
                 )
               : undefined
           }
@@ -194,10 +190,10 @@ export function RecruitmentView({
           title={L("18 · Average assessment score by job", "18 · متوسط درجة التقييم حسب الوظيفة")}
           sample={`${n(d.scoreByJob.reduce((a, j) => a + j.samples, 0))} ${L("scored submissions (top 10 jobs by volume)", "إجابة مُقيّمة (أعلى 10 وظائف)")}`}
           empty={!d.scoreByJob.length}
-          emptyText={L("No scored submissions for this cohort.", "لا توجد إجابات مُقيّمة لهذه المجموعة.")}
+          emptyText={L("No scored submissions for this cohort", "لا توجد إجابات مُقيّمة لهذه المجموعة")}
           definition={L(
-            "Mean percentage of each scored submission (not an average of averages).",
-            "متوسط النسبة لكل إجابة مُقيّمة (ليس متوسطًا للمتوسطات).",
+            "Mean percentage of each scored submission (not an average of averages)",
+            "متوسط النسبة لكل إجابة مُقيّمة (ليس متوسطًا للمتوسطات)",
           )}
         >
           <MiniTable
@@ -216,8 +212,8 @@ export function RecruitmentView({
           empty={!d.matchSamples}
           emptyText={emptyText}
           definition={L(
-            "Skills-overlap estimate at application time — not a measure of competence.",
-            "تقدير لتداخل المهارات وقت التقديم — وليس مقياسًا للكفاءة.",
+            "Skills-overlap estimate at application time — not a measure of competence",
+            "تقدير لتداخل المهارات وقت التقديم — وليس مقياسًا للكفاءة",
           )}
         >
           <Columns data={d.matchBuckets} name={L("Applications", "الطلبات")} />
@@ -229,8 +225,8 @@ export function RecruitmentView({
           empty={empty}
           emptyText={emptyText}
           definition={L(
-            "Mean time between the first entry into each status, from the application status history. Only applications that reached both statuses are counted.",
-            "متوسط الوقت بين أول دخول لكل حالة من سجل حالات الطلب. تُحسب فقط الطلبات التي بلغت الحالتين.",
+            "Mean time between the first entry into each status, from the application status history. Only applications that reached both statuses are counted",
+            "متوسط الوقت بين أول دخول لكل حالة من سجل حالات الطلب. تُحسب فقط الطلبات التي بلغت الحالتين",
           )}
         >
           <MiniTable
@@ -244,7 +240,7 @@ export function RecruitmentView({
           title={L("Interview activity over time", "نشاط المقابلات عبر الزمن")}
           sample={`${n(iv.total)} ${L("interviews", "مقابلة")}`}
           empty={!iv.total}
-          emptyText={L("No interviews for this cohort.", "لا توجد مقابلات لهذه المجموعة.")}
+          emptyText={L("No interviews for this cohort", "لا توجد مقابلات لهذه المجموعة")}
         >
           <StackedBars
             stacked={false}

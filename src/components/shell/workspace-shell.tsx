@@ -43,15 +43,15 @@ export async function WorkspaceShell({
   }
 
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[17rem_1fr]">
-      <aside className="bg-sidebar border-border sticky top-0 hidden h-dvh flex-col border-e lg:flex">
+    <div className="min-h-dvh lg:grid lg:grid-cols-[16.5rem_1fr]">
+      <aside className="ink sticky top-0 hidden h-dvh flex-col lg:flex">
         <div className="flex h-20 items-center px-6">
           <Link href="/" aria-label="JADARAH home">
             <Logo />
           </Link>
         </div>
         <div className="px-6 pb-4">
-          <p className="text-subtle text-[0.7rem] font-bold tracking-[0.16em] uppercase rtl:tracking-normal">
+          <p className="text-subtle text-[0.7rem] font-bold tracking-[0.14em] uppercase rtl:text-xs rtl:tracking-normal">
             {area}
           </p>
           {contextLabel && (
@@ -62,7 +62,7 @@ export async function WorkspaceShell({
           )}
         </div>
         <WorkspaceNav items={nav} />
-        <div className="mt-auto border-t p-4">
+        <div className="mt-auto border-t border-white/10 p-4">
           <div className="flex items-center gap-3">
             <Avatar name={session.profile.full_name || session.email} />
             <div className="min-w-0 flex-1">
@@ -84,7 +84,7 @@ export async function WorkspaceShell({
       </aside>
 
       <div className="flex min-w-0 flex-col">
-        <header className="bg-background/95 sticky top-0 z-40 flex h-16 items-center justify-between gap-3 border-b px-4 backdrop-blur-xl sm:px-6">
+        <header className="bg-background/85 sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b px-4 backdrop-blur-xl sm:h-16 sm:px-6">
           <div className="flex items-center gap-2 lg:hidden">
             <WorkspaceNav items={nav} mobile />
             <Link href="/" aria-label="JADARAH home">
@@ -92,7 +92,7 @@ export async function WorkspaceShell({
             </Link>
           </div>
           <div className="hidden min-w-0 lg:block">
-            {session.profile.is_demo && <Badge tone="accent">{t.common.demoBadge}</Badge>}
+            {session.profile.is_demo && <Badge tone="progress">{t.common.demoBadge}</Badge>}
           </div>
           <div className="flex items-center gap-1">
             <LanguageSwitcher />
@@ -122,7 +122,7 @@ export async function WorkspaceShell({
           </div>
         </header>
         {banner}
-        <main id="main" className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10">
+        <main id="main" className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
           {children}
         </main>
       </div>

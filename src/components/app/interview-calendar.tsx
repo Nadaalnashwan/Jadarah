@@ -3,7 +3,7 @@ import { useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Clock, Video } from "lucide-react";
-import { DEFAULT_TZ, addDays, minutesLabel, monthGrid, toZoned, weekDates } from "@/lib/domain/calendar";
+import { DEFAULT_TZ, addDays, interviewPhase, minutesLabel, monthGrid, toZoned, weekDates } from "@/lib/domain/calendar";
 import { useI18n } from "@/lib/i18n/client";
 import { tx } from "@/lib/i18n/config";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,8 @@ export type CalendarEvent = {
   status: "scheduled" | "completed" | "cancelled";
   confirmed?: boolean;
   href: string;
+  /** "deadline": a practical-task due date (shown at its due time, never as an interview). */
+  kind?: "interview" | "deadline";
 };
 export type BusyBlock = { startUtc: string; endUtc: string; label?: string };
 
@@ -27,6 +29,16 @@ const STATUS_STYLE: Record<CalendarEvent["status"], string> = {
   completed: "bg-sky-soft text-navy border-sky dark:text-sky",
   cancelled: "bg-surface-2 text-subtle border-border line-through",
 };
+
+/** Past interviews whose outcome was never recorded must not look like upcoming ones. */
+function eventStyle(e: CalendarEvent, now: number) {
+  if (e.kind === "deadline")
+    return e.status === "completed"
+      ? "bg-success-soft text-success border-success/40"
+      : "bg-warning-soft text-warning border-warning/50";
+  const p = interviewPhase({ status: e.status, scheduled_at: e.startUtc, ends_at: e.endUtc }, now);
+  return p === "awaiting_update" ? "bg-surface-2 text-muted border-dashed border-border-strong" : STATUS_STYLE[e.status];
+}
 
 const DEFAULT_HOURS = [7, 21] as const;
 const PHONE = "(max-width: 639px)";
@@ -105,7 +117,11 @@ export function InterviewCalendar({
   }
 
   const upcoming = events
-    .filter((e) => e.status === "scheduled" && Date.parse(e.endUtc) > now)
+    .filter((e) => {
+      if (e.kind === "deadline") return e.status === "scheduled" && Date.parse(e.endUtc) > now;
+      const p = interviewPhase({ status: e.status, scheduled_at: e.startUtc, ends_at: e.endUtc }, now);
+      return p === "upcoming" || p === "in_progress";
+    })
     .sort((a, b) => a.startUtc.localeCompare(b.startUtc));
 
   return (
@@ -183,6 +199,7 @@ export function InterviewCalendar({
         >
           {view === "month" ? (
             <MonthView
+              now={now}
               year={y}
               month0={m - 1}
               today={today}
@@ -195,6 +212,7 @@ export function InterviewCalendar({
             />
           ) : (
             <TimeGrid
+              now={now}
               dates={view === "week" ? weekDates(cursor) : [cursor]}
               today={today}
               byDate={byDate}
@@ -213,7 +231,7 @@ export function InterviewCalendar({
           <CalendarDays className="size-3.5" /> {L("Upcoming", "القادمة")}
         </p>
         {upcoming.length === 0 ? (
-          <p className="text-muted text-sm">{L("No upcoming interviews.", "لا توجد مقابلات قادمة.")}</p>
+          <p className="text-muted text-sm">{L("No upcoming interviews", "لا توجد مقابلات قادمة")}</p>
         ) : (
           <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {upcoming.slice(0, 6).map((e) => {
@@ -221,7 +239,7 @@ export function InterviewCalendar({
               return (
                 <li key={e.id}>
                   <Link href={e.href} className="hover:border-primary/50 flex items-center gap-3 rounded-2xl border p-3 transition">
-                    <span className="bg-navy text-lavender flex w-12 shrink-0 flex-col items-center rounded-xl py-1.5 text-center">
+                    <span className="ink text-primary-ink flex w-12 shrink-0 flex-col items-center rounded-xl py-1.5 text-center">
                       <span className="text-[10px] font-semibold uppercase">{fmt(s.date, { month: "short" })}</span>
                       <span className="ltr-nums text-lg leading-none font-extrabold">{Number(s.date.slice(8))}</span>
                     </span>
@@ -245,6 +263,7 @@ export function InterviewCalendar({
 }
 
 function MonthView({
+  now,
   year,
   month0,
   today,
@@ -252,6 +271,7 @@ function MonthView({
   locale,
   onPick,
 }: {
+  now: number;
   year: number;
   month0: number;
   today: string;
@@ -291,7 +311,7 @@ function MonthView({
               {evs.slice(0, 3).map((e) => (
                 <span
                   key={e.id}
-                  className={cn("truncate rounded-md border px-1 text-[10px] leading-4 font-semibold", STATUS_STYLE[e.status])}
+                  className={cn("truncate rounded-md border px-1 text-[10px] leading-4 font-semibold", eventStyle(e, now))}
                 >
                   {e.title}
                 </span>
@@ -306,6 +326,7 @@ function MonthView({
 }
 
 function TimeGrid({
+  now,
   dates,
   today,
   byDate,
@@ -314,6 +335,7 @@ function TimeGrid({
   L,
   compact,
 }: {
+  now: number;
   dates: string[];
   today: string;
   byDate: Map<string, (CalendarEvent & { startMin: number; endMin: number })[]>;
@@ -370,7 +392,7 @@ function TimeGrid({
                   href={e.href}
                   className={cn(
                     "flex h-full flex-col overflow-hidden rounded-lg border px-2 py-1 text-[11px] leading-tight shadow-sm transition hover:brightness-110",
-                    STATUS_STYLE[e.status],
+                    eventStyle(e, now),
                   )}
                 >
                   <span className="flex items-center gap-1 font-bold">

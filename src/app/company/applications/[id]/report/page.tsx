@@ -27,9 +27,9 @@ type Src = "verified_fact" | "cv_extraction" | "semantic_match" | "practical_ass
 const SRC_STYLE: Record<Src, string> = {
   verified_fact: "bg-success/12 text-success border-success/30",
   cv_extraction: "bg-sky-soft text-navy border-sky dark:text-sky",
-  semantic_match: "bg-accent-soft text-primary border-lavender dark:text-lavender",
-  practical_assessment: "bg-primary/10 text-primary border-primary/30 dark:text-lavender",
-  interviewer_judgment: "bg-navy text-lavender border-navy",
+  semantic_match: "bg-accent-soft text-primary border-lavender",
+  practical_assessment: "bg-primary/10 text-primary border-primary/30",
+  interviewer_judgment: "ink text-primary-ink border-navy",
   ai_inference: "bg-warning/12 text-warning border-warning/30",
 };
 
@@ -107,7 +107,7 @@ export default async function FinalReportPage({ params }: { params: Promise<{ id
       />
 
       {/* hero: overall + breakdown */}
-      <section className="from-navy via-navy-800 to-navy-700 relative mb-6 overflow-hidden rounded-[2rem] bg-gradient-to-br p-6 text-white sm:p-8">
+      <section className="ink relative mb-6 overflow-hidden rounded-2xl p-6 sm:p-8">
         <div className="bg-primary/30 pointer-events-none absolute -end-24 -top-24 size-72 rounded-full blur-3xl" />
         <div className="relative grid items-center gap-8 lg:grid-cols-[auto_1fr_auto]">
           <ScoreRing score={r.overall.score} />
@@ -128,8 +128,8 @@ export default async function FinalReportPage({ params }: { params: Promise<{ id
             ))}
             <p className="text-lavender/80 text-[11px]">
               {L(
-                `Weights re-normalise over available evidence (coverage ${Math.round(r.overall.coverage * 100)}%). Missing evidence is never imputed.`,
-                `تُعاد موازنة الأوزان على الأدلة المتاحة (التغطية ${Math.round(r.overall.coverage * 100)}٪). لا تُفترض أي أدلة مفقودة.`,
+                `Weights re-normalise over available evidence (coverage ${Math.round(r.overall.coverage * 100)}%). Missing evidence is never imputed`,
+                `تُعاد موازنة الأوزان على الأدلة المتاحة (التغطية ${Math.round(r.overall.coverage * 100)}٪). لا تُفترض أي أدلة مفقودة`,
               )}
             </p>
           </div>
@@ -207,7 +207,7 @@ export default async function FinalReportPage({ params }: { params: Promise<{ id
             />
             <CardBody className="flex flex-col gap-4 text-sm">
               {r.assessments.length === 0 ? (
-                <p className="text-muted">{L("No practical assessment was assigned. This component is excluded from the score.", "لم يُسند تقييم عملي. يُستبعد هذا المكوّن من الدرجة.")}</p>
+                <p className="text-muted">{L("No practical assessment was assigned. This component is excluded from the score", "لم يُسند تقييم عملي. يُستبعد هذا المكوّن من الدرجة")}</p>
               ) : (
                 r.assessments.map((a) => (
                   <div key={a.id} className="rounded-2xl border p-4">
@@ -221,7 +221,7 @@ export default async function FinalReportPage({ params }: { params: Promise<{ id
                         {a.passing !== null && <span className="bg-navy dark:bg-lavender absolute -top-1 h-4 w-0.5" style={{ insetInlineStart: `${a.passing}%` }} title={L("Passing score", "درجة النجاح")} />}
                       </div>
                     )}
-                    {a.needsReview && <p className="text-warning mt-2 text-xs">{L("Open answers await human review.", "إجابات مفتوحة بانتظار المراجعة البشرية.")}</p>}
+                    {a.needsReview && <p className="text-warning mt-2 text-xs">{L("Open answers await human review", "إجابات مفتوحة بانتظار المراجعة البشرية")}</p>}
                     {a.evaluations.length > 0 && (
                       <ul className="mt-3 flex flex-col gap-2">
                         {a.evaluations.map((e, i) => (
@@ -247,7 +247,7 @@ export default async function FinalReportPage({ params }: { params: Promise<{ id
             />
             <CardBody className="flex flex-col gap-4 text-sm">
               {r.evaluations.length === 0 ? (
-                <p className="text-muted">{L("No interviewer evaluations submitted yet. This component is excluded from the score.", "لم تُرسل تقييمات المقابلة بعد. يُستبعد هذا المكوّن من الدرجة.")}</p>
+                <p className="text-muted">{L("No interviewer evaluations submitted yet. This component is excluded from the score", "لم تُرسل تقييمات المقابلة بعد. يُستبعد هذا المكوّن من الدرجة")}</p>
               ) : (
                 <>
                   <SkillRadar
@@ -314,8 +314,8 @@ export default async function FinalReportPage({ params }: { params: Promise<{ id
               {!ai ? (
                 <p className="text-muted">
                   {L(
-                    "Generate an evidence synthesis: strengths, gaps, what to verify next and a recommendation with its basis. It uses a de-identified evidence pack and never changes the candidate's status.",
-                    "أنشئ خلاصة للأدلة: نقاط القوة والفجوات وما يلزم التحقق منه وتوصية مع أساسها. يستخدم حزمة أدلة دون بيانات تعريفية ولا يغيّر حالة المرشح.",
+                    "Generate an evidence synthesis: strengths, gaps, what to verify next and a recommendation with its basis. It uses a de-identified evidence pack and never changes the candidate's status",
+                    "أنشئ خلاصة للأدلة: نقاط القوة والفجوات وما يلزم التحقق منه وتوصية مع أساسها. يستخدم حزمة أدلة دون بيانات تعريفية ولا يغيّر حالة المرشح",
                   )}
                 </p>
               ) : (

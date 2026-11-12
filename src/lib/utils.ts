@@ -27,7 +27,7 @@ export function safeError(
   // Business-rule exceptions raised by our RPCs use P0001/P0002/23505/42501 with curated messages.
   if (error.code && ["P0001", "P0002", "23505"].includes(error.code) && error.message)
     return capitalize(error.message);
-  if (error.code === "42501") return "You don't have permission to do that.";
+  if (error.code === "42501") return "You don't have permission to do that";
   return fallback;
 }
 

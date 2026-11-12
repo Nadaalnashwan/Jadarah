@@ -33,8 +33,8 @@ export function BuilderForm({
           {creationKey && <input type="hidden" name="creation_key" value={creationKey} />}
           <p className="bg-sky-soft text-navy rounded-xl px-3 py-2 text-sm dark:text-sky">
             {L(
-              "The generated draft will be attached to this job as its practical task. Nothing is published automatically.",
-              "ستُربط المسودة المولّدة بهذه الوظيفة كمهمتها العملية. لا يُنشر شيء تلقائيًا.",
+              "The generated draft will be attached to this job as its practical task. Nothing is published automatically",
+              "ستُربط المسودة المولّدة بهذه الوظيفة كمهمتها العملية. لا يُنشر شيء تلقائيًا",
             )}
           </p>
         </>

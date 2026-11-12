@@ -2,20 +2,18 @@
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { CalendarPlus, CalendarSearch, FileText, Sparkles } from "lucide-react";
+import { CalendarPlus, CalendarSearch, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, FormMessage, Input, Select, Textarea } from "@/components/ui/form";
 import {
   addNote,
   assignAssessment,
   changeStatus,
-  evaluateAnswer,
   scheduleInterview,
   shareAssessmentFeedback,
   shortlistForInterview,
 } from "@/features/company/actions";
 import { getApplicationCvUrl } from "@/features/company/document-actions";
-import { suggestRubricScores, type RubricSuggestion } from "@/features/assessments/ai-evaluation-actions";
 import { getSchedulingSlots } from "@/features/calendar/actions";
 import type { Slot } from "@/lib/domain/calendar";
 import type { ApplicationStatus } from "@/lib/domain/application-status";
@@ -73,7 +71,7 @@ export function StatusForm({
   const form = useRef<HTMLFormElement>(null);
   useToastResult(state, () => form.current?.reset());
   if (targets.length === 0)
-    return <p className="text-subtle text-sm">{L("This application is closed.", "هذا الطلب مغلق.")}</p>;
+    return <p className="text-subtle text-sm">{L("This application is closed", "هذا الطلب مغلق")}</p>;
   return (
     <form ref={form} action={action} className="flex flex-col gap-3">
       <Field label={L("Move to", "نقل إلى")} htmlFor="to">
@@ -174,141 +172,6 @@ export function AssignAssessmentForm({
   );
 }
 
-export function EvaluateAnswerForm({
-  applicationId,
-  submissionId,
-  questionId,
-  max,
-  criteria,
-  existing,
-}: {
-  applicationId: string;
-  submissionId: string;
-  questionId: string;
-  max: number;
-  criteria: { key: string; name_en: string; name_ar: string; max_points: number }[];
-  existing: { points: number; comments: string } | null;
-}) {
-  const { locale } = useI18n();
-  const L = tx(locale);
-  const [state, action, pending] = useActionState<ActionResult | null, FormData>(
-    evaluateAnswer.bind(null, applicationId, submissionId, questionId),
-    null,
-  );
-  useToastResult(state);
-  const [scores, setScores] = useState<Record<string, number>>({});
-  const [comments, setComments] = useState(existing?.comments ?? "");
-  const [ai, setAi] = useState<RubricSuggestion | null>(null);
-  const [aiBusy, setAiBusy] = useState(false);
-  async function askAi() {
-    setAiBusy(true);
-    const res = await suggestRubricScores(applicationId, submissionId, questionId);
-    setAiBusy(false);
-    if (!res.ok) return toast.error(res.error);
-    const d = res.data!;
-    setAi(d);
-    setScores(Object.fromEntries(d.criteria.map((c) => [c.key, c.score])));
-    if (!comments.trim()) setComments(d.overall_comment);
-  }
-  const rubricTotal = criteria.reduce((s, c) => s + c.max_points, 0);
-  const suggested = rubricTotal
-    ? Math.round((Object.values(scores).reduce((a, b) => a + b, 0) / rubricTotal) * max * 10) / 10
-    : undefined;
-  return (
-    <form action={action} className="mt-3 grid gap-3 sm:grid-cols-2">
-      <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
-        <Button type="button" size="sm" variant="soft" onClick={askAi} loading={aiBusy}>
-          <Sparkles /> {L("Suggest rubric scores with AI", "اقتراح درجات المعايير بالذكاء الاصطناعي")}
-        </Button>
-        {ai && (
-          <span className="bg-accent-soft rounded-full px-2.5 py-1 text-[11px] font-semibold">
-            {L("AI suggestion — you decide", "اقتراح آلي — القرار لك")}
-          </span>
-        )}
-      </div>
-      {ai?.concerns.length ? (
-        <p className="text-warning text-xs sm:col-span-2" role="note">
-          {L("AI flagged: ", "ملاحظات الذكاء الاصطناعي: ")}
-          {ai.concerns.join(" · ")}
-        </p>
-      ) : null}
-      {criteria.map((c) => (
-        <Field
-          key={c.key}
-          label={`${locale === "ar" ? c.name_ar : c.name_en} (/${c.max_points})`}
-          htmlFor={`${questionId}-${c.key}`}
-        >
-          <Input
-            id={`${questionId}-${c.key}`}
-            name={`rubric_${c.key}`}
-            type="number"
-            min={0}
-            max={c.max_points}
-            step={1}
-            value={scores[c.key] ?? ""}
-            onChange={(e) => setScores((s) => ({ ...s, [c.key]: Number(e.target.value) }))}
-          />
-          {(() => {
-            const sug = ai?.criteria.find((x) => x.key === c.key);
-            return sug ? (
-              <p className="text-muted mt-1 text-[11px] leading-snug">
-                <Sparkles className="text-primary dark:text-lavender me-1 inline size-3" aria-hidden />
-                {sug.rationale}
-                {sug.evidence && <span className="text-subtle block truncate">“{sug.evidence}”</span>}
-              </p>
-            ) : null;
-          })()}
-        </Field>
-      ))}
-      <Field
-        label={L(`Points awarded (/${max})`, `النقاط الممنوحة (/${max})`)}
-        htmlFor={`${questionId}-points`}
-        hint={
-          suggested !== undefined
-            ? L(`Rubric suggests ${suggested}`, `المعايير تقترح ${suggested}`)
-            : undefined
-        }
-      >
-        <Input
-          id={`${questionId}-points`}
-          name="points"
-          type="number"
-          min={0}
-          max={max}
-          step={0.5}
-          defaultValue={existing?.points}
-          required
-          key={suggested}
-          placeholder={suggested?.toString()}
-        />
-      </Field>
-      <Field
-        label={L("Reviewer comments", "تعليق المراجِع")}
-        htmlFor={`${questionId}-comments`}
-        className="sm:col-span-2"
-      >
-        <Textarea
-          id={`${questionId}-comments`}
-          name="comments"
-          rows={ai ? 4 : 2}
-          value={comments}
-          onChange={(e) => setComments(e.target.value)}
-        />
-      </Field>
-      {state && !state.ok && (
-        <div className="sm:col-span-2">
-          <FormMessage>{state.error}</FormMessage>
-        </div>
-      )}
-      <div className="sm:col-span-2">
-        <Button type="submit" size="sm" variant={existing ? "outline" : "primary"} loading={pending}>
-          {existing ? L("Update evaluation", "تحديث التقييم") : L("Save evaluation", "حفظ التقييم")}
-        </Button>
-      </div>
-    </form>
-  );
-}
-
 export function ShareFeedbackForm({
   applicationId,
   submissionId,
@@ -330,7 +193,10 @@ export function ShareFeedbackForm({
   return (
     <form action={action} className="bg-sky-soft flex flex-col gap-2 rounded-2xl p-4">
       <Field
-        label={L("Feedback to share with the candidate", "ملاحظات لمشاركتها مع المرشح")}
+        label={L(
+          "Overall feedback for the candidate (sharing also publishes each question's feedback)",
+          "ملاحظات عامة للمرشح (المشاركة تنشر أيضًا ملاحظات كل سؤال)",
+        )}
         htmlFor={`fb-${submissionId}`}
         hint={shared ? L("Currently shared", "مُشارَكة حاليًا") : L("Not shared yet", "لم تُشارك بعد")}
       >
@@ -410,7 +276,7 @@ export function InterviewForm({
   const [slots, setSlots] = useState<Slot[] | null>(null);
   const [finding, setFinding] = useState(false);
   async function findSlots() {
-    if (!day || !picked.length) return toast.error(L("Choose interviewers and a date first.", "اختر المُقابِلين والتاريخ أولًا."));
+    if (!day || !picked.length) return toast.error(L("Choose interviewers and a date first", "اختر المُقابِلين والتاريخ أولًا"));
     setFinding(true);
     const r = await getSchedulingSlots({ date: day, duration, interviewers: picked, timezone: tz });
     setFinding(false);
@@ -510,7 +376,7 @@ export function InterviewForm({
         </Button>
         {slots && (
           slots.length === 0 ? (
-            <p className="text-muted text-sm">{L("No common free slot on this day.", "لا يوجد موعد مشترك متاح في هذا اليوم.")}</p>
+            <p className="text-muted text-sm">{L("No common free slot on this day", "لا يوجد موعد مشترك متاح في هذا اليوم")}</p>
           ) : (
             <div className="flex flex-wrap gap-1.5" role="listbox" aria-label={L("Free slots", "المواعيد المتاحة")}>
               {slots.map((sl) => {
@@ -539,7 +405,7 @@ export function InterviewForm({
         label={L("Date & time", "التاريخ والوقت")}
         htmlFor="iv-at"
         required
-        hint={L("Double-booking is blocked automatically.", "يُمنع الحجز المزدوج تلقائيًا.")}
+        hint={L("Double-booking is blocked automatically", "يُمنع الحجز المزدوج تلقائيًا")}
       >
         <Input id="iv-at" name="scheduled_at" type="datetime-local" required value={at} onChange={(e) => setAt(e.target.value)} />
       </Field>

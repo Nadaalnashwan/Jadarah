@@ -30,8 +30,8 @@ export default async function CvsPage() {
         eyebrow={t.candidate.nav.cvs}
         title={L("Your CVs", "سيرك الذاتية")}
         description={L(
-          "Files are stored privately. Only you, and companies you apply to, can open them through short-lived links.",
-          "تُحفظ الملفات بشكل خاص. لا يفتحها إلا أنت والشركات التي تتقدّم إليها عبر روابط مؤقتة.",
+          "Files are stored privately. Only you, and companies you apply to, can open them through short-lived links",
+          "تُحفظ الملفات بشكل خاص. لا يفتحها إلا أنت والشركات التي تتقدّم إليها عبر روابط مؤقتة",
         )}
       />
       <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
@@ -39,8 +39,8 @@ export default async function CvsPage() {
           <CardHeader
             title={L("Upload a new version", "رفع نسخة جديدة")}
             description={L(
-              "PDF or Word, up to 10 MB. Uploads never overwrite earlier versions.",
-              "PDF أو Word حتى 10 ميجابايت. الرفع لا يستبدل النسخ السابقة.",
+              "PDF or Word, up to 10 MB. Uploads never overwrite earlier versions",
+              "PDF أو Word حتى 10 ميجابايت. الرفع لا يستبدل النسخ السابقة",
             )}
           />
           <CardBody>
@@ -53,8 +53,8 @@ export default async function CvsPage() {
             description={
               ai.configured
                 ? L(
-                    "You review every extracted field.",
-                    "تراجع كل حقل مستخرج.",
+                    "You review every extracted field",
+                    "تراجع كل حقل مستخرج",
                   )
                 : t.common.ruleBased
             }

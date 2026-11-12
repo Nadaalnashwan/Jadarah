@@ -145,7 +145,7 @@ export function DecisionPanel({ applicationId, canHireDirectly }: { applicationI
       </Field>
       {decision === "hire" && canHireDirectly && (
         <p className="text-muted text-xs">
-          {L("Hiring is allowed at any open stage, even without prior shortlisting.", "يُسمح بالتوظيف في أي مرحلة مفتوحة حتى دون إدراج مسبق في القائمة المختصرة.")}
+          {L("Hiring is allowed at any open stage, even without prior shortlisting", "يُسمح بالتوظيف في أي مرحلة مفتوحة حتى دون إدراج مسبق في القائمة المختصرة")}
         </p>
       )}
       <Field label={L("Rationale (internal)", "المبرر (داخلي)")} htmlFor="fe-rationale" required>
@@ -164,7 +164,7 @@ export function DecisionPanel({ applicationId, canHireDirectly }: { applicationI
         <Gavel /> {L("Record decision & finalize", "تسجيل القرار واعتماد التقييم")}
       </Button>
       <p className="text-subtle text-[11px]">
-        {L("Finalizing locks this report. The decision is yours — AI never decides.", "الاعتماد يقفل هذا التقرير. القرار لكم — ولا يتخذه الذكاء الاصطناعي.")}
+        {L("Finalizing locks this report. The decision is yours — AI never decides", "الاعتماد يقفل هذا التقرير. القرار لكم — ولا يتخذه الذكاء الاصطناعي")}
       </p>
     </div>
   );
@@ -182,7 +182,7 @@ export function ShareFeedback({ applicationId, shared }: { applicationId: string
         value={text}
         onChange={(e) => setText(e.target.value)}
         aria-label={L("Feedback for the candidate", "ملاحظات للمرشح")}
-        placeholder={L("Only what you write here is shared — internal scores and notes stay private.", "يُشارك ما تكتبه هنا فقط — تبقى الدرجات والملاحظات الداخلية خاصة.")}
+        placeholder={L("Only what you write here is shared — internal scores and notes stay private", "يُشارك ما تكتبه هنا فقط — تبقى الدرجات والملاحظات الداخلية خاصة")}
       />
       <Button size="sm" variant="soft" className="self-end" loading={pending} disabled={text.trim().length < 10} onClick={() => run(() => shareFinalFeedback(applicationId, text))}>
         <Send /> {shared ? L("Update shared feedback", "تحديث الملاحظات المشتركة") : L("Share with candidate", "مشاركة مع المرشح")}

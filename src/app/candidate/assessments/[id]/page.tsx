@@ -11,6 +11,8 @@ import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { AttemptGate } from "./attempt";
+import { SignedFileLink } from "@/features/assessments/file-download";
+import { assessmentFileUrl } from "@/features/assessments/file-actions";
 
 type Result = {
   assessment: {
@@ -30,6 +32,7 @@ type Result = {
     submitted_at: string;
     feedback: string | null;
   };
+  unlinked_files?: { id: string; file_name: string; size_bytes: number }[];
   questions: {
     id: string;
     type: string;
@@ -39,6 +42,11 @@ type Result = {
     explanation_en: string | null;
     explanation_ar: string | null;
     options: { id: string; label_en: string; label_ar: string; is_correct: boolean }[];
+    /** Migration 0033: per-question review state, shared feedback and the files submitted for the question. */
+    auto_scored?: boolean;
+    reviewed?: boolean;
+    feedback?: { strengths?: string; missing?: string; improvements?: string } | null;
+    files?: { id: string; file_name: string; size_bytes: number }[];
     answer: {
       selected_option_ids: string[];
       text_answer: string | null;
@@ -98,8 +106,8 @@ export default async function AssessmentPage({
     sp.applied === "1" && jobTask ? (
       <p className="bg-success-soft text-success mb-4 rounded-xl px-4 py-3 text-sm font-semibold">
         {L(
-          "Application received. Complete and submit the practical task to finish your application.",
-          "استلمنا طلبك. أكمل المهمة العملية وسلّمها لإتمام طلبك.",
+          "Application received. Complete and submit the practical task to finish your application",
+          "استلمنا طلبك. أكمل المهمة العملية وسلّمها لإتمام طلبك",
         )}
       </p>
     ) : null;
@@ -146,6 +154,8 @@ export default async function AssessmentPage({
   if (error || !data) notFound();
   const r = data as unknown as Result;
   const pct = r.submission.percentage;
+  // Files attached to the whole task before per-question uploads existed (not linked to any question).
+  const solutionFiles = r.unlinked_files ?? [];
   const passed = pct !== null && pct >= r.assessment.passing_score;
   return (
     <>
@@ -156,11 +166,11 @@ export default async function AssessmentPage({
       {jobTask && app && (
         <div className="bg-success-soft mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl px-5 py-4">
           <div>
-            <p className="text-success font-bold">{L("Your application is complete.", "اكتمل طلبك.")}</p>
+            <p className="text-success font-bold">{L("Your application is complete", "اكتمل طلبك")}</p>
             <p className="text-muted text-sm">
               {L(
-                "The company now sees your profile, your CV (if shared) and this submission. People make the decision — you'll be notified of every update.",
-                "ترى الشركة الآن ملفك وسيرتك (إن أرفقتها) وهذا التسليم. القرار بيد أشخاص، وستصلك إشعارات بكل تحديث.",
+                "The company now sees your profile, your CV (if shared) and this submission. People make the decision — you'll be notified of every update",
+                "ترى الشركة الآن ملفك وسيرتك (إن أرفقتها) وهذا التسليم. القرار بيد أشخاص، وستصلك إشعارات بكل تحديث",
               )}
             </p>
           </div>
@@ -172,7 +182,7 @@ export default async function AssessmentPage({
       <div className="grid gap-6 xl:grid-cols-[1fr_1.6fr]">
         <div className="flex flex-col gap-6">
           <Card className="overflow-hidden">
-            <div className="bg-navy text-ivory p-6">
+            <div className="ink p-6">
               <p className="text-sky/80 text-sm">
                 {r.submission.needs_review
                   ? L("Objective score so far", "الدرجة الموضوعية حتى الآن")
@@ -193,8 +203,8 @@ export default async function AssessmentPage({
               {r.submission.needs_review ? (
                 <Badge tone="progress">
                   {L(
-                    "Open answers are being reviewed by the company against the rubric.",
-                    "تُراجع الشركة الإجابات المفتوحة وفق المعايير.",
+                    "Open answers are being reviewed by the company against the rubric",
+                    "تُراجع الشركة الإجابات المفتوحة وفق المعايير",
                   )}
                 </Badge>
               ) : (
@@ -207,6 +217,19 @@ export default async function AssessmentPage({
               )}
             </CardBody>
           </Card>
+          {solutionFiles.length > 0 && (
+            <Card>
+              <CardHeader
+                title={L("Files not linked to a question", "ملفات غير مرتبطة بسؤال")}
+                description={`${L("Submitted", "سُلّمت")} ${formatDateTime(r.submission.submitted_at, locale)}`}
+              />
+              <CardBody className="flex flex-col gap-2">
+                {solutionFiles.map((f) => (
+                  <SignedFileLink key={f.id} name={f.file_name} size={f.size_bytes} getUrl={assessmentFileUrl.bind(null, f.id)} />
+                ))}
+              </CardBody>
+            </Card>
+          )}
           {r.submission.feedback && (
             <Card>
               <CardHeader title={L("Feedback shared with you", "ملاحظات مُشارَكة معك")} />
@@ -231,8 +254,8 @@ export default async function AssessmentPage({
           <CardHeader
             title={L("Your answers", "إجاباتك")}
             description={L(
-              "Correct answers and explanations are revealed only after submission.",
-              "تظهر الإجابات الصحيحة والشروح بعد التسليم فقط.",
+              "Correct answers and explanations are revealed only after submission",
+              "تظهر الإجابات الصحيحة والشروح بعد التسليم فقط",
             )}
           />
           <CardBody>
@@ -241,12 +264,31 @@ export default async function AssessmentPage({
                 <li key={q.id} className="rounded-2xl border p-4">
                   <div className="flex items-start justify-between gap-3">
                     <p className="font-semibold">
-                      <span className="ltr-nums text-subtle">{i + 1}.</span> {pick(q, "prompt", locale)}
+                      <span className="ltr-nums text-subtle">{i + 1}</span> {pick(q, "prompt", locale)}
                     </p>
                     <span className="ltr-nums shrink-0 text-xs font-bold">
-                      {q.answer?.points_awarded ?? "—"}/{q.points}
+                      {q.auto_scored || q.reviewed || q.reviewed === undefined ? (q.answer?.points_awarded ?? "—") : "—"}/{q.points}
                     </span>
                   </div>
+                  {q.reviewed !== undefined && (
+                    <p className="mt-2">
+                      {q.auto_scored ? (
+                        <Badge tone="muted">{L("Scored automatically", "صُحّح آليًا")}</Badge>
+                      ) : q.reviewed ? (
+                        <Badge tone="positive">{L("Reviewed by the company", "راجعته الشركة")}</Badge>
+                      ) : (
+                        <Badge tone="progress">{L("Awaiting review", "بانتظار المراجعة")}</Badge>
+                      )}
+                    </p>
+                  )}
+                  {(q.files?.length ?? 0) > 0 && (
+                    <div className="mt-3 flex flex-col gap-2">
+                      <p className="text-muted text-xs font-semibold">{L("Your files for this question", "ملفاتك لهذا السؤال")}</p>
+                      {q.files!.map((f) => (
+                        <SignedFileLink key={f.id} name={f.file_name} size={f.size_bytes} getUrl={assessmentFileUrl.bind(null, f.id)} />
+                      ))}
+                    </div>
+                  )}
                   {q.options.length > 0 && (
                     <ul className="mt-3 flex flex-col gap-1.5">
                       {q.options.map((o) => {
@@ -288,6 +330,28 @@ export default async function AssessmentPage({
                     >
                       {q.answer.text_answer}
                     </pre>
+                  )}
+                  {q.feedback && (q.feedback.strengths || q.feedback.missing || q.feedback.improvements) && (
+                    <div className="bg-surface-violet mt-3 grid gap-2 rounded-xl p-3 text-sm">
+                      {q.feedback.strengths && (
+                        <div>
+                          <p className="text-success text-xs font-bold">{L("What you did well", "ما أحسنت فيه")}</p>
+                          <p className="whitespace-pre-wrap" dir="auto">{q.feedback.strengths}</p>
+                        </div>
+                      )}
+                      {q.feedback.missing && (
+                        <div>
+                          <p className="text-danger text-xs font-bold">{L("What was missing", "ما كان ناقصًا")}</p>
+                          <p className="whitespace-pre-wrap" dir="auto">{q.feedback.missing}</p>
+                        </div>
+                      )}
+                      {q.feedback.improvements && (
+                        <div>
+                          <p className="text-primary-ink text-xs font-bold">{L("How to improve", "كيف تتحسّن")}</p>
+                          <p className="whitespace-pre-wrap" dir="auto">{q.feedback.improvements}</p>
+                        </div>
+                      )}
+                    </div>
                   )}
                   {pick(q, "explanation", locale) && (
                     <p className="text-muted mt-3 text-sm">💡 {pick(q, "explanation", locale)}</p>

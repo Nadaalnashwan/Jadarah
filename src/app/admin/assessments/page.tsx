@@ -104,7 +104,7 @@ export default async function AdminAssessments({ searchParams }: { searchParams:
             </tbody>
           </table>
           {(data ?? []).length === 0 && (
-            <p className="text-muted p-6 text-center text-sm">{L("No assessments match these filters.", "لا توجد تقييمات مطابقة.")}</p>
+            <p className="text-muted p-6 text-center text-sm">{L("No assessments match these filters", "لا توجد تقييمات مطابقة")}</p>
           )}
         </div>
       </Card>

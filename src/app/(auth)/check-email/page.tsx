@@ -14,7 +14,7 @@ export default async function CheckEmailPage({
   const { t } = await getI18n();
   return (
     <div className="flex flex-col gap-6">
-      <span className="bg-accent-soft text-primary dark:text-lavender flex size-14 items-center justify-center rounded-2xl">
+      <span className="bg-accent-soft text-primary flex size-14 items-center justify-center rounded-2xl">
         <MailCheck className="size-7" aria-hidden />
       </span>
       <div>

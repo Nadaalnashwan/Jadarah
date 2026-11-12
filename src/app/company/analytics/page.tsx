@@ -31,7 +31,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
     <>
       <PageHeader
         title={t.company.nav.analytics}
-        description={L("Your organization's recruitment figures only.", "أرقام التوظيف الخاصة بجهتك فقط.")}
+        description={L("Your organization's recruitment figures only", "أرقام التوظيف الخاصة بجهتك فقط")}
         actions={
           <nav aria-label={L("Period", "الفترة")} className="flex gap-1.5">
             {RANGES.map(([v, en, ar]) => (

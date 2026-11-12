@@ -17,8 +17,8 @@ export default async function NewJob() {
       <PageHeader
         title={L("New job", "وظيفة جديدة")}
         description={L(
-          "Jobs are saved as drafts. Publish when ready — publishing requires an approved company.",
-          "تُحفظ الوظائف كمسودات. انشر عندما تكون جاهزًا — يتطلب النشر شركة معتمدة.",
+          "Jobs are saved as drafts. Publish when ready — publishing requires an approved company",
+          "تُحفظ الوظائف كمسودات. انشر عندما تكون جاهزًا — يتطلب النشر شركة معتمدة",
         )}
       />
       <JobEditor

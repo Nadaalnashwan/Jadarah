@@ -37,12 +37,12 @@ export default async function CandidateOnboarding({ searchParams }: { searchPara
       <main id="main" className="mx-auto max-w-3xl px-4 pb-20">
         <p className="eyebrow mb-3">{L("Welcome", "أهلًا بك")}</p>
         <h1 className="editorial text-4xl font-extrabold sm:text-5xl">
-          {L("Let's build your evidence profile.", "لنبنِ ملفك المدعوم بالأدلة.")}
+          {L("Let's build your evidence profile", "لنبنِ ملفك المدعوم بالأدلة")}
         </h1>
         <p className="text-muted mt-3 max-w-xl">
           {L(
-            "Start from your CV or fill in a few details. You can finish the rest later from your profile.",
-            "ابدأ من سيرتك الذاتية أو أدخل بعض البيانات. يمكنك إكمال البقية لاحقًا من ملفك.",
+            "Start from your CV or fill in a few details. You can finish the rest later from your profile",
+            "ابدأ من سيرتك الذاتية أو أدخل بعض البيانات. يمكنك إكمال البقية لاحقًا من ملفك",
           )}
         </p>
         {showCvStep ? (
@@ -52,8 +52,8 @@ export default async function CandidateOnboarding({ searchParams }: { searchPara
         {(sp.cv === "done" || reviewed) ? (
           <p className="bg-success-soft text-success mt-8 rounded-xl px-4 py-3 text-sm font-semibold">
             {L(
-              "Your approved CV information is in your profile. Confirm the details below — no need to repeat anything.",
-              "أصبحت معلومات سيرتك المعتمدة في ملفك. أكّد البيانات أدناه دون الحاجة لتكرار أي شيء.",
+              "Your approved CV information is in your profile. Confirm the details below — no need to repeat anything",
+              "أصبحت معلومات سيرتك المعتمدة في ملفك. أكّد البيانات أدناه دون الحاجة لتكرار أي شيء",
             )}
           </p>
         ) : null}

@@ -26,19 +26,16 @@ export async function B2bTab({ supabase, period, demo, locale }: Omit<TabProps, 
     <div className="flex flex-col gap-6">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          tone="sand"
           label={L("Provisioned organizations", "الجهات المُفعّلة")}
           value={n(b.organizations)}
           hint={`${n(b.demonstration)} ${L("demonstration subscriptions", "اشتراك تجريبي")}`}
         />
         <KpiCard
-          tone="sage"
           label={L("Paid revenue (recorded)", "الإيراد المحصّل (المسجّل)")}
           value={sar(b.revenue.received)}
           hint={`${n(b.revenue.payments)} ${L("payments, refunds subtracted", "دفعة، بعد خصم المبالغ المستردة")}`}
         />
         <KpiCard
-          tone="blue"
           label={L("Contract value", "قيمة العقود")}
           value={sar(b.revenue.contract)}
           hint={L("Prices of non-demo subscriptions", "أسعار الاشتراكات غير التجريبية")}
@@ -83,10 +80,10 @@ export async function B2bTab({ supabase, period, demo, locale }: Omit<TabProps, 
           title={L("21 · Subscription status", "21 · حالة الاشتراكات")}
           sample={`${n(b.organizations)} ${L("subscriptions", "اشتراك")}`}
           empty={!b.organizations}
-          emptyText={L("No subscriptions yet.", "لا توجد اشتراكات بعد.")}
+          emptyText={L("No subscriptions yet", "لا توجد اشتراكات بعد")}
           definition={L(
-            "Demonstration subscriptions are shown separately and never counted as revenue.",
-            "الاشتراكات التجريبية تُعرض منفصلة ولا تُحتسب إيرادًا.",
+            "Demonstration subscriptions are shown separately and never counted as revenue",
+            "الاشتراكات التجريبية تُعرض منفصلة ولا تُحتسب إيرادًا",
           )}
         >
           <StackedBars
@@ -107,10 +104,10 @@ export async function B2bTab({ supabase, period, demo, locale }: Omit<TabProps, 
           title={L("22 · Company activity", "22 · نشاط الشركات")}
           sample={`${periodLabel} · ${n(b.activity.length)} ${L("companies", "شركة")}`}
           empty={!b.activity.length}
-          emptyText={L("No companies yet.", "لا توجد شركات بعد.")}
+          emptyText={L("No companies yet", "لا توجد شركات بعد")}
           definition={L(
-            "Jobs created and applications received in the period.",
-            "الوظائف المنشأة والطلبات المستلمة خلال الفترة.",
+            "Jobs created and applications received in the period",
+            "الوظائف المنشأة والطلبات المستلمة خلال الفترة",
           )}
         >
           <StackedBars
@@ -165,8 +162,8 @@ export async function B2bTab({ supabase, period, demo, locale }: Omit<TabProps, 
           sample={`${n(b.revenue.payments)} ${L("recorded payments (all time, by month)", "دفعة مسجّلة (كل الفترات، شهريًا)")}`}
           empty={!b.revenueByMonth.length}
           emptyText={L(
-            "No payments have been recorded. Contract values are not revenue until a payment is recorded.",
-            "لم تُسجَّل أي دفعات. قيم العقود ليست إيرادًا حتى تُسجَّل دفعة.",
+            "No payments have been recorded. Contract values are not revenue until a payment is recorded",
+            "لم تُسجَّل أي دفعات. قيم العقود ليست إيرادًا حتى تُسجَّل دفعة",
           )}
         >
           <LineSeries

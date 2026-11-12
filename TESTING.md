@@ -143,3 +143,17 @@ Offline evaluation: `npm run eval:offline` (no AI calls) → `src/data/evaluatio
 
 Note: in `next dev` the Next.js dev badge overlaps the film's play button at 1280×720 / Pixel 7 — run the film E2E against a
 production build (as above). The film test allows extra time because WebGL renders in software in headless Chromium.
+
+## 2026-11-11 (visual identity, dashboards, copy audit, 3D city film improvements) — cloud session, hosted Supabase read-only
+No writes to the hosted project: only sign-ins as existing demo identities and page reads.
+
+| Check | Result |
+|---|---|
+| `npx tsc --noEmit` · `npx eslint .` | clean · 0 problems |
+| `npm test` (unit) | **79 passed** |
+| `npm run build` | success |
+| Playwright `public.spec.ts`, production build (`next start -p 3100`), desktop + Pixel 7 | **8 passed** — film autoplays on load, progress fills, scenes advance, pause/resume, CTAs, skip; reduced motion still advances (instant cuts); protected-route redirects; public job board |
+| 3D city (headless Chromium, SwiftShader) | WebGL canvas renders, poster fades out, frames differ between camera flights (ambient motion), scenes loop 1 → 2 → 3 → 1 on desktop and mobile in AR/EN, light/dark; no console errors. Frame rate is not measurable here (software GL, no GPU) |
+| Signed-in sweep (candidate, employer, Super Admin; 48 routes) in AR light and EN dark | every route 200, no console/page errors, no error boundaries; `/company/talent` and `/admin/ai` redirect by design |
+| Mobile (iPhone 13, RTL) | no horizontal overflow on landing and candidate overview; workspace drawer opens full height (portal fix) |
+| Integration tests (`npm run test:integration`) | **not run** — they write to the hosted project as demo users; needs owner approval |

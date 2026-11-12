@@ -53,12 +53,12 @@ export function IdentityEditor({
 
   async function upload(kind: "logo" | "cover", f: File) {
     if (!IMG_TYPES.includes(f.type) || f.size > 2 * 1024 * 1024)
-      return toast.error(L("PNG, JPEG or WebP up to 2 MB.", "PNG أو JPEG أو WebP حتى 2 ميجابايت."));
+      return toast.error(L("PNG, JPEG or WebP up to 2 MB", "PNG أو JPEG أو WebP حتى 2 ميجابايت"));
     setUploading(kind);
     const path = `${companyId}/${kind}-${crypto.randomUUID().slice(0, 8)}.${EXT[f.type]}`;
     const { error } = await getBrowserClient().storage.from("company-identity").upload(path, f, { contentType: f.type });
     setUploading(null);
-    if (error) return toast.error(L("Upload failed.", "فشل الرفع."));
+    if (error) return toast.error(L("Upload failed", "فشل الرفع"));
     set(kind === "logo" ? "logo_path" : "cover_path", path);
   }
 
@@ -144,8 +144,8 @@ export function IdentityEditor({
         {colour("accent_hex", L("Accent colour (optional)", "لون مميّز (اختياري)"))}
         <p className="text-subtle text-xs">
           {L(
-            "Your colours appear on your company pages, jobs, tasks and interviews. JADARAH navigation and security indicators always keep the platform colours. Text colour is chosen automatically for readability.",
-            "تظهر ألوانك في صفحات شركتك ووظائفها ومهامها ومقابلاتها. تحتفظ قوائم جدارة ومؤشرات الأمان دائمًا بألوان المنصة. يُختار لون النص تلقائيًا لضمان الوضوح.",
+            "Your colours appear on your company pages, jobs, tasks and interviews. JADARAH navigation and security indicators always keep the platform colours. Text colour is chosen automatically for readability",
+            "تظهر ألوانك في صفحات شركتك ووظائفها ومهامها ومقابلاتها. تحتفظ قوائم جدارة ومؤشرات الأمان دائمًا بألوان المنصة. يُختار لون النص تلقائيًا لضمان الوضوح",
           )}
         </p>
         {state && !state.ok && <FormMessage>{state.error}</FormMessage>}

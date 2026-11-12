@@ -92,13 +92,13 @@ export function MeetingRoom({
         setFrameLoaded(false);
       })
       .on("error", () => {
-        setError(L("The video call could not continue. Please rejoin.", "تعذّر استمرار المكالمة. يرجى الانضمام مجددًا."));
+        setError(L("The video call could not continue. Please rejoin", "تعذّر استمرار المكالمة. يرجى الانضمام مجددًا"));
         setPhase("error");
       });
     try {
       await frame.join({ url: join.url, token: join.token });
     } catch {
-      setError(L("Could not join the call. Check your connection and try again.", "تعذّر الانضمام. تحقق من اتصالك وحاول مجددًا."));
+      setError(L("Could not join the call. Check your connection and try again", "تعذّر الانضمام. تحقق من اتصالك وحاول مجددًا"));
       setPhase("error");
     }
   }
@@ -120,7 +120,7 @@ export function MeetingRoom({
       <div
         ref={frameEl}
         className={
-          inCall ? "bg-navy relative h-[calc(100dvh-7.5rem)] min-h-[28rem] w-full overflow-hidden rounded-[1.25rem]" : "hidden"
+          inCall ? "ink relative h-[calc(100dvh-7.5rem)] min-h-[28rem] w-full overflow-hidden rounded-[1.25rem]" : "hidden"
         }
       >
         {phase === "joining" && !frameLoaded && (
@@ -150,8 +150,8 @@ export function MeetingRoom({
               title={L("You left the interview", "غادرت المقابلة")}
               body={
                 role === "interviewer"
-                  ? L("Remember to submit your structured evaluation.", "لا تنسَ إرسال تقييمك المنظّم.")
-                  : L("Thank you. The company will share updates on your application.", "شكرًا لك. ستشاركك الشركة المستجدات بشأن طلبك.")
+                  ? L("Remember to submit your structured evaluation", "لا تنسَ إرسال تقييمك المنظّم")
+                  : L("Thank you. The company will share updates on your application", "شكرًا لك. ستشاركك الشركة المستجدات بشأن طلبك")
               }
             >
               <div className="flex gap-2">
@@ -171,7 +171,7 @@ export function MeetingRoom({
                 <Panel
                   icon={<Video />}
                   title={L("Video interviews are not configured", "لم تُضبط المقابلات المرئية")}
-                  body={L("Please contact the company for the meeting details.", "يرجى التواصل مع الشركة لمعرفة تفاصيل الاجتماع.")}
+                  body={L("Please contact the company for the meeting details", "يرجى التواصل مع الشركة لمعرفة تفاصيل الاجتماع")}
                 />
               )}
               {join.state === "closed" && (
@@ -195,12 +195,12 @@ export function MeetingRoom({
                   title={L("Waiting room", "غرفة الانتظار")}
                   body={
                     join.state === "waiting"
-                      ? L("The room opens 15 minutes before the start.", "تُفتح الغرفة قبل الموعد بخمس عشرة دقيقة.")
+                      ? L("The room opens 15 minutes before the start", "تُفتح الغرفة قبل الموعد بخمس عشرة دقيقة")
                       : L("The interviewer is opening the room…", "يقوم المُقابِل بفتح الغرفة…")
                   }
                 >
                   {join.state === "waiting" && (
-                    <p className="ltr-nums text-navy dark:text-lavender text-5xl font-extrabold tracking-tight" aria-live="polite">
+                    <p className="ltr-nums text-navy text-5xl font-extrabold tracking-tight" aria-live="polite">
                       {countdown}
                     </p>
                   )}
@@ -211,8 +211,8 @@ export function MeetingRoom({
                   icon={<Video />}
                   title={L("Your interview room is open", "غرفة مقابلتك مفتوحة")}
                   body={L(
-                    "You'll check your camera and microphone before entering. The call is private to the participants and is not recorded.",
-                    "ستتحقق من الكاميرا والميكروفون قبل الدخول. المكالمة خاصة بالمشاركين ولا تُسجَّل.",
+                    "You'll check your camera and microphone before entering. The call is private to the participants and is not recorded",
+                    "ستتحقق من الكاميرا والميكروفون قبل الدخول. المكالمة خاصة بالمشاركين ولا تُسجَّل",
                   )}
                 >
                   <Button size="lg" onClick={() => void enter()}>
@@ -243,7 +243,7 @@ export function MeetingRoom({
 function Panel({ icon, title, body, children }: { icon: React.ReactNode; title: string; body: string; children?: React.ReactNode }) {
   return (
     <div className="surface-card flex w-full flex-col items-center gap-4 p-8">
-      <span className="bg-navy text-lavender flex size-14 items-center justify-center rounded-2xl [&_svg]:size-7">{icon}</span>
+      <span className="ink text-primary-ink flex size-14 items-center justify-center rounded-2xl [&_svg]:size-7">{icon}</span>
       <h1 className="text-2xl font-extrabold tracking-tight">{title}</h1>
       {body && <p className="text-muted max-w-md">{body}</p>}
       {children}

@@ -59,7 +59,7 @@ export default async function SubscriptionDetail({ params }: { params: Promise<{
               </ul>
             )}
             {sub?.is_demo ? (
-              <p className="text-muted text-sm">{L("Demonstration access — no payments recorded.", "وصول تجريبي — لا تُسجَّل مدفوعات.")}</p>
+              <p className="text-muted text-sm">{L("Demonstration access — no payments recorded", "وصول تجريبي — لا تُسجَّل مدفوعات")}</p>
             ) : (
               <PaymentForm companyId={c.id} />
             )}

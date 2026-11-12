@@ -34,7 +34,7 @@ export function TaskPreviewCard({ task, locale }: { task: TaskPreview; locale: L
   const outcomes = (locale === "ar" ? task.learning_outcomes_ar : task.learning_outcomes_en) ?? [];
   return (
     <section className="border-primary/25 rounded-2xl border p-5" aria-labelledby="task-preview-title">
-      <p className="text-primary flex items-center gap-2 text-xs font-bold tracking-wide dark:text-lavender">
+      <p className="text-primary flex items-center gap-2 text-xs font-bold tracking-wide">
         <ClipboardCheck className="size-4" /> {L("Practical task", "المهمة العملية")}
       </p>
       <h2 id="task-preview-title" className="mt-1.5 font-bold">
@@ -61,8 +61,8 @@ export function TaskPreviewCard({ task, locale }: { task: TaskPreview; locale: L
       )}
       <p className="text-subtle mt-3 text-xs">
         {L(
-          "Every applicant receives the same task. It opens right after you apply; the timer starts when you begin.",
-          "يستلم جميع المتقدمين المهمة نفسها. تُفتح فور التقديم، ويبدأ الوقت عند بدئك.",
+          "Every applicant receives the same task. It opens right after you apply; the timer starts when you begin",
+          "يستلم جميع المتقدمين المهمة نفسها. تُفتح فور التقديم، ويبدأ الوقت عند بدئك",
         )}
       </p>
     </section>

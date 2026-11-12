@@ -71,7 +71,7 @@ export function InterviewRubricEditor({ initial }: { initial: RubricCriterion[] 
         </Button>
       </div>
       <p className="text-subtle text-[11px]">
-        {L("Interviewers rate each criterion 1–5. Weights shape the interview score in the final report; earlier evaluations stay readable.", "يقيّم المُقابِلون كل معيار من 1 إلى 5. تحدّد الأوزان درجة المقابلة في التقرير النهائي؛ وتبقى التقييمات السابقة مقروءة.")}
+        {L("Interviewers rate each criterion 1–5. Weights shape the interview score in the final report; earlier evaluations stay readable", "يقيّم المُقابِلون كل معيار من 1 إلى 5. تحدّد الأوزان درجة المقابلة في التقرير النهائي؛ وتبقى التقييمات السابقة مقروءة")}
       </p>
     </div>
   );

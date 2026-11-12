@@ -74,12 +74,12 @@ export default async function InterviewDetail({ params }: { params: Promise<{ id
             <CardHeader title={L("Questions", "الأسئلة")} />
             <CardBody className="flex flex-col gap-3">
               {questions.length === 0 && (
-                <p className="text-subtle text-sm">{L("No questions yet.", "لا توجد أسئلة بعد.")}</p>
+                <p className="text-subtle text-sm">{L("No questions yet", "لا توجد أسئلة بعد")}</p>
               )}
               <ol className="flex flex-col gap-2">
                 {questions.map((q, i) => (
                   <li key={q.id} className="rounded-xl border p-3 text-sm">
-                    <span className="ltr-nums text-subtle">{i + 1}.</span> {q.question}{" "}
+                    <span className="ltr-nums text-subtle">{i + 1}</span> {q.question}{" "}
                     <Badge tone="neutral" className="ms-2">
                       {q.kind}
                     </Badge>
@@ -99,8 +99,8 @@ export default async function InterviewDetail({ params }: { params: Promise<{ id
               <CardHeader
                 title={L("Your evaluation", "تقييمك")}
                 description={L(
-                  "Confidential: visible to your company's recruiters, never to the candidate.",
-                  "سري: يراه مسؤولو التوظيف في شركتك ولا يراه المرشح أبدًا.",
+                  "Confidential: visible to your company's recruiters, never to the candidate",
+                  "سري: يراه مسؤولو التوظيف في شركتك ولا يراه المرشح أبدًا",
                 )}
               />
               <CardBody>
@@ -128,7 +128,7 @@ export default async function InterviewDetail({ params }: { params: Promise<{ id
               <CardBody className="flex flex-col gap-3">
                 {iv.interview_evaluations.length === 0 && (
                   <p className="text-subtle text-sm">
-                    {L("No evaluations submitted yet.", "لم تُرسل تقييمات بعد.")}
+                    {L("No evaluations submitted yet", "لم تُرسل تقييمات بعد")}
                   </p>
                 )}
                 {iv.interview_evaluations.map((e) => (
@@ -178,7 +178,7 @@ export default async function InterviewDetail({ params }: { params: Promise<{ id
                   href={iv.meeting_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary dark:text-lavender inline-flex items-center gap-2 font-semibold"
+                  className="text-primary inline-flex items-center gap-2 font-semibold"
                 >
                   <Video className="size-4" /> {L("Meeting link", "رابط الاجتماع")}
                 </a>
@@ -194,7 +194,7 @@ export default async function InterviewDetail({ params }: { params: Promise<{ id
               {recruiter && iv.application && (
                 <Link
                   href={`/company/applications/${iv.application.id}`}
-                  className="text-primary dark:text-lavender mt-2 text-xs font-semibold"
+                  className="text-primary mt-2 text-xs font-semibold"
                 >
                   {L("Open application", "فتح الطلب")}
                 </Link>
@@ -205,8 +205,8 @@ export default async function InterviewDetail({ params }: { params: Promise<{ id
             <CardHeader
               title={L("Documents", "المستندات")}
               description={L(
-                "Internal unless you choose to share with the candidate.",
-                "داخلية ما لم تختر مشاركتها مع المرشح.",
+                "Internal unless you choose to share with the candidate",
+                "داخلية ما لم تختر مشاركتها مع المرشح",
               )}
             />
             <CardBody>
@@ -263,8 +263,8 @@ export default async function InterviewDetail({ params }: { params: Promise<{ id
             <CardHeader
               title={L("Feedback", "الملاحظات")}
               description={L(
-                "Share selected feedback with the candidate explicitly.",
-                "شارك ملاحظات محددة مع المرشح بشكل صريح.",
+                "Share selected feedback with the candidate explicitly",
+                "شارك ملاحظات محددة مع المرشح بشكل صريح",
               )}
             />
             <CardBody className="flex flex-col gap-3">

@@ -23,7 +23,9 @@ export async function GET() {
       database = "ok";
       schema = (data as { schema?: string } | null)?.schema ?? null;
     } else {
-      // Before migration 0029: fall back to a public read.
+      // Before migration 0029 the function does not exist (PGRST202); anything else (e.g. a timeout on a cold start)
+      // says nothing about the schema, so it is reported as unknown rather than as an old schema.
+      if (error.code === "PGRST202") schema = "pre-0029";
       const r = await rpcClient().from("skills").select("id", { head: true, count: "exact" }).abortSignal(AbortSignal.timeout(3000));
       if (!r.error) database = "ok";
     }
@@ -41,6 +43,33 @@ export async function GET() {
   } catch {
     auth = "error";
   }
+  // Task Solution Files need migrations 0029 (table, storage rules) and 0032 (solution kind + RPC). Probe the schema
+  // without reading data: an anonymous zero-row request is refused by grants when the table exists.
+  let taskSolutionFiles: "ready" | "missing_0029_and_0032" | "missing_0032" | "unknown" = "unknown";
+  try {
+    const r = await rpcClient()
+      .from("assessment_answer_files")
+      .select("kind")
+      .limit(0) // a GET returning no rows: HEAD requests do not carry PostgREST errors
+      .abortSignal(AbortSignal.timeout(3000));
+    const code = r.error?.code ?? "";
+    if (code === "PGRST205" || code === "42P01") taskSolutionFiles = "missing_0029_and_0032";
+    else if (code === "42703" || /column .*kind/i.test(r.error?.message ?? "")) taskSolutionFiles = "missing_0032";
+    // Anonymous callers have no SELECT grant: "permission denied" (42501) means table and column exist.
+    else if (!r.error || code === "42501") taskSolutionFiles = "ready";
+  } catch {
+    taskSolutionFiles = "unknown";
+  }
+  // Question-level evaluation (migration 0033): AI evaluations table, probed the same way.
+  let questionEvaluation: "ready" | "missing_0033" | "unknown" = "unknown";
+  try {
+    const r = await rpcClient().from("assessment_ai_evaluations").select("id").limit(0).abortSignal(AbortSignal.timeout(3000));
+    const code = r.error?.code ?? "";
+    if (code === "PGRST205" || code === "42P01") questionEvaluation = "missing_0033";
+    else if (!r.error || code === "42501") questionEvaluation = "ready";
+  } catch {
+    questionEvaluation = "unknown";
+  }
   const ai = aiStatus();
   const email = emailConfig();
   const body = {
@@ -51,7 +80,9 @@ export async function GET() {
     commit: (process.env.VERCEL_GIT_COMMIT_SHA ?? "").slice(0, 7) || null,
     checks: {
       database,
-      database_schema: schema ?? "pre-0029",
+      database_schema: schema ?? "unknown",
+      task_solution_files: taskSolutionFiles,
+      question_evaluation: questionEvaluation,
       auth,
       server_key: hasServerKey() ? "configured" : "missing",
       rate_limit: rateLimitBackend().configured,

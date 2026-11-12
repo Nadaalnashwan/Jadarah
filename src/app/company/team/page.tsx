@@ -38,8 +38,8 @@ export default async function TeamPage() {
       <PageHeader
         title={t.company.nav.team}
         description={L(
-          "Recruiters manage hiring; interviewers only see interviews assigned to them.",
-          "مسؤولو التوظيف يديرون التوظيف، والمُقابِلون يرون المقابلات المسندة إليهم فقط.",
+          "Recruiters manage hiring; interviewers only see interviews assigned to them",
+          "مسؤولو التوظيف يديرون التوظيف، والمُقابِلون يرون المقابلات المسندة إليهم فقط",
         )}
       />
       <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">

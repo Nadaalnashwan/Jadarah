@@ -17,6 +17,7 @@ import { withSemantics } from "@/services/semantic";
 import { ApplyForm } from "./apply-form";
 import { SaveJobButton } from "../save-button";
 import { isPracticeListing } from "@/lib/domain/listings";
+import { isJobOpen } from "@/lib/domain/listings";
 
 export default async function JobDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -71,9 +72,8 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
     locale,
     refreshCandidate: true,
   });
-  const closed =
-    job.status !== "published" ||
-    (job.deadline !== null && job.deadline < new Date().toISOString().slice(0, 10));
+  // Same rule as listings and apply_to_job: published and on/before the deadline in Riyadh.
+  const closed = !isJobOpen(job);
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
@@ -84,7 +84,7 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
           </Link>
         )}
         <Card className="overflow-hidden">
-          <div className="bg-navy text-ivory relative p-6 sm:p-8">
+          <div className="ink relative p-6 sm:p-8">
             <div className="flex items-start justify-between gap-4">
               <div>
                 {job.company && (
@@ -149,7 +149,7 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
               {pick(job.company, "description", locale) && <p className="text-muted mt-3 text-sm">{pick(job.company, "description", locale)}</p>}
               {isPracticeListing(job) && (
                 <p className="text-subtle mt-3 text-xs">
-                  {L("Practice scenario — not an official vacancy.", "سيناريو تدريبي — وليس شاغرًا رسميًا.")}
+                  {L("Practice scenario — not an official vacancy", "سيناريو تدريبي — وليس شاغرًا رسميًا")}
                 </p>
               )}
             </section>
@@ -161,8 +161,8 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
           <CardHeader
             title={L("How you match", "مدى مطابقتك")}
             description={L(
-              "Based only on what your profile states and proves.",
-              "مبنية فقط على ما يذكره ملفك ويثبته.",
+              "Based only on what your profile states and proves",
+              "مبنية فقط على ما يذكره ملفك ويثبته",
             )}
           />
           <CardBody>
@@ -175,12 +175,12 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
             {existing && existing.requires_task && !existing.completed_at && existing.task_assignment_id ? (
               <div className="flex flex-col items-start gap-3">
                 <p className="text-sm font-semibold">
-                  {L("Your application is waiting for the practical task.", "طلبك بانتظار إكمال المهمة العملية.")}
+                  {L("Your application is waiting for the practical task", "طلبك بانتظار إكمال المهمة العملية")}
                 </p>
                 <p className="text-muted text-sm">
                   {L(
-                    "Your application is complete once you submit the task. Saved answers are kept if you leave.",
-                    "يكتمل طلبك عند تسليم المهمة. تُحفظ إجاباتك إذا غادرت.",
+                    "Your application is complete once you submit the task. Saved answers are kept if you leave",
+                    "يكتمل طلبك عند تسليم المهمة. تُحفظ إجاباتك إذا غادرت",
                   )}
                 </p>
                 <Button asChild>
@@ -192,7 +192,7 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
             ) : existing ? (
               <div className="flex flex-col items-start gap-3">
                 <p className="text-muted text-sm">
-                  {L("You applied to this job.", "لقد تقدّمت لهذه الوظيفة.")}
+                  {L("You applied to this job", "لقد تقدّمت لهذه الوظيفة")}
                 </p>
                 <StatusBadge status={existing.status as ApplicationStatus} t={t} />
                 <Button asChild variant="outline">
@@ -203,7 +203,7 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
               </div>
             ) : closed ? (
               <p className="text-muted text-sm">
-                {L("This job is no longer accepting applications.", "لم تعد هذه الوظيفة تستقبل طلبات.")}
+                {L("This job is no longer accepting applications", "لم تعد هذه الوظيفة تستقبل طلبات")}
               </p>
             ) : (
               <ApplyForm

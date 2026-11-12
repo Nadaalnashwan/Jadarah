@@ -28,8 +28,8 @@ export default async function AdminDemo() {
       <PageHeader
         title={t.admin.nav.demo}
         description={L(
-          "Demo records are flagged and fictional. Reset refuses to run unless the environment flag is demo or local.",
-          "السجلات التجريبية موسومة وخيالية. يرفض الحذف العمل ما لم تكن البيئة demo أو local.",
+          "Demo records are flagged and fictional. Reset refuses to run unless the environment flag is demo or local",
+          "السجلات التجريبية موسومة وخيالية. يرفض الحذف العمل ما لم تكن البيئة demo أو local",
         )}
       />
       <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-6">
@@ -71,8 +71,8 @@ export default async function AdminDemo() {
           <CardHeader
             title={L("Reset demo data", "حذف البيانات التجريبية")}
             description={L(
-              "Deletes demo companies and demo identities (including the demo admin account) with all their records.",
-              "يحذف الشركات والهويات التجريبية (بما فيها حساب المدير التجريبي) وكل سجلاتها.",
+              "Deletes demo companies and demo identities (including the demo admin account) with all their records",
+              "يحذف الشركات والهويات التجريبية (بما فيها حساب المدير التجريبي) وكل سجلاتها",
             )}
           />
           <CardBody>

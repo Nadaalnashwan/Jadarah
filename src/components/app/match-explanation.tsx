@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 const ICON: Record<MatchStatus, React.ReactNode> = {
   matched: <CheckCircle2 className="text-success size-4" aria-hidden />,
   partial: <CircleDashed className="text-warning size-4" aria-hidden />,
-  unverified: <CircleHelp className="text-primary dark:text-lavender size-4" aria-hidden />,
+  unverified: <CircleHelp className="text-primary size-4" aria-hidden />,
   missing: <CircleSlash className="text-danger size-4" aria-hidden />,
 };
 
@@ -64,7 +64,7 @@ export function MatchExplanation({
         <div className="bg-accent-soft/60 mt-4 rounded-2xl border p-3">
           <div className="flex items-center justify-between gap-3">
             <p className="flex items-center gap-1.5 text-xs font-bold">
-              <Sparkles className="text-primary dark:text-lavender size-3.5" aria-hidden />
+              <Sparkles className="text-primary size-3.5" aria-hidden />
               {locale === "ar" ? "التوافق العام مع الوظيفة" : "Overall fit with the role"}
             </p>
             <span className="text-sm font-extrabold">
@@ -79,8 +79,8 @@ export function MatchExplanation({
           </div>
           <p className="text-subtle mt-1.5 text-[11px] leading-snug">
             {locale === "ar"
-              ? "استنتاج آلي — للاستئناس فقط ولا يدخل في الدرجة."
-              : "AI inference — context only, not part of the score."}
+              ? "استنتاج آلي — للاستئناس فقط ولا يدخل في الدرجة"
+              : "AI inference — context only, not part of the score"}
           </p>
         </div>
       )}
@@ -114,7 +114,7 @@ export function MatchExplanation({
               </p>
               {r.evidence && !compact && <p className="text-subtle mt-1 truncate text-xs">“{r.evidence}”</p>}
               {r.related && (
-                <p className="text-primary dark:text-lavender mt-1 flex items-center gap-1 text-xs">
+                <p className="text-primary mt-1 flex items-center gap-1 text-xs">
                   <Sparkles className="size-3 shrink-0" aria-hidden />
                   <span>
                     {locale === "ar" ? "مهارة قريبة لدى المرشح: " : "Related skill the candidate has: "}

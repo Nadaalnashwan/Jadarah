@@ -58,7 +58,7 @@ export function MilestoneList({ items }: { items: Item[] }) {
             {i.status === "completed" ? (
               <CheckCircle2 className="text-success size-6" />
             ) : i.status === "in_progress" ? (
-              <CircleDot className="text-primary dark:text-lavender size-6" />
+              <CircleDot className="text-primary size-6" />
             ) : (
               <Circle className="text-border-strong size-6" />
             )}
@@ -76,7 +76,7 @@ export function MilestoneList({ items }: { items: Item[] }) {
               </p>
               {i.kind === "milestone" && (
                 <Flag
-                  className="text-primary dark:text-lavender size-3.5"
+                  className="text-primary size-3.5"
                   aria-label={L("Milestone", "مرحلة")}
                 />
               )}
@@ -91,7 +91,7 @@ export function MilestoneList({ items }: { items: Item[] }) {
                 href={i.resource.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary dark:text-lavender mt-2 inline-flex items-center gap-1.5 text-sm font-semibold hover:underline"
+                className="text-primary mt-2 inline-flex items-center gap-1.5 text-sm font-semibold hover:underline"
               >
                 {i.resource.title} · <span className="text-subtle font-normal">{i.resource.provider}</span>{" "}
                 <ExternalLink className="size-3.5" />

@@ -11,8 +11,8 @@ export default async function HowItWorks() {
       eyebrow={t.nav.howItWorks}
       title={t.landing.solutionTitle}
       intro={L(
-        "From profile to decision, every step leaves a record that both sides can understand.",
-        "من الملف إلى القرار، تترك كل خطوة سجلًا يفهمه الطرفان.",
+        "From profile to decision, every step leaves a record that both sides can understand",
+        "من الملف إلى القرار، تترك كل خطوة سجلًا يفهمه الطرفان",
       )}
       sections={t.landing.stages.map((s) => ({ title: s.title, body: s.body }))}
       cta={[

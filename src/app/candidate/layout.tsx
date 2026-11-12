@@ -23,6 +23,7 @@ export default async function CandidateLayout({ children }: { children: React.Re
       icon: "Send",
       also: groupRoutes("candidate-applications"),
     },
+    { href: "/candidate/calendar", label: n.calendar, icon: "CalendarDays" },
     { href: "/candidate/assessments", label: n.assessments, icon: "ClipboardCheck" },
     {
       href: "/candidate/career",

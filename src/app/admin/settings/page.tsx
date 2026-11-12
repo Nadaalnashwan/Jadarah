@@ -48,8 +48,8 @@ export default async function AdminSettings() {
       <PageHeader
         title={t.admin.nav.settings}
         description={L(
-          "Secrets are never stored here — only non-sensitive configuration.",
-          "لا تُخزّن الأسرار هنا — فقط الإعدادات غير الحساسة.",
+          "Secrets are never stored here — only non-sensitive configuration",
+          "لا تُخزّن الأسرار هنا — فقط الإعدادات غير الحساسة",
         )}
       />
       <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">

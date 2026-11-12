@@ -42,8 +42,8 @@ export default async function EmailDeliveryPage() {
       <PageHeader
         title={L("Email delivery", "تسليم البريد")}
         description={L(
-          "Every email is queued once, retried with backoff on temporary errors, and never sent twice. Recipient addresses are not shown here.",
-          "تُضاف كل رسالة مرة واحدة، وتُعاد المحاولة عند الأخطاء المؤقتة، ولا تُرسل مرتين. لا تُعرض عناوين المستلمين هنا.",
+          "Every email is queued once, retried with backoff on temporary errors, and never sent twice. Recipient addresses are not shown here",
+          "تُضاف كل رسالة مرة واحدة، وتُعاد المحاولة عند الأخطاء المؤقتة، ولا تُرسل مرتين. لا تُعرض عناوين المستلمين هنا",
         )}
       />
       <Card className="mb-6">
@@ -58,7 +58,7 @@ export default async function EmailDeliveryPage() {
           <Badge tone={hasServerKey() ? "positive" : "negative"}>{hasServerKey() ? L("Configured", "مُهيّأ") : L("Missing", "مفقود")}</Badge>
           {!cfg.configured && (
             <span className="text-muted">
-              {L("Emails stay queued until a provider is configured (see DEPLOYMENT.md).", "تبقى الرسائل في الانتظار حتى يُهيّأ مزوّد (راجع DEPLOYMENT.md).")}
+              {L("Emails stay queued until a provider is configured (see DEPLOYMENT.md)", "تبقى الرسائل في الانتظار حتى يُهيّأ مزوّد (راجع DEPLOYMENT.md)")}
             </span>
           )}
         </CardBody>
@@ -66,7 +66,7 @@ export default async function EmailDeliveryPage() {
       {!available ? (
         <EmptyState
           title={L("Email delivery isn't enabled in this database yet", "تسليم البريد غير مُفعّل في قاعدة البيانات بعد")}
-          body={L("Apply migration 0029 to enable the outbox.", "طبّق الترحيل 0029 لتفعيل صندوق الإرسال.")}
+          body={L("Apply migration 0029 to enable the outbox", "طبّق الترحيل 0029 لتفعيل صندوق الإرسال")}
         />
       ) : (
         <>

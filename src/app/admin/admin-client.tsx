@@ -152,8 +152,8 @@ export function UserControls({
             isAdmin
               ? L("Revoke Super Admin?", "إلغاء صلاحية مدير المنصة؟")
               : L(
-                  "Grant Super Admin? This gives full platform control.",
-                  "منح صلاحية مدير المنصة؟ هذا يمنح تحكمًا كاملًا.",
+                  "Grant Super Admin? This gives full platform control",
+                  "منح صلاحية مدير المنصة؟ هذا يمنح تحكمًا كاملًا",
                 ),
           ) && run(setPlatformRole(userId, "super_admin", !isAdmin))
         }

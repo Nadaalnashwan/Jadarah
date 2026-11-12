@@ -119,7 +119,7 @@ export default async function CompanyApplications({ searchParams }: { searchPara
                       <td className="p-4">
                         <Link
                           href={`/company/applications/${r.id}`}
-                          className="hover:text-primary dark:hover:text-lavender font-semibold"
+                          className="hover:text-primary font-semibold"
                         >
                           {r.candidate?.full_name ?? "—"}
                         </Link>
@@ -179,8 +179,8 @@ export default async function CompanyApplications({ searchParams }: { searchPara
       <p className="text-subtle mt-4 flex items-center gap-2 text-xs">
         <GitCompareArrows className="size-4" />{" "}
         {L(
-          "Tick 2–4 applications for the same job to compare evidence side by side.",
-          "حدّد 2–4 طلبات للوظيفة نفسها لمقارنة الأدلة جنبًا إلى جنب.",
+          "Tick 2–4 applications for the same job to compare evidence side by side",
+          "حدّد 2–4 طلبات للوظيفة نفسها لمقارنة الأدلة جنبًا إلى جنب",
         )}
       </p>
     </>

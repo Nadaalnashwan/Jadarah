@@ -44,10 +44,10 @@ export function CvUploader({ userId, onUploaded }: { userId: string; onUploaded?
     setError(null);
     // Resolve the type from the extension too: many browsers report "" or a generic type for .docx/.pdf.
     const type = resolveCvType(file.name, file.type);
-    if (!type) return setError(L("Only PDF or Word (DOCX) files are accepted.", "يُقبل ملف PDF أو Word (DOCX) فقط."));
-    if (file.size === 0) return setError(L("This file is empty.", "هذا الملف فارغ."));
+    if (!type) return setError(L("Only PDF or Word (DOCX) files are accepted", "يُقبل ملف PDF أو Word (DOCX) فقط"));
+    if (file.size === 0) return setError(L("This file is empty", "هذا الملف فارغ"));
     if (file.size > MAX_CV_BYTES)
-      return setError(L("The file is larger than 10 MB.", "حجم الملف أكبر من 10 ميجابايت."));
+      return setError(L("The file is larger than 10 MB", "حجم الملف أكبر من 10 ميجابايت"));
     setBusy(true);
     try {
       const path = `${userId}/${crypto.randomUUID()}-${safeCvObjectName(file.name, type.kind)}`;
@@ -59,12 +59,12 @@ export function CvUploader({ userId, onUploaded }: { userId: string; onUploaded?
         const msg = upErr.message.toLowerCase();
         return setError(
           msg.includes("size") || msg.includes("too large")
-            ? L("The file is larger than 10 MB.", "حجم الملف أكبر من 10 ميجابايت.")
+            ? L("The file is larger than 10 MB", "حجم الملف أكبر من 10 ميجابايت")
             : msg.includes("mime") || msg.includes("type")
-              ? L("Only PDF or Word (DOCX) files are accepted.", "يُقبل ملف PDF أو Word (DOCX) فقط.")
+              ? L("Only PDF or Word (DOCX) files are accepted", "يُقبل ملف PDF أو Word (DOCX) فقط")
               : msg.includes("jwt") || msg.includes("auth") || msg.includes("row-level") || msg.includes("unauthorized")
-                ? L("Your session has expired. Sign in again and retry.", "انتهت جلستك. سجّل الدخول مجددًا ثم أعد المحاولة.")
-                : L("Upload failed. Check your connection and try again.", "فشل الرفع. تحقق من الاتصال وحاول مرة أخرى."),
+                ? L("Your session has expired. Sign in again and retry", "انتهت جلستك. سجّل الدخول مجددًا ثم أعد المحاولة")
+                : L("Upload failed. Check your connection and try again", "فشل الرفع. تحقق من الاتصال وحاول مرة أخرى"),
         );
       }
       const res = await registerCvUpload({
@@ -74,7 +74,7 @@ export function CvUploader({ userId, onUploaded }: { userId: string; onUploaded?
         size_bytes: file.size,
         label: label || undefined,
       }).catch(() => null);
-      if (!res) return setError(L("Upload failed. Please try again.", "فشل الرفع. حاول مرة أخرى."));
+      if (!res) return setError(L("Upload failed. Please try again", "فشل الرفع. حاول مرة أخرى"));
       if (!res.ok) return setError(res.error);
       toast.success(L("CV uploaded", "تم رفع السيرة الذاتية"));
       setLabel("");
@@ -120,7 +120,7 @@ export function CvUploader({ userId, onUploaded }: { userId: string; onUploaded?
         {busy ? (
           <Loader2 className="text-primary size-8 animate-spin" />
         ) : (
-          <UploadCloud className="text-primary dark:text-lavender size-8" />
+          <UploadCloud className="text-primary size-8" />
         )}
         <span className="text-sm font-semibold">
           {busy
@@ -171,7 +171,7 @@ export function CvList({ docs }: { docs: Doc[] }) {
       <ul className="flex flex-col gap-2">
         {docs.map((d) => (
           <li key={d.id} className="flex flex-wrap items-center gap-3 rounded-2xl border p-3 sm:flex-nowrap">
-            <span className="bg-accent-soft text-primary dark:text-lavender flex size-10 shrink-0 items-center justify-center rounded-xl">
+            <span className="bg-accent-soft text-primary flex size-10 shrink-0 items-center justify-center rounded-xl">
               <FileText className="size-5" />
             </span>
             <div className="min-w-0 flex-1">
@@ -235,7 +235,7 @@ export function CvList({ docs }: { docs: Doc[] }) {
                 onClick={() => {
                   if (
                     !confirm(
-                      L("Delete this CV version? This cannot be undone.", "حذف هذه النسخة؟ لا يمكن التراجع."),
+                      L("Delete this CV version? This cannot be undone", "حذف هذه النسخة؟ لا يمكن التراجع"),
                     )
                   )
                     return;

@@ -29,8 +29,8 @@ export default async function ApplicationsPage() {
         eyebrow={t.candidate.nav.applications}
         title={L("Your applications", "طلباتك")}
         description={L(
-          "Every status change is recorded. Feedback appears here only when a company chooses to share it.",
-          "كل تغيير في الحالة مُسجَّل. تظهر الملاحظات هنا فقط عندما تختار الشركة مشاركتها.",
+          "Every status change is recorded. Feedback appears here only when a company chooses to share it",
+          "كل تغيير في الحالة مُسجَّل. تظهر الملاحظات هنا فقط عندما تختار الشركة مشاركتها",
         )}
       />
       <Card>
@@ -61,7 +61,7 @@ export default async function ApplicationsPage() {
                     <td className="p-4 font-semibold">
                       <Link
                         href={`/candidate/applications/${a.id}`}
-                        className="hover:text-primary dark:hover:text-lavender"
+                        className="hover:text-primary"
                       >
                         {pick(a.job, "title", locale)}
                       </Link>

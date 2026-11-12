@@ -116,8 +116,8 @@ export default async function CareerPage() {
           plan
             ? pick(plan, "description", locale)
             : L(
-                "Pick a target role. We compare it with your current skills and build a plan with verified learning resources.",
-                "اختر دورًا مستهدفًا. نقارنه بمهاراتك الحالية ونبني خطة بمصادر تعلّم موثّقة.",
+                "Pick a target role. We compare it with your current skills and build a plan with verified learning resources",
+                "اختر دورًا مستهدفًا. نقارنه بمهاراتك الحالية ونبني خطة بمصادر تعلّم موثّقة",
               )
         }
       />
@@ -125,7 +125,6 @@ export default async function CareerPage() {
         <div className="flex flex-col gap-6">
           <div className="grid gap-4 sm:grid-cols-3">
             <KpiCard
-              tone="blue"
               label={L("Role requirements demonstrated", "متطلبات الدور المُثبتة")}
               value={
                 reqs.length
@@ -141,7 +140,6 @@ export default async function CareerPage() {
               hint={L("Missing or not yet demonstrated", "مفقودة أو لم تُثبت بعد")}
             />
             <KpiCard
-              tone="sage"
               label={t.candidate.planProgress}
               value={`${formatNumber(progress, locale)}%`}
               hint={`${t.level[plan.target_level]} · ${formatNumber(plan.estimated_weeks, locale)} ${L("weeks", "أسبوعًا")}${
@@ -157,14 +155,14 @@ export default async function CareerPage() {
               <CardHeader
                 title={L("1 · What the role requires", "1 · ما يتطلبه الدور")}
                 description={L(
-                  "Each essential skill and the evidence you have for it today.",
-                  "كل مهارة أساسية والدليل المتوفر لديك عليها اليوم.",
+                  "Each essential skill and the evidence you have for it today",
+                  "كل مهارة أساسية والدليل المتوفر لديك عليها اليوم",
                 )}
               />
               <CardBody>
                 {reqs.length === 0 ? (
                   <p className="text-subtle text-sm">
-                    {L("This plan lists no required skills.", "لا تحدد هذه الخطة مهارات مطلوبة.")}
+                    {L("This plan lists no required skills", "لا تحدد هذه الخطة مهارات مطلوبة")}
                   </p>
                 ) : (
                   <ul className="divide-border divide-y">
@@ -194,7 +192,7 @@ export default async function CareerPage() {
                 <CardBody>
                   {priorities.length === 0 ? (
                     <p className="text-sm">
-                      {L("Every requirement is demonstrated.", "كل المتطلبات مُثبتة.")}
+                      {L("Every requirement is demonstrated", "كل المتطلبات مُثبتة")}
                     </p>
                   ) : (
                     <ol className="flex list-decimal flex-col gap-1.5 ps-5 text-sm">
@@ -217,14 +215,14 @@ export default async function CareerPage() {
                 <CardHeader
                   title={L("3 · Assessment results", "3 · نتائج التقييمات")}
                   description={L(
-                    "Scores appear after a person reviews your answers.",
-                    "تظهر الدرجات بعد مراجعة شخص لإجاباتك.",
+                    "Scores appear after a person reviews your answers",
+                    "تظهر الدرجات بعد مراجعة شخص لإجاباتك",
                   )}
                 />
                 <CardBody>
                   {scored.length === 0 ? (
                     <p className="text-sm">
-                      {L("No submitted assessments yet.", "لا توجد تقييمات مُسلّمة بعد.")}
+                      {L("No submitted assessments yet", "لا توجد تقييمات مُسلّمة بعد")}
                     </p>
                   ) : (
                     <ul className="flex flex-col gap-2 text-sm">
@@ -259,8 +257,8 @@ export default async function CareerPage() {
             <CardHeader
               title={L("4 · Recommended actions", "4 · الإجراءات المقترحة")}
               description={L(
-                "Your plan's milestones. Mark progress as you go.",
-                "مراحل خطتك. حدّث تقدّمك أولًا بأول.",
+                "Your plan's milestones. Mark progress as you go",
+                "مراحل خطتك. حدّث تقدّمك أولًا بأول",
               )}
             />
             <CardBody className="flex flex-col gap-4">
@@ -272,8 +270,8 @@ export default async function CareerPage() {
                   <p>{locale === "ar" ? aiSummary.summary_ar : aiSummary.summary_en}</p>
                   <p className="text-subtle mt-1 text-[11px]">
                     {L(
-                      "AI suggestion based on your gap analysis — not a human assessment of your ability.",
-                      "اقتراح آلي مبني على تحليل فجواتك — وليس تقييمًا بشريًا لقدراتك.",
+                      "AI suggestion based on your gap analysis — not a human assessment of your ability",
+                      "اقتراح آلي مبني على تحليل فجواتك — وليس تقييمًا بشريًا لقدراتك",
                     )}
                   </p>
                 </div>
@@ -329,8 +327,8 @@ export default async function CareerPage() {
         <p className="text-subtle mt-4 flex items-center gap-1 text-xs">
           <ExternalLink className="size-3" />{" "}
           {L(
-            "Learning links point to third-party providers; availability can change.",
-            "روابط التعلّم تشير إلى جهات خارجية وقد يتغير توفرها.",
+            "Learning links point to third-party providers; availability can change",
+            "روابط التعلّم تشير إلى جهات خارجية وقد يتغير توفرها",
           )}
         </p>
       </section>

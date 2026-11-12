@@ -36,6 +36,9 @@ insert into public.assessment_questions (assessment_id, type, prompt_en, prompt_
   values (:'asmt', 'file_upload', 'Upload your report', 'ارفع تقريرك', 10, 1) returning id as q_file \gset
 insert into public.assessment_questions (assessment_id, type, prompt_en, prompt_ar, points, position)
   values (:'asmt', 'long_answer', 'Explain', 'اشرح', 5, 2) returning id as q_text \gset
+-- Objective questions never take files (open questions do since 0033).
+insert into public.assessment_questions (assessment_id, type, prompt_en, prompt_ar, points, position)
+  values (:'asmt', 'true_false', 'True?', 'صحيح؟', 1, 3) returning id as q_obj \gset
 insert into public.applications (job_id, candidate_id, company_id, status)
   values (:'job_a', :'cand_1', :'co_a', 'under_review')
   on conflict do nothing;
@@ -78,15 +81,15 @@ select pg_temp.login(:'cand_1');
 set role authenticated;
 insert into storage.objects (bucket_id, name, owner, metadata)
   values ('assessment-attachments', :'cand_1' || '/' || :'sub' || '/' || :'q_file' || '/report.pdf', :'cand_1', '{"size": 2048, "mimetype": "application/pdf"}');
--- wrong question type, other submission, other prefix → refused by storage policy
-select pg_temp.expect_error(format($$insert into storage.objects (bucket_id, name, owner) values ('assessment-attachments', '%s/%s/%s/a.pdf', '%s')$$, :'cand_1', :'sub', :'q_text', :'cand_1'), '%row-level security%');
+-- objective question, other submission, other prefix → refused by storage policy
+select pg_temp.expect_error(format($$insert into storage.objects (bucket_id, name, owner) values ('assessment-attachments', '%s/%s/%s/a.pdf', '%s')$$, :'cand_1', :'sub', :'q_obj', :'cand_1'), '%row-level security%');
 select pg_temp.expect_error(format($$insert into storage.objects (bucket_id, name, owner) values ('assessment-attachments', '%s/%s/%s/a.pdf', '%s')$$, :'cand_1', gen_random_uuid(), :'q_file', :'cand_1'), '%row-level security%');
 select pg_temp.expect_error(format($$insert into storage.objects (bucket_id, name, owner) values ('assessment-attachments', '%s/%s/%s/a.pdf', '%s')$$, :'cand_2', :'sub', :'q_file', :'cand_1'), '%row-level security%');
 select public.register_assessment_file(:'asg', :'q_file', :'cand_1' || '/' || :'sub' || '/' || :'q_file' || '/report.pdf', 'report.pdf', 'application/pdf', 2048) as file_1 \gset
 -- registering twice is idempotent
 do $$ begin assert (select count(*) from public.assessment_answer_files) = 1; end $$;
 select pg_temp.expect_error(format($$select public.register_assessment_file('%s', '%s', '%s/%s/%s/nothere.pdf', 'n.pdf', 'application/pdf', 10)$$, :'asg', :'q_file', :'cand_1', :'sub', :'q_file'), 'uploaded file not found');
-select pg_temp.expect_error(format($$select public.register_assessment_file('%s', '%s', '%s/%s/%s/report.pdf', 'r', 'application/pdf', 10)$$, :'asg', :'q_text', :'cand_1', :'sub', :'q_text'), 'this question does not accept files');
+select pg_temp.expect_error(format($$select public.register_assessment_file('%s', '%s', '%s/%s/%s/report.pdf', 'r', 'application/pdf', 10)$$, :'asg', :'q_obj', :'cand_1', :'sub', :'q_obj'), 'this question does not accept files');
 select pg_temp.expect_error(format($$select public.register_assessment_file('%s', '%s', '../%s/x.pdf', 'r', 'application/pdf', 10)$$, :'asg', :'q_file', :'sub'), 'invalid file path');
 -- executable disguised as allowed name → storage metadata decides
 insert into storage.objects (bucket_id, name, owner, metadata)

@@ -1,112 +1,132 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------
-   JADARAH design tokens — approved brand palette ONLY (2026-11, final).
-   Every value is an approved brand colour or a tonal variation of one (same hue, different lightness, or a blend of
-   two approved colours). Generated and contrast-checked (WCAG AA for every text role) — see docs/BRAND_COLORS.md.
-   LIGHT  Deep Navy #172F49 · Professional Blue #3B66F6 · Sky #A9CBE5 · Mist #D4E4EF · Petrol #20566A · Teal #4D9996
-          Warm Sand #DCC8B5 · Soft Beige #E9DCD2 · Muted Peach #E8BFAE · Soft Sage #D5E5DA · Muted Lavender #B6A8CA
-   DARK   Deep Midnight #101E31 · Dark Navy #172C43 · Petrol Surface #204355 · Blue Accent #4B83C5 · Soft Sky #91B9D8
-          Teal #5DA7A0 · Warm Sand #CBB29C · Muted Lavender #9585AD
-   One semantic token set, two themes; pages and components use these tokens only. Lavender is a rare accent.
+   JADARAH design tokens — one semantic set, two themes (see docs/BRAND_COLORS.md).
+   Hierarchy: Deep Navy carries the identity (text, the deep "ink" layer), Professional Blue is the single action
+   colour, Teal is the secondary accent, Warm Sand is the warm neutral. Mist tints build the light surfaces.
+   Peach, Sage and Lavender appear only as quiet semantic tints, never as large fills.
+   Every value is an approved brand colour or a tonal variation of one; every text role is ≥ 4.5:1 on every surface.
 ------------------------------------------------------------------- */
 :root {
-  /* ---- semantic: backgrounds & surfaces ---- */
-  --background: #ceccc7;
-  --background-2: #c4dae9;
-  --page-gradient: linear-gradient(135deg, #c4dae9 0%, #ceccc7 52%, #deccba 100%);
-  --sidebar: #cddfec;
-  --surface: #E9DCD2;
-  --surface-glass: #E9DCD2;
-  --surface-elevated: #e2dfdc;
-  --surface-2: #e2d1c2;
-  --input: #e5ded8;
-  --tone-blue: #c1d9ea;
-  --tone-mist: #D4E4EF;
-  --tone-sand: #DCC8B5;
-  --tone-peach: #E8BFAE;
-  --tone-sage: #D5E5DA;
-  --tone-teal: #b7d4cb;
-  --tone-lilac: #d2c5ce;
+  /* LIGHT — warm, editorial: off-white and ivory grounds, lavender-tinted sections, deep indigo text,
+     the blue → violet portal gradient for the main action, deep green and mint for identity, gold for rare highlights. */
+  --background: #f7f4e9;
+  --background-2: #fbf8f0;
+  --section-tint: #f1ecf7;
+  --section-warm: #efe9dc;
+  --sidebar: #211c4a;
+  --surface: #fffdf8;
+  --surface-glass: #fffdf8;
+  --surface-elevated: #ffffff;
+  --surface-2: #efe9dc;
+  --surface-violet: #f3eefa;
+  --input: #fffdf8;
+  --ink-bg: #211c4a;
+  --ink-bg-2: #2c2560;
 
-  /* ---- semantic: text ---- */
-  --foreground: #172F49;
-  --muted-foreground: #344e68; /* secondary text */
-  --subtle-foreground: #20566a; /* muted text */
-  --tone-blue-ink: #25409d;
-  --tone-mist-ink: #1c4c5e;
-  --tone-sand-ink: #593f26;
-  --tone-peach-ink: #6b3924;
-  --tone-sage-ink: #264b49;
-  --tone-teal-ink: #264b49;
-  --tone-lilac-ink: #4a3c5d;
+  --tone-blue: #e6eafd;
+  --tone-mist: #efeafb;
+  --tone-sand: #f3ebdc;
+  --tone-peach: #fbe3dd;
+  --tone-sage: #e2f3e9;
+  --tone-teal: #ddf0e6;
+  --tone-lilac: #f3e8ff;
+  --tone-blue-ink: #2f48c4;
+  --tone-mist-ink: #5b3fa8;
+  --tone-sand-ink: #6e5531;
+  --tone-peach-ink: #a8331f;
+  --tone-sage-ink: #17643f;
+  --tone-teal-ink: #17643f;
+  --tone-lilac-ink: #6d28d9;
+  --tone-blue-line: #3b66f6;
+  --tone-mist-line: #8b5cf6;
+  --tone-sand-line: #c29a2b;
+  --tone-peach-line: #d9694f;
+  --tone-sage-line: #1f7a4d;
+  --tone-teal-line: #1f7a4d;
+  --tone-lilac-line: #a855f7;
 
-  /* ---- semantic: lines ---- */
-  --border: #9cb6c9;
-  --border-strong: #7698b2;
+  --foreground: #1f1b33;
+  --muted-foreground: #4a4560;
+  --subtle-foreground: #5f5975;
+  --border: #e4dccb;
+  --border-strong: #c9bca3;
 
-  /* ---- semantic: actions ---- */
-  --primary: #3B66F6; /* buttons, fills, focus */
-  --primary-hover: #355cd7;
+  --primary: #5b3fe0;
+  --primary-hover: #4c32c9;
   --primary-foreground: #ffffff;
-  --primary-ink: #2744a5; /* blue text/links on light surfaces (AA) */
-  --accent: #4D9996; /* secondary accent fills */
-  --accent-ink: #2e5c5a;
-  --accent-soft: #c1d9ea;
-  --sky-soft: #c1d9ea;
-  --ring: #3B66F6;
+  --primary-ink: #6d28d9;
+  --primary-violet: #7c3aed;
+  --primary-blue: #3b66f6;
+  --accent: #1f7a4d;
+  --accent-ink: #17643f;
+  --accent-soft: #efeafb;
+  --sky-soft: #e6eafd;
+  --ring: #7c3aed;
 
-  /* ---- semantic: status ---- */
-  --success: #2b5553;
-  --success-soft: #D5E5DA;
-  --warning: #644426;
-  --warning-soft: #DCC8B5;
-  --danger: #824126;
-  --danger-soft: #E8BFAE;
-  --info: #2744a5;
-  --info-soft: #c1d9ea;
+  /* brand identity */
+  --green: #0b3d2e;
+  --green-2: #1f7a4d;
+  --green-ink: #17643f;
+  --mint: #a7e3c2;
+  --gold: #d4af37;
+  --gold-ink: #7a5a0c;
+  --violet: #8b5cf6;
+  --violet-ink: #6d28d9;
+  --violet-soft: #efeafb;
+  --violet-line: #a78bfa;
+  --violet-glow: 139 92 246;
+  --blue-glow: 59 102 246;
+  --lilac: #d8b4fe;
 
-  /* ---- brand aliases (legacy class names) ---- */
-  --navy: #172F49;
-  --royal: #3B66F6;
-  --petrol: #20566A;
-  --teal: #4D9996;
-  --sky: #A9CBE5;
-  --mist: #D4E4EF;
-  --sand: #DCC8B5;
-  --beige: #E9DCD2;
-  --peach: #E8BFAE;
-  --sage: #D5E5DA;
-  --lilac: #7a619e;
-  --lavender: #A9CBE5; /* light accent text on navy panels; links use --primary-ink */
-  --ivory: #D4E4EF;
-  --navy-900: #0f1e2f;
-  --navy-800: #172F49;
-  --navy-700: #214369;
-  --royal-600: #355cd7;
-  --royal-700: #2744a5;
-  --ivory-50: #dee0e0;
-  --ivory-200: #DCC8B5;
+  --success: #17643f;
+  --success-soft: #e2f3e9;
+  --warning: #7a5a0c;
+  --warning-soft: #f7edcf;
+  --danger: #a8331f;
+  --danger-soft: #fbe3dd;
+  --info: #2f48c4;
+  --info-soft: #e6eafd;
 
-  /* ---- depth ---- */
-  --shadow-color: 23 47 73;
-  --glow: 0 1px 2px rgb(23 47 73 / 0.08), 0 10px 28px -16px rgb(23 47 73 / 0.35);
+  /* legacy aliases */
+  --navy: #211c4a;
+  --royal: #5b3fe0;
+  --petrol: #1f7a4d;
+  --teal: #1f7a4d;
+  --sky: #a9c1ff;
+  --mist: #efeafb;
+  --sand: #e9dcc0;
+  --beige: #f3ebdc;
+  --peach: #fbe3dd;
+  --sage: #e2f3e9;
+  --lavender: var(--primary-ink);
+  --ivory: #f7f4e9;
+  --navy-900: #17143a;
+  --navy-800: #211c4a;
+  --navy-700: #2c2560;
+  --royal-600: #4c32c9;
+  --royal-700: #6d28d9;
+  --ivory-50: #fffdf8;
+  --ivory-200: #efe9dc;
 
-  /* ---- charts (series 1–8: blue first, lavender last) ---- */
-  --chart-1: #3B66F6;
-  --chart-2: #4D9996;
-  --chart-3: #cb724d;
-  --chart-4: #20566A;
-  --chart-5: #4088bf;
-  --chart-6: #9b724b;
-  --chart-7: #172F49;
-  --chart-8: #8770a9;
-  --chart-success: #4D9996;
-  --chart-failure: #c66239;
-  --chart-grid: rgb(23 47 73 / 0.16);
-  --chart-axis: #1a3d55;
+  --shadow-color: 52 38 92;
+  --glow: 0 1px 2px rgb(52 38 92 / 0.05), 0 12px 32px -20px rgb(52 38 92 / 0.28);
+  --lift: 0 2px 4px rgb(52 38 92 / 0.06), 0 26px 50px -26px rgb(52 38 92 / 0.4);
+  --portal-gradient: linear-gradient(120deg, #3b66f6 0%, #7c3aed 58%, #a855f7 100%);
 
-  /* motion */
+  --chart-1: #7c3aed;
+  --chart-2: #3b66f6;
+  --chart-3: #1f7a4d;
+  --chart-4: #c29a2b;
+  --chart-5: #c084fc;
+  --chart-6: #5dbb8a;
+  --chart-7: #3730a3;
+  --chart-8: #b08b5b;
+  --chart-success: #1f7a4d;
+  --chart-failure: #c4573e;
+  --chart-grid: rgb(52 38 92 / 0.1);
+  --chart-axis: #4a4560;
+
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --dur-fast: 140ms;
@@ -114,165 +134,260 @@
   --dur-slow: 520ms;
 }
 
-:root[data-theme="dark"] {
-  --background: #172C43;
-  --background-2: #101E31;
-  --page-gradient: linear-gradient(150deg, #101E31 0%, #172C43 55%, #1a3449 100%);
-  --sidebar: #101E31;
-  --surface: #204355;
-  --surface-glass: #204355;
-  --surface-elevated: #2e5165;
-  --surface-2: #375b6f;
-  --input: #1b364b;
-  --tone-blue: #2e537e;
-  --tone-mist: #305467;
-  --tone-sand: #544436;
-  --tone-peach: #533b32;
-  --tone-sage: #344b3b;
-  --tone-teal: #2b5450;
-  --tone-lilac: #3d344b;
-  --foreground: #eaf2f7;
-  --muted-foreground: #b6d1e5;
-  --subtle-foreground: #b2cee4;
-  --tone-blue-ink: #accae1;
-  --tone-mist-ink: #b2cee4;
-  --tone-sand-ink: #dac7b7;
-  --tone-peach-ink: #E8BFAE;
-  --tone-sage-ink: #D5E5DA;
-  --tone-teal-ink: #a4cccf;
-  --tone-lilac-ink: #b4b4ce;
-  --border: #44697f;
-  --border-strong: #537890;
-  --primary: #6496cc;
-  --primary-hover: #6e9ece;
-  --primary-foreground: #101E31;
-  --primary-ink: #b2cee4;
-  --accent: #5DA7A0;
-  --accent-ink: #b0d2d7;
-  --accent-soft: #2e537e;
-  --sky-soft: #2e537e;
-  --ring: #6496cc;
-  --success: #b0d2d7;
-  --success-soft: #2b5450;
-  --warning: #CBB29C;
-  --warning-soft: #544436;
-  --danger: #E8BFAE;
-  --danger-soft: #533b32;
-  --info: #b2cee4;
-  --info-soft: #2e537e;
-  --navy: #223f60;
-  --royal: #6496cc;
-  --petrol: #204355;
-  --teal: #5DA7A0;
-  --sky: #91B9D8;
-  --mist: #2e537e;
-  --sand: #CBB29C;
-  --beige: #544436;
-  --peach: #E8BFAE;
-  --sage: #9fc6ab;
-  --lilac: #9585AD;
-  --lavender: #b2cee4;
-  --ivory: #eaf2f7;
-  --navy-900: #101E31;
-  --navy-800: #172C43;
-  --navy-700: #204355;
-  --royal-600: #6e9ece;
-  --royal-700: #b2cee4;
-  --shadow-color: 6 12 19;
-  --glow: 0 1px 0 rgb(145 185 216 / 0.06) inset, 0 12px 30px -18px rgb(5 9 15 / 0.7);
-  --chart-1: #6496cc;
-  --chart-2: #5DA7A0;
-  --chart-3: #d89579;
-  --chart-4: #91B9D8;
-  --chart-5: #CBB29C;
-  --chart-6: #86b695;
-  --chart-7: #648aa4;
-  --chart-8: #9585AD;
-  --chart-success: #7bb6b4;
-  --chart-failure: #d38869;
-  --chart-grid: rgb(145 185 216 / 0.18);
-  --chart-axis: #b2cee4;
+/* DARK — luminous indigo, never near-black; layers lighten as they rise. The ".ink" deep layer (sidebar, spotlight
+   panels) reuses these text/accent values in either theme. */
+:root[data-theme="dark"],
+.ink {
+  --background: #1c2045;
+  --background-2: #232850;
+  --section-tint: #262456;
+  --section-warm: #232850;
+  --surface: #2a3060;
+  --surface-glass: #2a3060;
+  --surface-elevated: #343b70;
+  --surface-2: #272456;
+  --surface-violet: #2e2a5c;
+  --input: #232850;
+  --tone-blue: #2b3a78;
+  --tone-mist: #352d6e;
+  --tone-sand: #4a3f22;
+  --tone-peach: #4e2a30;
+  --tone-sage: #1e4a3e;
+  --tone-teal: #1e4a3e;
+  --tone-lilac: #3d2c6e;
+  --tone-blue-ink: #a9c1ff;
+  --tone-mist-ink: #d4bbff;
+  --tone-sand-ink: #e9cf7a;
+  --tone-peach-ink: #ffb4a6;
+  --tone-sage-ink: #9ee0bc;
+  --tone-teal-ink: #9ee0bc;
+  --tone-lilac-ink: #e1ccff;
+  --tone-blue-line: #7a9bff;
+  --tone-mist-line: #b58cf8;
+  --tone-sand-line: #e3c566;
+  --tone-peach-line: #ff9c87;
+  --tone-sage-line: #6fd3a0;
+  --tone-teal-line: #6fd3a0;
+  --tone-lilac-line: #d8b4fe;
+  --foreground: #f3f0fb;
+  --muted-foreground: #cfc8e6;
+  --subtle-foreground: #b2aacf;
+  --border: #3e4580;
+  --border-strong: #525a9a;
+  --primary: #a58cf8;
+  --primary-hover: #b49ffa;
+  --primary-foreground: #140f2e;
+  --primary-ink: #d4bbff;
+  --primary-violet: #b58cf8;
+  --primary-blue: #7a9bff;
+  --accent: #6fd3a0;
+  --accent-ink: #9ee0bc;
+  --accent-soft: #352d6e;
+  --sky-soft: #2b3a78;
+  --ring: #d8b4fe;
+  --green: #6fd3a0;
+  --green-2: #6fd3a0;
+  --green-ink: #9ee0bc;
+  --mint: #a7e3c2;
+  --gold: #e3c566;
+  --gold-ink: #e9cf7a;
+  --violet: #b58cf8;
+  --violet-ink: #d4bbff;
+  --violet-soft: #352d6e;
+  --violet-line: #b58cf8;
+  --violet-glow: 168 85 247;
+  --blue-glow: 122 155 255;
+  --lilac: #d8b4fe;
+  --success: #9ee0bc;
+  --success-soft: #1e4a3e;
+  --warning: #e9cf7a;
+  --warning-soft: #4a3f22;
+  --danger: #ffb4a6;
+  --danger-soft: #4e2a30;
+  --info: #a9c1ff;
+  --info-soft: #2b3a78;
+  --navy: #17143a;
+  --royal: #a58cf8;
+  --petrol: #2a3060;
+  --teal: #6fd3a0;
+  --sky: #a9c1ff;
+  --mist: #352d6e;
+  --sand: #e3c566;
+  --beige: #4a3f22;
+  --peach: #ffb4a6;
+  --sage: #6fd3a0;
+  --lavender: #d4bbff;
+  --ivory: #f3f0fb;
+  --navy-900: #17143a;
+  --navy-800: #1c2045;
+  --navy-700: #2a3060;
+  --royal-600: #b49ffa;
+  --royal-700: #d4bbff;
+  --shadow-color: 10 8 30;
+  --glow: 0 1px 0 rgb(216 180 254 / 0.06) inset, 0 14px 34px -20px rgb(10 8 30 / 0.65);
+  --lift: 0 1px 0 rgb(216 180 254 / 0.08) inset, 0 26px 50px -26px rgb(10 8 30 / 0.8);
+  --portal-gradient: linear-gradient(120deg, #7a9bff 0%, #b58cf8 60%, #d8b4fe 100%);
+  --chart-1: #b58cf8;
+  --chart-2: #7a9bff;
+  --chart-3: #6fd3a0;
+  --chart-4: #e3c566;
+  --chart-5: #d8b4fe;
+  --chart-6: #a7e3c2;
+  --chart-7: #8b93ff;
+  --chart-8: #d9b88f;
+  --chart-success: #6fd3a0;
+  --chart-failure: #ff9c87;
+  --chart-grid: rgb(216 180 254 / 0.14);
+  --chart-axis: #b2aacf;
 }
-
+:root[data-theme="dark"] {
+  --sidebar: #20244b;
+  --ink-bg: #2e2a5c;
+  --ink-bg-2: #3a3478;
+}
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --background: #172C43;
-    --background-2: #101E31;
-    --page-gradient: linear-gradient(150deg, #101E31 0%, #172C43 55%, #1a3449 100%);
-    --sidebar: #101E31;
-    --surface: #204355;
-    --surface-glass: #204355;
-    --surface-elevated: #2e5165;
-    --surface-2: #375b6f;
-    --input: #1b364b;
-    --tone-blue: #2e537e;
-    --tone-mist: #305467;
-    --tone-sand: #544436;
-    --tone-peach: #533b32;
-    --tone-sage: #344b3b;
-    --tone-teal: #2b5450;
-    --tone-lilac: #3d344b;
-    --foreground: #eaf2f7;
-    --muted-foreground: #b6d1e5;
-    --subtle-foreground: #b2cee4;
-    --tone-blue-ink: #accae1;
-    --tone-mist-ink: #b2cee4;
-    --tone-sand-ink: #dac7b7;
-    --tone-peach-ink: #E8BFAE;
-    --tone-sage-ink: #D5E5DA;
-    --tone-teal-ink: #a4cccf;
-    --tone-lilac-ink: #b4b4ce;
-    --border: #44697f;
-    --border-strong: #537890;
-    --primary: #6496cc;
-    --primary-hover: #6e9ece;
-    --primary-foreground: #101E31;
-    --primary-ink: #b2cee4;
-    --accent: #5DA7A0;
-    --accent-ink: #b0d2d7;
-    --accent-soft: #2e537e;
-    --sky-soft: #2e537e;
-    --ring: #6496cc;
-    --success: #b0d2d7;
-    --success-soft: #2b5450;
-    --warning: #CBB29C;
-    --warning-soft: #544436;
-    --danger: #E8BFAE;
-    --danger-soft: #533b32;
-    --info: #b2cee4;
-    --info-soft: #2e537e;
-    --navy: #223f60;
-    --royal: #6496cc;
-    --petrol: #204355;
-    --teal: #5DA7A0;
-    --sky: #91B9D8;
-    --mist: #2e537e;
-    --sand: #CBB29C;
-    --beige: #544436;
-    --peach: #E8BFAE;
-    --sage: #9fc6ab;
-    --lilac: #9585AD;
-    --lavender: #b2cee4;
-    --ivory: #eaf2f7;
-    --navy-900: #101E31;
-    --navy-800: #172C43;
-    --navy-700: #204355;
-    --royal-600: #6e9ece;
-    --royal-700: #b2cee4;
-    --shadow-color: 6 12 19;
-    --glow: 0 1px 0 rgb(145 185 216 / 0.06) inset, 0 12px 30px -18px rgb(5 9 15 / 0.7);
-    --chart-1: #6496cc;
-    --chart-2: #5DA7A0;
-    --chart-3: #d89579;
-    --chart-4: #91B9D8;
-    --chart-5: #CBB29C;
-    --chart-6: #86b695;
-    --chart-7: #648aa4;
-    --chart-8: #9585AD;
-    --chart-success: #7bb6b4;
-    --chart-failure: #d38869;
-    --chart-grid: rgb(145 185 216 / 0.18);
-    --chart-axis: #b2cee4;
+    --background: #1c2045;
+    --background-2: #232850;
+    --section-tint: #262456;
+    --section-warm: #232850;
+    --surface: #2a3060;
+    --surface-glass: #2a3060;
+    --surface-elevated: #343b70;
+    --surface-2: #272456;
+    --surface-violet: #2e2a5c;
+    --input: #232850;
+    --tone-blue: #2b3a78;
+    --tone-mist: #352d6e;
+    --tone-sand: #4a3f22;
+    --tone-peach: #4e2a30;
+    --tone-sage: #1e4a3e;
+    --tone-teal: #1e4a3e;
+    --tone-lilac: #3d2c6e;
+    --tone-blue-ink: #a9c1ff;
+    --tone-mist-ink: #d4bbff;
+    --tone-sand-ink: #e9cf7a;
+    --tone-peach-ink: #ffb4a6;
+    --tone-sage-ink: #9ee0bc;
+    --tone-teal-ink: #9ee0bc;
+    --tone-lilac-ink: #e1ccff;
+    --tone-blue-line: #7a9bff;
+    --tone-mist-line: #b58cf8;
+    --tone-sand-line: #e3c566;
+    --tone-peach-line: #ff9c87;
+    --tone-sage-line: #6fd3a0;
+    --tone-teal-line: #6fd3a0;
+    --tone-lilac-line: #d8b4fe;
+    --foreground: #f3f0fb;
+    --muted-foreground: #cfc8e6;
+    --subtle-foreground: #b2aacf;
+    --border: #3e4580;
+    --border-strong: #525a9a;
+    --primary: #a58cf8;
+    --primary-hover: #b49ffa;
+    --primary-foreground: #140f2e;
+    --primary-ink: #d4bbff;
+    --primary-violet: #b58cf8;
+    --primary-blue: #7a9bff;
+    --accent: #6fd3a0;
+    --accent-ink: #9ee0bc;
+    --accent-soft: #352d6e;
+    --sky-soft: #2b3a78;
+    --ring: #d8b4fe;
+    --green: #6fd3a0;
+    --green-2: #6fd3a0;
+    --green-ink: #9ee0bc;
+    --mint: #a7e3c2;
+    --gold: #e3c566;
+    --gold-ink: #e9cf7a;
+    --violet: #b58cf8;
+    --violet-ink: #d4bbff;
+    --violet-soft: #352d6e;
+    --violet-line: #b58cf8;
+    --violet-glow: 168 85 247;
+    --blue-glow: 122 155 255;
+    --lilac: #d8b4fe;
+    --success: #9ee0bc;
+    --success-soft: #1e4a3e;
+    --warning: #e9cf7a;
+    --warning-soft: #4a3f22;
+    --danger: #ffb4a6;
+    --danger-soft: #4e2a30;
+    --info: #a9c1ff;
+    --info-soft: #2b3a78;
+    --navy: #17143a;
+    --royal: #a58cf8;
+    --petrol: #2a3060;
+    --teal: #6fd3a0;
+    --sky: #a9c1ff;
+    --mist: #352d6e;
+    --sand: #e3c566;
+    --beige: #4a3f22;
+    --peach: #ffb4a6;
+    --sage: #6fd3a0;
+    --lavender: #d4bbff;
+    --ivory: #f3f0fb;
+    --navy-900: #17143a;
+    --navy-800: #1c2045;
+    --navy-700: #2a3060;
+    --royal-600: #b49ffa;
+    --royal-700: #d4bbff;
+    --shadow-color: 10 8 30;
+    --glow: 0 1px 0 rgb(216 180 254 / 0.06) inset, 0 14px 34px -20px rgb(10 8 30 / 0.65);
+    --lift: 0 1px 0 rgb(216 180 254 / 0.08) inset, 0 26px 50px -26px rgb(10 8 30 / 0.8);
+    --portal-gradient: linear-gradient(120deg, #7a9bff 0%, #b58cf8 60%, #d8b4fe 100%);
+    --chart-1: #b58cf8;
+    --chart-2: #7a9bff;
+    --chart-3: #6fd3a0;
+    --chart-4: #e3c566;
+    --chart-5: #d8b4fe;
+    --chart-6: #a7e3c2;
+    --chart-7: #8b93ff;
+    --chart-8: #d9b88f;
+    --chart-success: #6fd3a0;
+    --chart-failure: #ff9c87;
+    --chart-grid: rgb(216 180 254 / 0.14);
+    --chart-axis: #b2aacf;
+    --sidebar: #20244b;
+    --ink-bg: #2e2a5c;
+    --ink-bg-2: #3a3478;
+  }
+}
+
+/* Ink panels: deep indigo in light mode; in dark mode they are the LIGHTER, luminous layer. */
+.ink {
+  --surface: #2c2560;
+  --surface-glass: #2c2560;
+  --surface-elevated: #352d6e;
+  --surface-2: #2c2560;
+  --input: #261f55;
+  --border: #463c86;
+  --border-strong: #5a4f9e;
+}
+@layer components {
+  :where(.ink) {
+    background-color: var(--ink-bg);
+    color: var(--foreground);
+  }
+}
+:root[data-theme="dark"] .ink {
+  --surface: #3a3478;
+  --surface-glass: #3a3478;
+  --surface-elevated: #3d3679;
+  --surface-2: #3a3478;
+  --input: #2e2a5c;
+  --border: #554c9a;
+  --border-strong: #6a60b0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .ink {
+    --surface: #3a3478;
+    --surface-glass: #3a3478;
+    --surface-elevated: #3d3679;
+    --surface-2: #3a3478;
+    --input: #2e2a5c;
+    --border: #554c9a;
+    --border-strong: #6a60b0;
   }
 }
 
@@ -301,12 +416,26 @@
   --color-tone-teal: var(--tone-teal);
   --color-tone-lilac: var(--tone-lilac);
   --color-sidebar: var(--sidebar);
+  --color-ink: var(--ink-bg);
   --color-surface-glass: var(--surface-glass);
   --color-surface-elevated: var(--surface-elevated);
   --color-background-2: var(--background-2);
   --color-input: var(--input);
   --color-primary-ink: var(--primary-ink);
   --color-accent-ink: var(--accent-ink);
+  --color-violet: var(--violet);
+  --color-violet-ink: var(--violet-ink);
+  --color-violet-soft: var(--violet-soft);
+  --color-violet-line: var(--violet-line);
+  --color-green: var(--green);
+  --color-green-2: var(--green-2);
+  --color-green-ink: var(--green-ink);
+  --color-mint: var(--mint);
+  --color-gold: var(--gold);
+  --color-gold-ink: var(--gold-ink);
+  --color-surface-violet: var(--surface-violet);
+  --color-section-tint: var(--section-tint);
+  --color-section-warm: var(--section-warm);
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
 
@@ -334,12 +463,16 @@
 
   --font-sans: var(--font-manrope), var(--font-plex-arabic), ui-sans-serif, system-ui, sans-serif;
   --font-arabic: var(--font-plex-arabic), var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  /* Brand typefaces (identity board): Manrope for English, IBM Plex Sans Arabic for Arabic — headings and text. */
+  --font-display: var(--font-manrope), var(--font-plex-arabic), ui-sans-serif, system-ui, sans-serif;
+  --font-display-ar: var(--font-plex-arabic), var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
 
   --radius-sm: 0.375rem;
-  --radius-md: 0.625rem;
-  --radius-lg: 0.875rem;
-  --radius-xl: 1.25rem;
-  --radius-2xl: 1.75rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.375rem;
+  --radius-3xl: 1.75rem;
 }
 
 @layer base {
@@ -352,23 +485,30 @@
     scroll-behavior: smooth;
   }
   body {
-    background: var(--page-gradient);
     background-color: var(--background);
+    background-image:
+      radial-gradient(60rem 40rem at 100% -10%, rgb(var(--violet-glow) / 0.08), transparent 70%),
+      radial-gradient(50rem 36rem at -10% 110%, rgb(var(--blue-glow) / 0.06), transparent 70%);
     background-attachment: fixed;
     color: var(--foreground);
     font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
   }
   html[lang="ar"] body {
     font-family: var(--font-arabic);
-    line-height: 1.7;
+    line-height: 1.75;
   }
   ::selection {
-    background: var(--tone-mist);
+    background: var(--lilac);
     color: var(--foreground);
   }
-  h1, h2, h3 {
+  h1,
+  h2,
+  h3 {
     color: var(--foreground);
+    text-wrap: balance;
   }
   :focus-visible {
     outline: 2px solid var(--ring);
@@ -379,56 +519,135 @@
   .ltr-nums {
     direction: ltr;
     unicode-bidi: isolate;
+    font-variant-numeric: tabular-nums;
   }
 }
 
 @layer components {
-  /* Cards: opaque themed surface, visible border and soft depth — distinct from the page background. */
+  /* Cards: one surface, a hairline border and soft depth. */
   .surface-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-xl);
     box-shadow: var(--glow);
   }
-  /* Tonal cards: colour carries meaning (opportunity = blue, done = sage, action = peach, growth = mist…). */
-  .surface-card[data-tone] { border-color: color-mix(in srgb, var(--tone-ink) 22%, var(--border)); }
-  .surface-card[data-tone="blue"] { background: var(--tone-blue); --tone-ink: var(--tone-blue-ink); }
-  .surface-card[data-tone="mist"] { background: var(--tone-mist); --tone-ink: var(--tone-mist-ink); }
-  .surface-card[data-tone="sand"] { background: var(--tone-sand); --tone-ink: var(--tone-sand-ink); }
-  .surface-card[data-tone="peach"] { background: var(--tone-peach); --tone-ink: var(--tone-peach-ink); }
-  .surface-card[data-tone="sage"] { background: var(--tone-sage); --tone-ink: var(--tone-sage-ink); }
-  .surface-card[data-tone="teal"] { background: var(--tone-teal); --tone-ink: var(--tone-teal-ink); }
-  .surface-card[data-tone="lilac"] { background: var(--tone-lilac); --tone-ink: var(--tone-lilac-ink); }
-  .tone-ink { color: var(--tone-ink, var(--primary)); }
-  /* Brand surfaces */
+  /* Tone = meaning (blue opportunity · sage done · peach needs action · mist growth · sand context · teal insight ·
+     lilac AI note), expressed by a top rule and the label colour — never by flooding the card with colour. */
+  .surface-card[data-tone] {
+    box-shadow: inset 0 2px 0 0 var(--tone-line), var(--glow);
+  }
+  .surface-card[data-tone="blue"] { --tone-ink: var(--tone-blue-ink); --tone-line: var(--tone-blue-line); --tone-fill: var(--tone-blue); }
+  .surface-card[data-tone="mist"] { --tone-ink: var(--tone-mist-ink); --tone-line: var(--tone-mist-line); --tone-fill: var(--tone-mist); }
+  .surface-card[data-tone="sand"] { --tone-ink: var(--tone-sand-ink); --tone-line: var(--tone-sand-line); --tone-fill: var(--tone-sand); }
+  .surface-card[data-tone="peach"] { --tone-ink: var(--tone-peach-ink); --tone-line: var(--tone-peach-line); --tone-fill: var(--tone-peach); }
+  .surface-card[data-tone="sage"] { --tone-ink: var(--tone-sage-ink); --tone-line: var(--tone-sage-line); --tone-fill: var(--tone-sage); }
+  .surface-card[data-tone="teal"] { --tone-ink: var(--tone-teal-ink); --tone-line: var(--tone-teal-line); --tone-fill: var(--tone-teal); }
+  .surface-card[data-tone="lilac"] { --tone-ink: var(--tone-lilac-ink); --tone-line: var(--tone-lilac-line); --tone-fill: var(--tone-lilac); }
+  .tone-ink {
+    color: var(--tone-ink, var(--muted-foreground));
+  }
+  .tone-chip {
+    background: var(--tone-fill, var(--surface-2));
+    color: var(--tone-ink, var(--foreground));
+  }
   .brand-hero-bg {
     background: transparent;
   }
   .brand-banner {
-    background: linear-gradient(110deg, #172f49 0%, #20566a 45%, #3b66f6 78%, #4d9996 100%);
-    color: #fff;
+    background-color: var(--ink-bg);
+    color: #eaf2f7;
   }
-  .grain {
-    background-image: radial-gradient(rgb(var(--shadow-color) / 0.06) 1px, transparent 1px);
-    background-size: 18px 18px;
+  /* Violet signature: the primary action carries a quiet blue → violet gradient. */
+  .btn-primary {
+    background-image: linear-gradient(120deg, var(--primary-blue) 0%, var(--primary-violet) 100%);
+    background-size: 160% 100%;
+    background-position: 0% 0;
+    transition: background-position 420ms var(--ease-out), box-shadow 240ms var(--ease-out), transform 160ms;
+  }
+  .btn-primary:hover {
+    background-position: 100% 0;
+    box-shadow: 0 10px 26px -10px rgb(var(--violet-glow) / 0.55);
+  }
+  /* Secondary brand action: deep green (mint in dark mode). */
+  .btn-brand {
+    background-color: var(--green);
+    color: var(--background);
+  }
+  .fill-signature {
+    background-image: linear-gradient(90deg, var(--primary-blue) 0%, var(--primary-violet) 100%);
+  }
+  [dir="rtl"] .fill-signature {
+    background-image: linear-gradient(270deg, var(--primary-blue) 0%, var(--primary-violet) 100%);
+  }
+  .text-portal {
+    background-image: var(--portal-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  /* Soft violet light in a corner of a navy panel — depth, not decoration. */
+  .ink-aura {
+    background-image:
+      radial-gradient(55% 70% at 100% 0%, rgb(var(--violet-glow) / 0.34), transparent 70%),
+      radial-gradient(45% 60% at 0% 100%, rgb(var(--blue-glow) / 0.22), transparent 70%);
+  }
+  [dir="rtl"] .ink-aura {
+    background-image:
+      radial-gradient(55% 70% at 0% 0%, rgb(var(--violet-glow) / 0.34), transparent 70%),
+      radial-gradient(45% 60% at 100% 100%, rgb(var(--blue-glow) / 0.22), transparent 70%);
+  }
+  /* Section grounds: a lavender-lit band and a warm band, so pages do not read as one flat canvas. */
+  .section-lavender {
+    background-color: var(--section-tint);
+    background-image: radial-gradient(70% 90% at 85% 0%, rgb(var(--violet-glow) / 0.12), transparent 70%);
+  }
+  .section-warm {
+    background-color: var(--section-warm);
+  }
+  /* Deep green brand panel (employer identity, closing CTA). */
+  .panel-green {
+    --foreground: #f7f4e9;
+    --muted-foreground: #cfe7d9;
+    --subtle-foreground: #a7e3c2;
+    --primary-ink: #e3c566;
+    --violet-ink: #a7e3c2;
+    --primary: #a7e3c2;
+    --primary-hover: #bdebd2;
+    --primary-foreground: #0b3d2e;
+    --primary-blue: #a7e3c2;
+    --primary-violet: #6fd3a0;
+    --border: #2a6a52;
+    --surface: #134a38;
+    --surface-2: #134a38;
+    background-color: #0b3d2e;
+    background-image: radial-gradient(60% 80% at 100% 0%, rgb(167 227 194 / 0.18), transparent 70%);
+    color: var(--foreground);
+  }
+  /* Faint architectural grid used on ink panels. */
+  /* (formerly a square grid) — soft portal light only; no technical pattern. */
+  .ink-grid {
+    background-image: radial-gradient(50% 60% at 70% 30%, rgb(var(--violet-glow) / 0.16), transparent 70%);
   }
   .text-balance {
     text-wrap: balance;
   }
   .editorial {
-    letter-spacing: -0.035em;
-    line-height: 1.02;
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
   }
   html[lang="ar"] .editorial {
+    font-family: var(--font-display-ar);
     letter-spacing: 0;
-    line-height: 1.25;
+    line-height: 1.3;
   }
   .eyebrow {
     font-size: 0.75rem;
     font-weight: 700;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--primary);
+    color: var(--violet-ink);
   }
   html[lang="ar"] .eyebrow {
     letter-spacing: 0;
@@ -447,11 +666,6 @@
   }
 }
 
-@keyframes brand-breathe {
-  0%, 100% { opacity: 1; transform: translateY(0); }
-  50% { opacity: 0.72; transform: translateY(-2px); }
-}
-
 /* Blue text uses the AA "ink" shade of the brand blue; fills (buttons, bars) keep --primary. */
 .text-primary,
 .hover\:text-primary:hover,
@@ -459,7 +673,57 @@
   color: var(--primary-ink);
 }
 
+/* Page entrance: content settles in once per navigation (transform + opacity only). */
+@keyframes jd-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.jd-enter {
+  animation: jd-enter 420ms var(--ease-out) both;
+}
+.jd-enter-stagger > * {
+  animation: jd-enter 480ms var(--ease-out) both;
+}
+.jd-enter-stagger > *:nth-child(2) { animation-delay: 50ms; }
+.jd-enter-stagger > *:nth-child(3) { animation-delay: 100ms; }
+.jd-enter-stagger > *:nth-child(4) { animation-delay: 150ms; }
+.jd-enter-stagger > *:nth-child(5) { animation-delay: 200ms; }
+.jd-enter-stagger > *:nth-child(n + 6) { animation-delay: 240ms; }
 
+/* Skeleton shimmer for loading states. */
+@keyframes jd-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+.jd-skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 0%, var(--surface-elevated) 50%, var(--surface-2) 100%);
+  background-size: 200% 100%;
+  animation: jd-shimmer 1.6s linear infinite;
+  border-radius: var(--radius-md);
+}
+
+/* Slow, continuous drift of the brand layers in spotlight panels (transform-only, compositor friendly). */
+@keyframes jd-drift-a {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(-14px, 10px, 0) rotate(-0.6deg); }
+}
+@keyframes jd-drift-b {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(12px, -12px, 0); }
+}
+.jd-drift-a { animation: jd-drift-a 18s var(--ease-in-out) infinite; }
+.jd-drift-b { animation: jd-drift-b 22s var(--ease-in-out) infinite; }
+
+@keyframes brand-breathe {
+  0%, 100% { opacity: 1; transform: translateY(0); }
+  50% { opacity: 0.72; transform: translateY(-2px); }
+}
 
 /* Landing film: the current scene's progress segment fills over the scene length (duration set inline). */
 .jd-progress-fill {
@@ -471,3 +735,9 @@
   from { width: 0; }
   to { width: 100%; }
 }
+
+@keyframes jd-glow-soft {
+  0%, 100% { opacity: 0.75; }
+  50% { opacity: 1; }
+}
+.jd-glow-soft { animation: jd-glow-soft 7s var(--ease-in-out) infinite; }

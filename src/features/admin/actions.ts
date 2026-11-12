@@ -30,7 +30,7 @@ export async function reviewCompany(
   return {
     ok: true,
     message:
-      locale === "ar" ? "تم تسجيل القرار وإبلاغ الشركة." : "Decision recorded and the company was notified.",
+      locale === "ar" ? "تم تسجيل القرار وإبلاغ الشركة" : "Decision recorded and the company was notified",
   };
 }
 
@@ -98,8 +98,8 @@ export async function addResource(_: ActionResult | null, form: FormData): Promi
       ok: false,
       error:
         locale === "ar"
-          ? "راجع الحقول (الرابط يجب أن يبدأ بـ https)."
-          : "Check the fields (URL must use https).",
+          ? "راجع الحقول (الرابط يجب أن يبدأ بـ https)"
+          : "Check the fields (URL must use https)",
     };
   const { error } = await supabase.from("learning_resources").insert({
     ...p.data,
@@ -153,8 +153,8 @@ export async function saveSetting(_: ActionResult | null, form: FormData): Promi
       ok: false,
       error:
         locale === "ar"
-          ? "يُغيَّر نوع البيئة عبر SQL فقط لأسباب أمان."
-          : "The environment flag can only be changed through SQL for safety.",
+          ? "يُغيَّر نوع البيئة عبر SQL فقط لأسباب أمان"
+          : "The environment flag can only be changed through SQL for safety",
     };
   let value: unknown;
   try {
@@ -162,7 +162,7 @@ export async function saveSetting(_: ActionResult | null, form: FormData): Promi
   } catch {
     return {
       ok: false,
-      error: locale === "ar" ? "القيمة يجب أن تكون JSON صالحًا." : "Value must be valid JSON.",
+      error: locale === "ar" ? "القيمة يجب أن تكون JSON صالحًا" : "Value must be valid JSON",
     };
   }
   const { error } = await supabase
@@ -198,7 +198,7 @@ export async function generateReport(kind: "platform_snapshot"): Promise<ActionR
 export async function resetDemo(_: ActionResult | null, form: FormData): Promise<ActionResult> {
   const { supabase, locale } = await ctx();
   if (form.get("confirm") !== "RESET DEMO")
-    return { ok: false, error: locale === "ar" ? "اكتب RESET DEMO للتأكيد." : "Type RESET DEMO to confirm." };
+    return { ok: false, error: locale === "ar" ? "اكتب RESET DEMO للتأكيد" : "Type RESET DEMO to confirm" };
   const { data, error } = await supabase.rpc("demo_reset" as never);
   if (error)
     return {

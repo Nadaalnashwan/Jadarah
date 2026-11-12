@@ -48,13 +48,12 @@ export default async function MonitoringPage({ searchParams }: { searchParams: P
   const tab = tabOf(sp);
   const period = parsePeriod(sp);
   const demo = includeDemo(sp);
-  const { data: companies } = await supabase
-    .from("company_profiles")
-    .select("id, name_en, name_ar, is_demo")
-    .order("name_en");
+  // Filter options load in parallel (previously the AI options waited for the company list).
+  const [{ data: companies }, ai] = await Promise.all([
+    supabase.from("company_profiles").select("id, name_en, name_ar, is_demo").order("name_en"),
+    tab === "ai" ? aiFilterOptions(supabase, new Date(period.to.getTime() - 90 * 86_400_000)) : Promise.resolve(null),
+  ]);
   const companyOptions = (companies ?? []).filter((c) => demo || !c.is_demo);
-  const ai =
-    tab === "ai" ? await aiFilterOptions(supabase, new Date(period.to.getTime() - 90 * 86_400_000)) : null;
 
   return (
     <>
@@ -62,8 +61,8 @@ export default async function MonitoringPage({ searchParams }: { searchParams: P
         eyebrow={L("Super Admin", "المشرف العام")}
         title={L("Monitoring & evaluation", "المراقبة والتقييم")}
         description={L(
-          "Live operational figures aggregated on the server from recorded events. Every figure states its period and sample.",
-          "أرقام تشغيلية حيّة تُجمَّع على الخادم من الأحداث المسجلة. كل رقم يوضح فترته وحجم عينته.",
+          "Live operational figures aggregated on the server from recorded events. Every figure states its period and sample",
+          "أرقام تشغيلية حيّة تُجمَّع على الخادم من الأحداث المسجلة. كل رقم يوضح فترته وحجم عينته",
         )}
       />
       <Suspense fallback={null}>
@@ -263,25 +262,23 @@ async function AlertsPanel({
     telemetry: telemetryWriteFailures(),
   });
   let notified: "yes" | "unavailable" | "none" = "none";
-  for (const a of alerts) {
-    const { error } = await supabase.rpc(
-      "raise_monitoring_alert" as never,
-      {
-        p_key: a.key,
-        p_title_en: a.title_en,
-        p_title_ar: a.title_ar,
-        p_cooldown_minutes: 360,
-      } as never,
-    );
-    notified = error ? "unavailable" : "yes";
-  }
+  // Raise every alert in parallel (was one round trip per alert in sequence).
+  const raised = await Promise.all(
+    alerts.map((a) =>
+      supabase.rpc(
+        "raise_monitoring_alert" as never,
+        { p_key: a.key, p_title_en: a.title_en, p_title_ar: a.title_ar, p_cooldown_minutes: 360 } as never,
+      ),
+    ),
+  );
+  if (raised.length) notified = raised.some((r) => r.error) ? "unavailable" : "yes";
   if (!alerts.length)
     return (
       <p className="text-subtle mb-4 flex items-center gap-2 text-xs">
         <Badge tone="positive" dot>
           {L("No active alerts", "لا توجد تنبيهات نشطة")}
         </Badge>
-        {L("Checked now against the alert thresholds.", "تم الفحص الآن وفق حدود التنبيه.")}
+        {L("Checked now against the alert thresholds", "تم الفحص الآن وفق حدود التنبيه")}
       </p>
     );
   return (
@@ -322,12 +319,12 @@ async function AlertsPanel({
       <p className="text-subtle mt-2 text-xs">
         {notified === "yes"
           ? L(
-              "Super Admins are notified in-app at most once every 6 hours per alert.",
-              "يُشعَر المشرفون داخل المنصة مرة واحدة كل 6 ساعات لكل تنبيه كحد أقصى.",
+              "Super Admins are notified in-app at most once every 6 hours per alert",
+              "يُشعَر المشرفون داخل المنصة مرة واحدة كل 6 ساعات لكل تنبيه كحد أقصى",
             )
           : L(
-              "In-app notifications for alerts need proposal 0031; alerts are shown here only.",
-              "إشعارات التنبيهات داخل المنصة تتطلب المقترح 0031؛ تُعرض التنبيهات هنا فقط.",
+              "In-app notifications for alerts need proposal 0031; alerts are shown here only",
+              "إشعارات التنبيهات داخل المنصة تتطلب المقترح 0031؛ تُعرض التنبيهات هنا فقط",
             )}
       </p>
     </Card>

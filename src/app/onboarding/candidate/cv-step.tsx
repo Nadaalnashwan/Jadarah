@@ -30,7 +30,7 @@ export function CvFirstStep({ userId }: { userId: string }) {
     setPhase("extracting");
     const r = await parseCv(id).catch(() => null);
     if (!r || !r.ok) {
-      setError(r && !r.ok ? r.error : L("We couldn't read this CV.", "تعذّرت قراءة هذه السيرة."));
+      setError(r && !r.ok ? r.error : L("We couldn't read this CV", "تعذّرت قراءة هذه السيرة"));
       return setPhase("failed");
     }
     setParsed(r.data!.parsed);
@@ -45,8 +45,8 @@ export function CvFirstStep({ userId }: { userId: string }) {
       </h2>
       <p className="text-muted mt-1 max-w-xl text-sm">
         {L(
-          "We read your CV, you review every item, and only what you approve is added to your profile. Your original file is kept privately as a version.",
-          "نقرأ سيرتك، وتراجع كل عنصر، ولا يُضاف لملفك إلا ما تعتمده. يُحفظ ملفك الأصلي بشكل خاص كنسخة.",
+          "We read your CV, you review every item, and only what you approve is added to your profile. Your original file is kept privately as a version",
+          "نقرأ سيرتك، وتراجع كل عنصر، ولا يُضاف لملفك إلا ما تعتمده. يُحفظ ملفك الأصلي بشكل خاص كنسخة",
         )}
       </p>
       <div className="mt-6">
@@ -61,7 +61,7 @@ export function CvFirstStep({ userId }: { userId: string }) {
           <div className="flex flex-col items-start gap-3">
             <FormMessage>{error}</FormMessage>
             <p className="text-muted text-sm">
-              {L("Your CV was saved. You can retry or continue manually.", "حُفظت سيرتك. يمكنك المحاولة مجددًا أو المتابعة يدويًا.")}
+              {L("Your CV was saved. You can retry or continue manually", "حُفظت سيرتك. يمكنك المحاولة مجددًا أو المتابعة يدويًا")}
             </p>
             <div className="flex gap-2">
               {docId && (
@@ -81,7 +81,7 @@ export function CvFirstStep({ userId }: { userId: string }) {
       </div>
       {phase !== "review" && (
         <p className="mt-6 text-sm">
-          <Link href="/onboarding/candidate?cv=skip" className="text-primary dark:text-lavender font-semibold">
+          <Link href="/onboarding/candidate?cv=skip" className="text-primary font-semibold">
             {L("Skip — I'll fill my profile manually", "تخطَّ — سأكمل ملفي يدويًا")}
           </Link>
         </p>

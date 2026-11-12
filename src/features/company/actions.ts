@@ -55,7 +55,7 @@ export async function registerCompany(_: ActionResult | null, form: FormData): P
     parsed.error.issues.forEach(
       (i) => (fieldErrors[String(i.path[0])] = locale === "ar" ? "قيمة غير صالحة" : "Invalid value"),
     );
-    return { ok: false, error: locale === "ar" ? "راجع الحقول." : "Please review the fields.", fieldErrors };
+    return { ok: false, error: locale === "ar" ? "راجع الحقول" : "Please review the fields", fieldErrors };
   }
   const v = parsed.data;
   const supabase = await createClient();
@@ -80,7 +80,7 @@ export async function updateCompanyProfile(_: ActionResult | null, form: FormDat
   const { locale } = await getI18n();
   const parsed = companySchema.safeParse(Object.fromEntries(form));
   if (!parsed.success)
-    return { ok: false, error: locale === "ar" ? "راجع الحقول." : "Please review the fields." };
+    return { ok: false, error: locale === "ar" ? "راجع الحقول" : "Please review the fields" };
   const supabase = await createClient();
   const { error } = await supabase
     .from("company_profiles")
@@ -110,7 +110,7 @@ export async function submitVerification(_: ActionResult | null, form: FormData)
   revalidatePath("/company", "layout");
   return {
     ok: true,
-    message: locale === "ar" ? "أُرسل طلب التحقق للمراجعة." : "Verification submitted for review.",
+    message: locale === "ar" ? "أُرسل طلب التحقق للمراجعة" : "Verification submitted for review",
   };
 }
 
@@ -151,7 +151,7 @@ export async function saveJob(
     );
     return {
       ok: false,
-      error: locale === "ar" ? "راجع الحقول المظللة." : "Please review the highlighted fields.",
+      error: locale === "ar" ? "راجع الحقول المظللة" : "Please review the highlighted fields",
       fieldErrors,
     };
   }
@@ -166,7 +166,7 @@ export async function saveJob(
     return {
       ok: false,
       error:
-        locale === "ar" ? "الحد الأعلى للراتب أقل من الحد الأدنى." : "Maximum salary is below the minimum.",
+        locale === "ar" ? "الحد الأعلى للراتب أقل من الحد الأدنى" : "Maximum salary is below the minimum",
       fieldErrors: { salary_max: "!" },
     };
   const row = {
@@ -220,16 +220,33 @@ export async function saveJob(
       };
     })
     .filter((r) => /^[0-9a-f-]{36}$/.test(r.skill_id));
-  await supabase.from("job_skills").delete().eq("job_id", id!);
-  if (rows.length) await supabase.from("job_skills").insert(rows);
+  const partial = (e: { code?: string; message?: string } | null) =>
+    e
+      ? ({
+          ok: false as const,
+          error:
+            locale === "ar"
+              ? `حُفظت بيانات الوظيفة، لكن تعذّر حفظ المهارات أو الأسئلة: ${localizeError(e, locale)}`
+              : `The job was saved, but its skills or questions could not be saved: ${localizeError(e, locale)}`,
+        })
+      : null;
+  const { error: delSkillsErr } = await supabase.from("job_skills").delete().eq("job_id", id!);
+  if (partial(delSkillsErr)) return partial(delSkillsErr)!;
+  if (rows.length) {
+    const { error } = await supabase.from("job_skills").insert(rows);
+    if (partial(error)) return partial(error)!;
+  }
   // application questions: replace set
   const qEn = lines(form.get("questions_en"));
   const qAr = lines(form.get("questions_ar"));
-  await supabase.from("job_application_questions").delete().eq("job_id", id!);
-  if (qEn.length)
-    await supabase
+  const { error: delQErr } = await supabase.from("job_application_questions").delete().eq("job_id", id!);
+  if (partial(delQErr)) return partial(delQErr)!;
+  if (qEn.length) {
+    const { error } = await supabase
       .from("job_application_questions")
       .insert(qEn.map((q, i) => ({ job_id: id!, question_en: q, question_ar: qAr[i] ?? q, position: i })));
+    if (partial(error)) return partial(error)!;
+  }
   revalidatePath("/company", "layout");
   const next = form.get("intent") === "task" ? ("task" as const) : undefined;
   return {
@@ -237,11 +254,11 @@ export async function saveJob(
     data: { id: id!, next },
     message: jobId
       ? locale === "ar"
-        ? "تم حفظ التغييرات."
-        : "Changes saved."
+        ? "تم حفظ التغييرات"
+        : "Changes saved"
       : locale === "ar"
-        ? "تم حفظ الوظيفة كمسودة."
-        : "Job saved as a draft.",
+        ? "تم حفظ الوظيفة كمسودة"
+        : "Job saved as a draft",
   };
 }
 
@@ -264,11 +281,19 @@ export async function setJobStatus(
       ok: false,
       error:
         locale === "ar"
-          ? "أضف مهارة مطلوبة واحدة على الأقل قبل النشر."
-          : "Add at least one required skill before publishing.",
+          ? "أضف مهارة مطلوبة واحدة على الأقل قبل النشر"
+          : "Add at least one required skill before publishing",
     };
-  const { error } = await supabase.from("jobs").update({ status }).eq("id", jobId);
+  const { data: changed, error } = await supabase
+    .from("jobs")
+    .update({ status })
+    .eq("id", jobId)
+    .eq("company_id", companyId)
+    .select("id, status");
   if (error) return { ok: false, error: localizeError(error, locale) };
+  // An update blocked by row-level security returns no error and no rows: never report that as success.
+  if (!changed?.length || changed[0].status !== status)
+    return { ok: false, error: localizeError({ code: "42501" }, locale) };
   revalidatePath("/company", "layout");
   return { ok: true };
 }
@@ -301,8 +326,8 @@ export async function changeStatus(
       ok: false,
       error: taskPending
         ? locale === "ar"
-          ? "لم يسلّم المرشح المهمة العملية بعد؛ يمكن الرفض أو قرار التعيين فقط."
-          : "The candidate hasn't submitted the practical task yet; only rejection or a Hired decision is possible."
+          ? "لم يسلّم المرشح المهمة العملية بعد؛ يمكن الرفض أو قرار التعيين فقط"
+          : "The candidate hasn't submitted the practical task yet; only rejection or a Hired decision is possible"
         : localizeError({ code: "P0001", message: "invalid application status transition" }, locale),
     };
   const { error } = await supabase.rpc("change_application_status", {
@@ -318,7 +343,7 @@ export async function changeStatus(
   return {
     ok: true,
     message:
-      locale === "ar" ? "تم تحديث الحالة وإبلاغ المرشح." : "Status updated and the candidate was notified.",
+      locale === "ar" ? "تم تحديث الحالة وإبلاغ المرشح" : "Status updated and the candidate was notified",
   };
 }
 
@@ -332,7 +357,7 @@ export async function addNote(
   const body = String(form.get("body") ?? "")
     .trim()
     .slice(0, 5000);
-  if (!body) return { ok: false, error: locale === "ar" ? "اكتب الملاحظة." : "Write a note." };
+  if (!body) return { ok: false, error: locale === "ar" ? "اكتب الملاحظة" : "Write a note" };
   const supabase = await createClient();
   const { error } = await supabase
     .from("application_notes")
@@ -363,7 +388,7 @@ export async function assignAssessment(
   return {
     ok: true,
     message:
-      locale === "ar" ? "أُسند التقييم وأُبلغ المرشح." : "Assessment assigned; the candidate was notified.",
+      locale === "ar" ? "أُسند التقييم وأُبلغ المرشح" : "Assessment assigned; the candidate was notified",
   };
 }
 
@@ -410,7 +435,7 @@ export async function shareAssessmentFeedback(
   revalidatePath(`/company/applications/${applicationId}`);
   return {
     ok: true,
-    message: locale === "ar" ? "تمت مشاركة الملاحظات مع المرشح." : "Feedback shared with the candidate.",
+    message: locale === "ar" ? "تمت مشاركة الملاحظات مع المرشح" : "Feedback shared with the candidate",
   };
 }
 
@@ -436,8 +461,8 @@ export async function shortlistForInterview(applicationId: string): Promise<Acti
       ok: false,
       error:
         locale === "ar"
-          ? "لم يسلّم المرشح المهمة العملية بعد."
-          : "The candidate hasn't submitted the practical task yet.",
+          ? "لم يسلّم المرشح المهمة العملية بعد"
+          : "The candidate hasn't submitted the practical task yet",
     };
   const { error } = await supabase.rpc("change_application_status", {
     p_app: applicationId,
@@ -450,7 +475,7 @@ export async function shortlistForInterview(applicationId: string): Promise<Acti
   revalidatePath(`/company/applications/${applicationId}`);
   return {
     ok: true,
-    message: locale === "ar" ? "أُضيف المرشح إلى القائمة المختصرة. حدّد موعد المقابلة." : "Shortlisted. Now schedule the interview.",
+    message: locale === "ar" ? "أُضيف المرشح إلى القائمة المختصرة. حدّد موعد المقابلة" : "Shortlisted. Now schedule the interview",
   };
 }
 
@@ -476,7 +501,7 @@ export async function scheduleInterview(
   if (!parsed.success)
     return {
       ok: false,
-      error: locale === "ar" ? "أكمل بيانات المقابلة." : "Complete the interview details.",
+      error: locale === "ar" ? "أكمل بيانات المقابلة" : "Complete the interview details",
     };
   const interviewers = form.getAll("interviewers").map(String);
   const v = parsed.data;
@@ -568,7 +593,7 @@ export async function rescheduleInterview(
   revalidatePath(`/company/interviews/${interviewId}`);
   return {
     ok: true,
-    message: locale === "ar" ? "تم تغيير الموعد وإبلاغ المرشح." : "Rescheduled; the candidate was notified.",
+    message: locale === "ar" ? "تم تغيير الموعد وإبلاغ المرشح" : "Rescheduled; the candidate was notified",
   };
 }
 
@@ -617,7 +642,7 @@ export async function submitInterviewEvaluation(
   const { locale } = await getI18n();
   const parsed = evalSchema.safeParse(Object.fromEntries(form));
   if (!parsed.success)
-    return { ok: false, error: locale === "ar" ? "أكمل التقييم." : "Complete all ratings." };
+    return { ok: false, error: locale === "ar" ? "أكمل التقييم" : "Complete all ratings" };
   const v = parsed.data;
   const supabase = await createClient();
   // Ratings are validated against the company's interview rubric (default: 7 structured dimensions).
@@ -625,7 +650,7 @@ export async function submitInterviewEvaluation(
   const ratings: Record<string, number> = {};
   for (const c of criteria) {
     const r = rating.safeParse(form.get(c.key));
-    if (!r.success) return { ok: false, error: locale === "ar" ? "قيّم كل المعايير." : "Rate every criterion." };
+    if (!r.success) return { ok: false, error: locale === "ar" ? "قيّم كل المعايير" : "Rate every criterion" };
     ratings[c.key] = r.data;
   }
   const { error } = await supabase
@@ -647,7 +672,7 @@ export async function submitInterviewEvaluation(
   revalidatePath(`/company/interviews/${interviewId}`);
   return {
     ok: true,
-    message: locale === "ar" ? "تم حفظ تقييمك السري." : "Your confidential evaluation was saved.",
+    message: locale === "ar" ? "تم حفظ تقييمك السري" : "Your confidential evaluation was saved",
   };
 }
 
@@ -662,7 +687,7 @@ export async function addInterviewFeedback(
   const body = String(form.get("body") ?? "")
     .trim()
     .slice(0, 3000);
-  if (!body) return { ok: false, error: locale === "ar" ? "اكتب الملاحظات." : "Write the feedback." };
+  if (!body) return { ok: false, error: locale === "ar" ? "اكتب الملاحظات" : "Write the feedback" };
   const supabase = await createClient();
   const { error } = await supabase
     .from("interview_feedback")
@@ -703,11 +728,11 @@ export async function inviteMember(_: ActionResult | null, form: FormData): Prom
     ok: true,
     message: delivering
       ? locale === "ar"
-        ? "أُرسلت الدعوة بالبريد. يقبلها العضو بعد تسجيل الدخول بنفس البريد."
-        : "Invitation emailed. The person accepts it after signing in with that email."
+        ? "أُرسلت الدعوة بالبريد. يقبلها العضو بعد تسجيل الدخول بنفس البريد"
+        : "Invitation emailed. The person accepts it after signing in with that email"
       : locale === "ar"
-        ? "أُنشئت الدعوة. البريد غير مُفعّل بعد، فانسخ رابط الدعوة وأرسله بنفسك."
-        : "Invitation created. Email isn't enabled yet, so copy the invitation link and send it yourself.",
+        ? "أُنشئت الدعوة. البريد غير مُفعّل بعد، فانسخ رابط الدعوة وأرسله بنفسك"
+        : "Invitation created. Email isn't enabled yet, so copy the invitation link and send it yourself",
   };
 }
 
@@ -796,7 +821,7 @@ export async function saveCompanyIdentity(_: ActionResult | null, form: FormData
   if (p1 === null || p2 === null || p3 === null)
     return {
       ok: false,
-      error: locale === "ar" ? "استخدم ألوانًا بصيغة ‎#RRGGBB." : "Use colours in #RRGGBB format.",
+      error: locale === "ar" ? "استخدم ألوانًا بصيغة ‎#RRGGBB" : "Use colours in #RRGGBB format",
     };
   const supabase = await createClient();
   const { data: prev } = await supabase
@@ -820,5 +845,5 @@ export async function saveCompanyIdentity(_: ActionResult | null, form: FormData
   if (stale.length) await supabase.storage.from("company-identity").remove(stale);
   revalidatePath("/company", "layout");
   revalidatePath("/companies", "layout");
-  return { ok: true, message: locale === "ar" ? "حُفظت هوية الشركة." : "Company identity saved." };
+  return { ok: true, message: locale === "ar" ? "حُفظت هوية الشركة" : "Company identity saved" };
 }

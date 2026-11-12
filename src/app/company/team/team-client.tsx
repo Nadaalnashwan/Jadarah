@@ -43,8 +43,8 @@ export function InviteForm() {
       </Button>
       <p className="text-subtle text-xs">
         {L(
-          "We email a personal link. Only someone signed in with this exact email can accept it, and it expires after 14 days.",
-          "نرسل رابطًا شخصيًا بالبريد. لا يقبله إلا من سجّل الدخول بهذا البريد نفسه، وتنتهي صلاحيته بعد 14 يومًا.",
+          "We email a personal link. Only someone signed in with this exact email can accept it, and it expires after 14 days",
+          "نرسل رابطًا شخصيًا بالبريد. لا يقبله إلا من سجّل الدخول بهذا البريد نفسه، وتنتهي صلاحيته بعد 14 يومًا",
         )}
       </p>
     </form>

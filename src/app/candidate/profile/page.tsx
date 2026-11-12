@@ -126,7 +126,7 @@ export default async function ProfilePage() {
           </CardBody>
         </Card>
         <Section
-          emptyLabel={L("Nothing added yet.", "لم يُضف شيء بعد.")}
+          emptyLabel={L("Nothing added yet", "لم يُضف شيء بعد")}
           deleteLabel={t.common.delete}
           title={L("Experience", "الخبرة")}
           table="candidate_experience"
@@ -161,7 +161,7 @@ export default async function ProfilePage() {
           ]}
         />
         <Section
-          emptyLabel={L("Nothing added yet.", "لم يُضف شيء بعد.")}
+          emptyLabel={L("Nothing added yet", "لم يُضف شيء بعد")}
           deleteLabel={t.common.delete}
           title={L("Education", "التعليم")}
           table="candidate_education"
@@ -190,7 +190,7 @@ export default async function ProfilePage() {
           ]}
         />
         <Section
-          emptyLabel={L("Nothing added yet.", "لم يُضف شيء بعد.")}
+          emptyLabel={L("Nothing added yet", "لم يُضف شيء بعد")}
           deleteLabel={t.common.delete}
           title={L("Projects", "المشاريع")}
           table="candidate_projects"
@@ -204,7 +204,7 @@ export default async function ProfilePage() {
                   href={i.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary dark:text-lavender text-xs"
+                  className="text-primary text-xs"
                   dir="ltr"
                 >
                   {i.url}
@@ -219,7 +219,7 @@ export default async function ProfilePage() {
           ]}
         />
         <Section
-          emptyLabel={L("Nothing added yet.", "لم يُضف شيء بعد.")}
+          emptyLabel={L("Nothing added yet", "لم يُضف شيء بعد")}
           deleteLabel={t.common.delete}
           title={L("Certifications", "الشهادات")}
           table="candidate_certifications"

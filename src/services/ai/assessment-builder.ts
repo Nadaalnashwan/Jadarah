@@ -346,30 +346,57 @@ export async function applyDraft(supabase: ServerSupabase, assessmentId: string,
     .from("assessments")
     .update({ title_en: d.title_en, title_ar: d.title_ar, description_en: d.scenario_en, description_ar: d.scenario_ar, duration_minutes: d.duration_minutes, difficulty: d.difficulty, learning_outcomes_en: d.skills_assessed, ai_generated: true })
     .eq("id", assessmentId);
-  // rubric (candidate-safe criteria only; expected evidence lives in the assessor guide)
-  const criteria = d.rubric.map((c) => ({ key: c.key, name_en: c.criterion_en, name_ar: c.criterion_ar, description_en: c.description, description_ar: "", max_points: c.max_points }));
-  const { data: rub } = await supabase.from("assessment_rubrics").select("id").eq("assessment_id", assessmentId).limit(1).maybeSingle();
-  const rubricId = rub
-    ? (await supabase.from("assessment_rubrics").update({ criteria }).eq("id", rub.id).select("id").single()).data!.id
-    : (await supabase.from("assessment_rubrics").insert({ assessment_id: assessmentId, title_en: "Practical rubric", title_ar: "معايير التقييم العملي", criteria }).select("id").single()).data!.id;
-  // tasks → questions
+  // Tasks → questions, each with ITS OWN rubric: the criteria whose task_refs include that task (a criterion shared by
+  // several tasks is split evenly). Candidate-safe criteria only; expected evidence lives in the assessor guide.
+  // Drafts only (checked above): earlier draft questions and rubrics are replaced.
   await supabase.from("assessment_questions").delete().eq("assessment_id", assessmentId);
-  const pts = d.tasks.map((_, i) =>
-    Math.max(1, Math.round(d.rubric.reduce((s, c) => s + (c.task_refs.includes(i) ? c.max_points / c.task_refs.length : 0), 0))),
+  await supabase.from("assessment_rubrics").delete().eq("assessment_id", assessmentId);
+  const taskCriteria = d.tasks.map((_, i) =>
+    d.rubric
+      .filter((c) => c.task_refs.includes(i))
+      .map((c) => ({
+        key: c.key,
+        name_en: c.criterion_en,
+        name_ar: c.criterion_ar,
+        description_en: c.description,
+        description_ar: "",
+        max_points: Math.round((c.max_points / c.task_refs.length) * 100) / 100,
+      })),
   );
-  const { error: qErr } = await supabase.from("assessment_questions").insert(
-    d.tasks.map((t, i) => ({
-      assessment_id: assessmentId,
-      type: QTYPE[t.kind],
-      prompt_en: `${t.title_en}\n\n${taskPrompt(t, "en")}`,
-      prompt_ar: `${t.title_ar}\n\n${taskPrompt(t, "ar")}`,
-      points: pts[i],
-      position: i,
-      rubric_id: rubricId,
-      config: { practical: true, kind: t.kind, deliverables: t.deliverables, inputs: t.inputs, time_minutes: t.time_minutes, skills: t.skills, objective: t.objective },
-    })),
-  );
+  const pts = taskCriteria.map((cs) => Math.max(1, Math.round(cs.reduce((sum, c) => sum + c.max_points, 0))));
+  const { data: inserted, error: qErr } = await supabase
+    .from("assessment_questions")
+    .insert(
+      d.tasks.map((t, i) => ({
+        assessment_id: assessmentId,
+        type: QTYPE[t.kind],
+        prompt_en: `${t.title_en}\n\n${taskPrompt(t, "en")}`,
+        prompt_ar: `${t.title_ar}\n\n${taskPrompt(t, "ar")}`,
+        points: pts[i],
+        position: i,
+        config: { practical: true, kind: t.kind, deliverables: t.deliverables, inputs: t.inputs, time_minutes: t.time_minutes, skills: t.skills, objective: t.objective },
+      })),
+    )
+    .select("id, position");
   if (qErr) throw qErr;
+  for (const q of inserted ?? []) {
+    const criteria = taskCriteria[q.position] ?? [];
+    if (!criteria.length) continue;
+    const { data: rub, error: rErr } = await supabase
+      .from("assessment_rubrics")
+      .insert({
+        assessment_id: assessmentId,
+        question_id: q.id,
+        title_en: `Practical rubric · Task ${q.position + 1}`,
+        title_ar: `معايير التقييم العملي · المهمة ${q.position + 1}`,
+        criteria,
+      })
+      .select("id")
+      .single();
+    if (rErr) throw rErr;
+    const { error: uErr } = await supabase.from("assessment_questions").update({ rubric_id: rub.id }).eq("id", q.id);
+    if (uErr) throw uErr;
+  }
   // assessor-only guide
   await supabase.from("assessment_assessor_guides").upsert({
     assessment_id: assessmentId,

@@ -50,8 +50,8 @@ export function evaluateAlerts(input: {
         severity: "critical",
         title_en: `${provider}: quota exhausted ${n} times in the last hour`,
         title_ar: `${provider}: نفاد الحصة ${n} مرات خلال الساعة الأخيرة`,
-        detail_en: `Threshold: ≥ ${ALERT_RULES.quota.minErrors} quota errors in ${ALERT_RULES.quota.windowMin} min. Requests fall back to other providers or rule-based modes.`,
-        detail_ar: `الحد: ${ALERT_RULES.quota.minErrors} أخطاء حصة أو أكثر خلال ${ALERT_RULES.quota.windowMin} دقيقة. تنتقل الطلبات إلى مزودين آخرين أو الوضع القائم على القواعد.`,
+        detail_en: `Threshold: ≥ ${ALERT_RULES.quota.minErrors} quota errors in ${ALERT_RULES.quota.windowMin} min. Requests fall back to other providers or rule-based modes`,
+        detail_ar: `الحد: ${ALERT_RULES.quota.minErrors} أخطاء حصة أو أكثر خلال ${ALERT_RULES.quota.windowMin} دقيقة. تنتقل الطلبات إلى مزودين آخرين أو الوضع القائم على القواعد`,
         investigate: `ai&provider=${encodeURIComponent(provider)}&range=24h`,
       });
 
@@ -64,8 +64,8 @@ export function evaluateAlerts(input: {
         severity: rate >= 0.6 ? "critical" : "warning",
         title_en: `AI error rate ${Math.round(rate * 100)}% in the last hour`,
         title_ar: `معدل أخطاء الذكاء الاصطناعي ${Math.round(rate * 100)}% خلال الساعة الأخيرة`,
-        detail_en: `${lastHour.length} attempts. Threshold: ≥ ${ALERT_RULES.errorRate.threshold * 100}% with ≥ ${ALERT_RULES.errorRate.minAttempts} attempts.`,
-        detail_ar: `${lastHour.length} محاولة. الحد: ${ALERT_RULES.errorRate.threshold * 100}% فأكثر مع ${ALERT_RULES.errorRate.minAttempts} محاولة على الأقل.`,
+        detail_en: `${lastHour.length} attempts. Threshold: ≥ ${ALERT_RULES.errorRate.threshold * 100}% with ≥ ${ALERT_RULES.errorRate.minAttempts} attempts`,
+        detail_ar: `${lastHour.length} محاولة. الحد: ${ALERT_RULES.errorRate.threshold * 100}% فأكثر مع ${ALERT_RULES.errorRate.minAttempts} محاولة على الأقل`,
         investigate: "ai&range=24h",
       });
   }
@@ -96,8 +96,8 @@ export function evaluateAlerts(input: {
         severity: "warning",
         title_en: `AI p95 latency ${Math.round(now95)} ms (baseline ${Math.round(base95)} ms)`,
         title_ar: `زمن الاستجابة p95 ${Math.round(now95)} ملّي ث (الأساس ${Math.round(base95)})`,
-        detail_en: `Last hour vs previous 7 days; threshold ×${ALERT_RULES.latency.factor} with ≥ ${ALERT_RULES.latency.minSamples} samples.`,
-        detail_ar: `الساعة الأخيرة مقابل الأيام السبعة السابقة؛ الحد ×${ALERT_RULES.latency.factor} مع ${ALERT_RULES.latency.minSamples} عينة على الأقل.`,
+        detail_en: `Last hour vs previous 7 days; threshold ×${ALERT_RULES.latency.factor} with ≥ ${ALERT_RULES.latency.minSamples} samples`,
+        detail_ar: `الساعة الأخيرة مقابل الأيام السبعة السابقة؛ الحد ×${ALERT_RULES.latency.factor} مع ${ALERT_RULES.latency.minSamples} عينة على الأقل`,
         investigate: "ai&range=7d",
       });
   }
@@ -111,8 +111,8 @@ export function evaluateAlerts(input: {
       severity: "warning",
       title_en: `${b.failed} of ${attempts} assessment generations failed in 24 h`,
       title_ar: `فشل ${b.failed} من ${attempts} عمليات توليد تقييم خلال 24 ساعة`,
-      detail_en: `Threshold: ≥ ${ALERT_RULES.builder.threshold * 100}% failures with ≥ ${ALERT_RULES.builder.minAttempts} attempts.`,
-      detail_ar: `الحد: ${ALERT_RULES.builder.threshold * 100}% إخفاقات فأكثر مع ${ALERT_RULES.builder.minAttempts} محاولات على الأقل.`,
+      detail_en: `Threshold: ≥ ${ALERT_RULES.builder.threshold * 100}% failures with ≥ ${ALERT_RULES.builder.minAttempts} attempts`,
+      detail_ar: `الحد: ${ALERT_RULES.builder.threshold * 100}% إخفاقات فأكثر مع ${ALERT_RULES.builder.minAttempts} محاولات على الأقل`,
       investigate: "assessments&range=24h",
     });
 
@@ -124,8 +124,8 @@ export function evaluateAlerts(input: {
       title_en: `${input.telemetry.failures} AI telemetry writes failed on this server`,
       title_ar: `تعذّر حفظ ${input.telemetry.failures} من سجلات الذكاء الاصطناعي على هذا الخادم`,
       detail_en:
-        "AI requests were served, but their monitoring records were not stored; figures may undercount.",
-      detail_ar: "خُدمت الطلبات لكن سجلات المراقبة لم تُحفظ؛ قد تكون الأرقام أقل من الواقع.",
+        "AI requests were served, but their monitoring records were not stored; figures may undercount",
+      detail_ar: "خُدمت الطلبات لكن سجلات المراقبة لم تُحفظ؛ قد تكون الأرقام أقل من الواقع",
       investigate: "ai&range=24h",
     });
   return out;

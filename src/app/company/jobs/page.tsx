@@ -4,6 +4,8 @@ import { ListingBadge } from "@/components/app/company-mark";
 import { JobStatusBadge } from "@/components/app/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, EmptyState, PageHeader } from "@/components/ui/primitives";
+import { FormMessage } from "@/components/ui/form";
+import { isJobOpen, riyadhToday } from "@/lib/domain/listings";
 import { requireCompanyMember } from "@/lib/auth/session";
 import { formatDate, formatNumber, pick, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
@@ -21,8 +23,15 @@ export default async function CompanyJobs({ searchParams }: { searchParams: Prom
     .select("id, title_en, title_ar, status, listing_type, created_by, city, deadline, published_at, updated_at, applications(count)")
     .eq("company_id", s.activeMembership.company_id);
   if (sp.status) q = q.eq("status", sp.status as "draft");
-  const { data } = await q.order("updated_at", { ascending: false });
+  const [{ data }, { data: company }] = await Promise.all([
+    q.order("updated_at", { ascending: false }),
+    supabase.from("company_profiles").select("listed, status").eq("id", s.activeMembership.company_id).maybeSingle(),
+  ]);
   const jobs = data ?? [];
+  const today = riyadhToday();
+  // Candidates only see published jobs of organizations listed in the catalogue (can_view_job); say so plainly.
+  const hiddenPublished = company && !company.listed ? jobs.filter((j) => isJobOpen(j, today)).length : 0;
+  const expired = jobs.filter((j) => j.status === "published" && !isJobOpen(j, today)).length;
   return (
     <>
       <PageHeader
@@ -35,12 +44,32 @@ export default async function CompanyJobs({ searchParams }: { searchParams: Prom
           </Button>
         }
       />
+      {hiddenPublished > 0 && (
+        <div className="mb-4">
+          <FormMessage tone="danger">
+            {L(
+              `${hiddenPublished} published job(s) are not visible to candidates yet: your organization is not listed in the JADARAH catalogue. Ask the platform administrator to list it`,
+              `${hiddenPublished} من الوظائف المنشورة غير ظاهرة للمرشحين بعد، لأن جهتك غير مدرجة في دليل جدارة. اطلب من مسؤول المنصة إدراجها`,
+            )}
+          </FormMessage>
+        </div>
+      )}
+      {expired > 0 && (
+        <div className="mb-4">
+          <FormMessage tone="info">
+            {L(
+              `${expired} published job(s) are past their application deadline and no longer shown to candidates. Extend the deadline or close them`,
+              `${expired} من الوظائف المنشورة تجاوزت موعد التقديم ولم تعد تظهر للمرشحين. مدّد الموعد أو أغلقها`,
+            )}
+          </FormMessage>
+        </div>
+      )}
       <div className="mb-4 flex flex-wrap gap-1.5">
         {["", "draft", "published", "paused", "closed", "archived"].map((st) => (
           <Link
             key={st}
             href={st ? `?status=${st}` : "?"}
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${sp.status === st || (!sp.status && !st) ? "bg-navy text-ivory dark:bg-royal" : "bg-surface-2"}`}
+            className={`rounded-full px-3 py-1 text-xs font-semibold ${sp.status === st || (!sp.status && !st) ? "bg-foreground text-background" : "bg-surface-2"}`}
           >
             {st ? t.jobStatus[st as keyof typeof t.jobStatus] : t.common.all}
           </Link>
@@ -74,7 +103,7 @@ export default async function CompanyJobs({ searchParams }: { searchParams: Prom
                     <td className="p-4">
                       <Link
                         href={`/company/jobs/${j.id}`}
-                        className="hover:text-primary dark:hover:text-lavender font-semibold"
+                        className="hover:text-primary font-semibold"
                       >
                         {pick(j, "title", locale)}
                       </Link>{" "}

@@ -20,8 +20,8 @@ export default async function AdminReports() {
       <PageHeader
         title={t.admin.nav.reports}
         description={L(
-          "Snapshots store the platform statistics at a point in time for trend comparison.",
-          "تحفظ اللقطات إحصاءات المنصة في لحظة معينة للمقارنة.",
+          "Snapshots store the platform statistics at a point in time for trend comparison",
+          "تحفظ اللقطات إحصاءات المنصة في لحظة معينة للمقارنة",
         )}
         actions={<ReportButton />}
       />

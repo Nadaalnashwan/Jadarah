@@ -60,9 +60,9 @@ export async function generateFromJob(_: ActionResult | null, form: FormData): P
   const { s, supabase, company, locale } = await ctx();
   const L = (en: string, ar: string) => (locale === "ar" ? ar : en);
   const p = inputSchema.safeParse(Object.fromEntries(form));
-  if (!p.success) return { ok: false, error: L("Complete the job details.", "أكمل بيانات الوظيفة.") };
+  if (!p.success) return { ok: false, error: L("Complete the job details", "أكمل بيانات الوظيفة") };
   const { data: job } = await supabase.from("jobs").select("id, assessment_id, category:job_categories(slug)").eq("id", p.data.job_id).eq("company_id", company.id).maybeSingle();
-  if (!job) return { ok: false, error: L("Job not found.", "الوظيفة غير موجودة.") };
+  if (!job) return { ok: false, error: L("Job not found", "الوظيفة غير موجودة") };
   // Job-linked creation ("Save & create practical task"): idempotent per creation key, attached to the job.
   const attach = form.get("attach") === "1";
   const rawKey = String(form.get("creation_key") ?? "");
@@ -93,7 +93,7 @@ export async function generateFromJob(_: ActionResult | null, form: FormData): P
       duration_ms: Date.now() - started,
       retrieval: meta.retrieval ?? "failed",
     });
-    if (e instanceof AIUnavailableError) return { ok: false, error: L("Generation is unavailable right now. Try again shortly.", "التوليد غير متاح الآن. حاول بعد قليل.") };
+    if (e instanceof AIUnavailableError) return { ok: false, error: L("Generation is unavailable right now. Try again shortly", "التوليد غير متاح الآن. حاول بعد قليل") };
     throw e;
   }
   const durationMs = Date.now() - started;
@@ -220,7 +220,7 @@ async function refsFor(supabase: Awaited<ReturnType<typeof createClient>>, used:
 export async function regenerateSection(assessmentId: string, section: "scenario" | "tasks" | "rubric" | "data"): Promise<ActionResult> {
   const { s, supabase, company, locale, g } = await loadGeneration(assessmentId);
   const L = (en: string, ar: string) => (locale === "ar" ? ar : en);
-  if (!g || g.status !== "draft") return { ok: false, error: L("Only AI drafts can be regenerated.", "يمكن إعادة توليد المسودات الآلية فقط.") };
+  if (!g || g.status !== "draft") return { ok: false, error: L("Only AI drafts can be regenerated", "يمكن إعادة توليد المسودات الآلية فقط") };
   const job = g.job_snapshot as unknown as JobInput;
   try {
     const refs = await refsFor(supabase, (g.references_used as { reference_id: string }[]) ?? [], job, company);
@@ -229,7 +229,7 @@ export async function regenerateSection(assessmentId: string, section: "scenario
       company,
       job,
       references: refs,
-      repairOf: { draft: g.output as unknown as GeneratedDraft, issues: [`Rewrite the ${section} with a fresh approach.`] },
+      repairOf: { draft: g.output as unknown as GeneratedDraft, issues: [`Rewrite the ${section} with a fresh approach`] },
       focusSection: section,
     });
     const checks = runValidation(res.data, job, refs);
@@ -237,11 +237,11 @@ export async function regenerateSection(assessmentId: string, section: "scenario
     await supabase.from("assessment_generations").update({ output: res.data, validation: checks, provider: res.provider, model: res.model }).eq("id", g.id);
     await recordBuilderEvent(supabase, s.userId, company.id, "section_regenerated", { assessment_id: assessmentId, section, checks_failed: checks.filter((c) => !c.passed).length }, res.provider, res.model);
   } catch (e) {
-    if (e instanceof AIUnavailableError) return { ok: false, error: L("Generation is unavailable right now.", "التوليد غير متاح الآن.") };
+    if (e instanceof AIUnavailableError) return { ok: false, error: L("Generation is unavailable right now", "التوليد غير متاح الآن") };
     return { ok: false, error: localizeError(e as { message?: string }, locale) };
   }
   revalidatePath(`/company/assessments/${assessmentId}`);
-  return { ok: true, message: L("Section regenerated.", "أُعيد توليد القسم.") };
+  return { ok: true, message: L("Section regenerated", "أُعيد توليد القسم") };
 }
 
 const taskEdit = z.object({
@@ -264,16 +264,16 @@ const scenarioEdit = z.object({
 export async function editDraft(assessmentId: string, part: string, _: ActionResult | null, form: FormData): Promise<ActionResult> {
   const { s, supabase, company, locale, g } = await loadGeneration(assessmentId);
   const L = (en: string, ar: string) => (locale === "ar" ? ar : en);
-  if (!g || g.status !== "draft") return { ok: false, error: L("Only drafts can be edited.", "يمكن تعديل المسودات فقط.") };
+  if (!g || g.status !== "draft") return { ok: false, error: L("Only drafts can be edited", "يمكن تعديل المسودات فقط") };
   const d = structuredClone(g.output as unknown as GeneratedDraft);
   if (part === "scenario") {
     const p = scenarioEdit.safeParse(Object.fromEntries(form));
-    if (!p.success) return { ok: false, error: L("Check the fields.", "تحقق من الحقول.") };
+    if (!p.success) return { ok: false, error: L("Check the fields", "تحقق من الحقول") };
     Object.assign(d, p.data);
   } else {
     const i = Number(part.replace("task:", ""));
     const p = taskEdit.safeParse(Object.fromEntries(form));
-    if (!p.success || !d.tasks[i]) return { ok: false, error: L("Check the fields.", "تحقق من الحقول.") };
+    if (!p.success || !d.tasks[i]) return { ok: false, error: L("Check the fields", "تحقق من الحقول") };
     const deliverables = p.data.deliverables.split("\n").map((l) => l.trim()).filter(Boolean).map((l) => {
       const m = /^(.*?)\s*\(([^)]+)\)\s*(?:[-—:]\s*(.*))?$/.exec(l);
       return m ? { name: m[1], format: m[2], description: m[3] } : { name: l, format: "document" };
@@ -291,18 +291,25 @@ export async function editDraft(assessmentId: string, part: string, _: ActionRes
   await supabase.from("assessment_generations").update({ output: d, validation: checks }).eq("id", g.id);
   await recordBuilderEvent(supabase, s.userId, company.id, "human_edit", { assessment_id: assessmentId, part, checks_failed: checks.filter((c) => !c.passed).length });
   revalidatePath(`/company/assessments/${assessmentId}`);
-  return { ok: true, message: L("Saved and re-validated.", "حُفظ وأُعيد التحقق.") };
+  return { ok: true, message: L("Saved and re-validated", "حُفظ وأُعيد التحقق") };
 }
 
 /** Human approval: re-validates the CURRENT content; publishes only when every check passes. */
 export async function approveAndPublish(assessmentId: string): Promise<ActionResult> {
   const { s, supabase, company, locale, g } = await loadGeneration(assessmentId);
   const L = (en: string, ar: string) => (locale === "ar" ? ar : en);
-  if (!g) return { ok: false, error: L("Not found.", "غير موجود.") };
+  if (!g) return { ok: false, error: L("Not found", "غير موجود") };
   const d = g.output as unknown as GeneratedDraft;
-  // Pick up rubric edits made in the rubric editor.
-  const { data: rub } = await supabase.from("assessment_rubrics").select("criteria").eq("assessment_id", assessmentId).limit(1).maybeSingle();
-  const edited = (rub?.criteria as { key: string; name_en: string; name_ar: string; max_points: number }[] | null) ?? [];
+  // Pick up rubric edits made in the rubric editor(s). Each task has its own rubric; a criterion shared by several
+  // tasks appears in each with its share of the points, so shares are added back together by key.
+  const { data: rubs } = await supabase.from("assessment_rubrics").select("criteria").eq("assessment_id", assessmentId);
+  const byKey = new Map<string, { key: string; name_en: string; name_ar: string; max_points: number }>();
+  for (const r of rubs ?? [])
+    for (const c of (r.criteria as { key: string; name_en: string; name_ar: string; max_points: number }[] | null) ?? []) {
+      const prev = byKey.get(c.key);
+      byKey.set(c.key, prev ? { ...prev, max_points: Math.round((prev.max_points + Number(c.max_points)) * 100) / 100 } : { ...c, max_points: Number(c.max_points) });
+    }
+  const edited = [...byKey.values()];
   const merged: GeneratedDraft = {
     ...d,
     rubric: d.rubric
@@ -319,14 +326,14 @@ export async function approveAndPublish(assessmentId: string): Promise<ActionRes
   const failed = checks.filter((c) => !c.passed);
   if (failed.length) {
     revalidatePath(`/company/assessments/${assessmentId}`);
-    return { ok: false, error: L(`Resolve ${failed.length} validation issue(s) before publishing.`, `عالج ${failed.length} من ملاحظات التحقق قبل النشر.`) };
+    return { ok: false, error: L(`Resolve ${failed.length} validation issue(s) before publishing`, `عالج ${failed.length} من ملاحظات التحقق قبل النشر`) };
   }
   const { error } = await supabase.from("assessments").update({ status: "published", reviewed_by: s.userId }).eq("id", assessmentId).eq("status", "draft");
   if (error) return { ok: false, error: localizeError(error, locale) };
   await supabase.from("assessment_generations").update({ status: "approved", approved_by: s.userId, approved_at: new Date().toISOString() }).eq("id", g.id);
   await recordBuilderEvent(supabase, s.userId, company.id, "approved", { assessment_id: assessmentId });
   revalidatePath(`/company/assessments/${assessmentId}`);
-  return { ok: true, message: L("Approved and published.", "اعتُمد ونُشر.") };
+  return { ok: true, message: L("Approved and published", "اعتُمد ونُشر") };
 }
 
 /** Short-lived signed link for an assessment file (storage RLS decides: company or assigned candidate). */

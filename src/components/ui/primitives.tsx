@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { LogoMark } from "@/components/brand/logo";
+import { Inbox } from "lucide-react";
 import type { StatusTone } from "@/lib/domain/application-status";
 
 /** Tonal surfaces carry meaning: blue = opportunity/primary metric, sage = done/positive, peach = needs action,
@@ -28,7 +28,7 @@ export function CardHeader({
   return (
     <div className={cn("flex items-start justify-between gap-4 p-5 pb-0 sm:p-6 sm:pb-0", className)}>
       <div className="min-w-0">
-        <h2 className="text-base font-bold tracking-tight">{title}</h2>
+        <h2 className="text-[0.95rem] font-bold tracking-tight">{title}</h2>
         {description && <p className="text-muted mt-1 text-sm">{description}</p>}
       </div>
       {action}
@@ -43,7 +43,7 @@ export function CardBody({ className, ...props }: React.HTMLAttributes<HTMLDivEl
 const toneClasses: Record<StatusTone | "accent", string> = {
   neutral: "bg-surface-2 text-foreground",
   info: "bg-info-soft text-info",
-  progress: "bg-tone-blue text-primary-ink",
+  progress: "bg-tone-mist text-[var(--tone-mist-ink)]",
   positive: "bg-success-soft text-success",
   negative: "bg-danger-soft text-danger",
   muted: "bg-surface-2 text-muted",
@@ -64,7 +64,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap",
+        "inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-semibold whitespace-nowrap",
         toneClasses[tone],
         className,
       )}
@@ -86,7 +86,7 @@ export function Avatar({ name, className }: { name: string; className?: string }
     <span
       aria-hidden
       className={cn(
-        "from-sky to-peach text-[#172f49] inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold",
+        "bg-tone-mist text-[var(--tone-mist-ink)] ring-border inline-flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ring-1",
         className,
       )}
     >
@@ -104,10 +104,10 @@ export function Progress({ value, className, label }: { value: number; className
       aria-valuemax={100}
       aria-valuenow={Math.round(v)}
       aria-label={label}
-      className={cn("bg-surface-2 h-2 w-full overflow-hidden rounded-full", className)}
+      className={cn("bg-surface-2 h-1.5 w-full overflow-hidden rounded-full", className)}
     >
       <div
-        className="from-royal to-teal h-full rounded-full bg-gradient-to-r transition-[width] duration-700 ease-[cubic-bezier(.22,1,.36,1)] rtl:bg-gradient-to-l"
+        className="fill-signature bg-primary h-full rounded-full transition-[width] duration-700 ease-[cubic-bezier(.22,1,.36,1)]"
         style={{ width: `${v}%` }}
       />
     </div>
@@ -126,11 +126,11 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <header className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
+    <header className="jd-enter mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         {eyebrow && <p className="eyebrow mb-2">{eyebrow}</p>}
-        <h1 className="editorial text-3xl font-extrabold sm:text-4xl">{title}</h1>
-        {description && <p className="text-muted mt-2 max-w-2xl text-sm sm:text-base">{description}</p>}
+        <h1 className="editorial text-[1.9rem] font-bold sm:text-[2.4rem]">{title}</h1>
+        {description && <p className="text-muted mt-2 max-w-2xl text-sm leading-relaxed sm:text-[0.95rem]">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </header>
@@ -149,13 +149,12 @@ export function EmptyState({
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-col items-center px-6 py-14 text-center", className)}>
-      <span className="relative mb-5 grid size-20 place-items-center">
-        <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgb(169_184_255/0.45),transparent_70%)]" aria-hidden />
-        <LogoMark className="relative size-14 opacity-90" />
+    <div className={cn("flex flex-col items-center px-6 py-12 text-center", className)}>
+      <span className="bg-violet-soft mb-4 grid size-14 place-items-center rounded-2xl" aria-hidden>
+        <Inbox className="text-violet-ink size-6" />
       </span>
-      <h3 className="text-base font-bold">{title}</h3>
-      {body && <p className="text-muted mt-1 max-w-sm text-sm">{body}</p>}
+      <h3 className="text-[0.95rem] font-bold">{title}</h3>
+      {body && <p className="text-muted mt-1 max-w-sm text-sm leading-relaxed">{body}</p>}
       {action && <div className="mt-5">{action}</div>}
     </div>
   );
@@ -178,12 +177,14 @@ export function KpiCard({
   className?: string;
 }) {
   return (
-    <Card tone={tone} className={cn("flex flex-col gap-1 p-4 sm:p-5", className)}>
+    <Card tone={tone} className={cn("flex flex-col gap-1.5 p-4 sm:p-5", className)}>
       <span className="tone-ink flex items-center gap-1.5 text-xs font-semibold">
         {icon}
         {label}
       </span>
-      <span className="ltr-nums text-2xl font-extrabold tracking-tight sm:text-3xl">{value}</span>
+      <span className="ltr-nums self-start text-[1.75rem] leading-none font-extrabold tracking-tight sm:text-[2rem]">
+        {value}
+      </span>
       {hint && <span className="text-subtle text-xs">{hint}</span>}
     </Card>
   );
@@ -203,8 +204,112 @@ export function Stat({
   return (
     <div className={cn("flex flex-col gap-1", className)}>
       <span className="text-muted text-xs font-semibold">{label}</span>
-      <span className="ltr-nums text-3xl font-extrabold tracking-tight">{value}</span>
+      <span className="ltr-nums self-start text-[1.75rem] leading-none font-extrabold tracking-tight">{value}</span>
       {hint && <span className="text-subtle text-xs">{hint}</span>}
     </div>
   );
+}
+
+/**
+ * Spotlight: the opening composition of each workspace overview — the few figures that matter, on a calm ground that
+ * differs per role (no background graphics behind content):
+ *   candidate — luminous indigo with violet light: a personal, career-focused space
+ *   employer  — deep green brand panel with mint light: the organisation's command view
+ *   admin     — a lavender-lit operations band, denser and calmer for scanning
+ */
+export function Spotlight({
+  eyebrow,
+  title,
+  description,
+  actions,
+  children,
+  className,
+  variant = "candidate",
+}: {
+  eyebrow?: React.ReactNode;
+  title: React.ReactNode;
+  description?: React.ReactNode;
+  actions?: React.ReactNode;
+  children?: React.ReactNode;
+  className?: string;
+  variant?: "candidate" | "employer" | "admin";
+}) {
+  const skin =
+    variant === "employer"
+      ? "panel-green"
+      : variant === "admin"
+        ? "section-lavender border"
+        : "ink ink-aura";
+  return (
+    <section
+      className={cn(
+        "jd-enter relative isolate overflow-hidden rounded-[1.75rem]",
+        variant === "admin" ? "p-5 sm:p-6" : "p-6 sm:p-8",
+        skin,
+        className,
+      )}
+    >
+      <div className="flex flex-col gap-5">
+        <div className="min-w-0 max-w-2xl">
+          {eyebrow && (
+            <p className={cn("mb-2 text-xs font-semibold", variant === "admin" ? "eyebrow" : "text-subtle")}>{eyebrow}</p>
+          )}
+          <h1
+            className={cn(
+              "editorial font-extrabold",
+              variant === "admin" ? "text-[1.6rem] sm:text-[1.9rem]" : "text-[1.9rem] sm:text-[2.5rem]",
+            )}
+          >
+            {title}
+          </h1>
+          {description && <p className="text-muted mt-2 text-sm leading-relaxed sm:text-[0.95rem]">{description}</p>}
+        </div>
+        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      </div>
+      {children && <div className={variant === "admin" ? "mt-5" : "mt-7"}>{children}</div>}
+    </section>
+  );
+}
+
+/**
+ * A metric inside a Spotlight. "tile" (candidate/employer) is a soft lifted block; "inline" (admin) separates figures
+ * with hairlines instead of boxes, so dense numbers stay calm.
+ */
+export function SpotlightStat({
+  label,
+  value,
+  hint,
+  emphasis,
+  look = "tile",
+}: {
+  label: React.ReactNode;
+  value: React.ReactNode;
+  hint?: React.ReactNode;
+  /** Marks the figure that needs attention (e.g. pending actions). */
+  emphasis?: boolean;
+  look?: "tile" | "inline";
+}) {
+  return (
+    <div
+      className={cn(
+        "flex min-w-0 flex-col gap-1.5",
+        look === "tile"
+          ? "bg-surface/80 rounded-2xl border border-white/10 p-4"
+          : "border-border border-s ps-4 first:border-s-0 first:ps-0",
+      )}
+    >
+      <span className="text-muted flex items-center gap-1.5 text-xs font-semibold">
+        {emphasis && <span className="size-1.5 rounded-full bg-[var(--gold)]" aria-hidden />}
+        {label}
+      </span>
+      <span className="editorial ltr-nums self-start text-[1.9rem] leading-none font-bold tracking-tight sm:text-[2.2rem]">
+        {value}
+      </span>
+      {hint && <span className="text-subtle text-xs">{hint}</span>}
+    </div>
+  );
+}
+
+export function Skeleton({ className }: { className?: string }) {
+  return <div className={cn("jd-skeleton", className)} aria-hidden />;
 }

@@ -23,7 +23,7 @@ export function ContentPage({
       <div className="mt-16 grid gap-10 md:grid-cols-2">
         {sections.map((s, i) => (
           <section key={s.title} className="border-t pt-6">
-            <p className="ltr-nums text-primary dark:text-lavender text-sm font-bold">0{i + 1}</p>
+            <p className="ltr-nums text-primary text-sm font-bold">0{i + 1}</p>
             <h2 className="mt-2 text-2xl font-extrabold">{s.title}</h2>
             {Array.isArray(s.body) ? (
               <ul className="text-muted mt-3 list-disc space-y-1.5 ps-5">

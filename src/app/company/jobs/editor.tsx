@@ -80,7 +80,7 @@ export function JobEditor({
     if (!v.title_en.trim())
       return setAiState({
         busy: false,
-        note: L("Enter the English title first.", "أدخل المسمى الإنجليزي أولًا."),
+        note: L("Enter the English title first", "أدخل المسمى الإنجليزي أولًا"),
       });
     setAiState({ busy: true, note: null });
     const r = await draftJobWithAI(v.title_en, v.experience_level);
@@ -90,12 +90,12 @@ export function JobEditor({
         note:
           r.reason === "not_configured"
             ? L(
-                "No AI provider is configured on this platform. Write the post manually.",
-                "لم يُضبط مزوّد ذكاء اصطناعي على المنصة. اكتب الإعلان يدويًا.",
+                "No AI provider is configured on this platform. Write the post manually",
+                "لم يُضبط مزوّد ذكاء اصطناعي على المنصة. اكتب الإعلان يدويًا",
               )
             : L(
-                "The AI provider did not return a usable draft. Try again or write it manually.",
-                "لم يُرجع مزوّد الذكاء الاصطناعي مسودة صالحة. حاول مجددًا أو اكتبها يدويًا.",
+                "The AI provider did not return a usable draft. Try again or write it manually",
+                "لم يُرجع مزوّد الذكاء الاصطناعي مسودة صالحة. حاول مجددًا أو اكتبها يدويًا",
               ),
       });
     const d = r.draft;
@@ -112,8 +112,8 @@ export function JobEditor({
     setAiState({
       busy: false,
       note: L(
-        "AI draft inserted. Review and edit everything before saving or publishing.",
-        "أُدرجت مسودة الذكاء الاصطناعي. راجع كل شيء وعدّله قبل الحفظ أو النشر.",
+        "AI draft inserted. Review and edit everything before saving or publishing",
+        "أُدرجت مسودة الذكاء الاصطناعي. راجع كل شيء وعدّله قبل الحفظ أو النشر",
       ),
       provider: d.provider,
     });
@@ -391,8 +391,8 @@ export function JobEditor({
         </h2>
         <p className="text-muted mt-1 text-sm">
           {L(
-            "These drive explainable matching. Required skills weigh twice as much as preferred.",
-            "تقود هذه المطابقة القابلة للتفسير. المهارات المطلوبة ضعف وزن المفضّلة.",
+            "These drive explainable matching. Required skills weigh twice as much as preferred",
+            "تقود هذه المطابقة القابلة للتفسير. المهارات المطلوبة ضعف وزن المفضّلة",
           )}
         </p>
         <ul className="mt-4 flex flex-col gap-2">
@@ -514,7 +514,7 @@ export function JobEditor({
           </Button>
         )}
         <p className="text-subtle text-xs">
-          {L("Saving never publishes the job.", "الحفظ لا ينشر الوظيفة.")}
+          {L("Saving never publishes the job", "الحفظ لا ينشر الوظيفة")}
         </p>
       </div>
     </form>

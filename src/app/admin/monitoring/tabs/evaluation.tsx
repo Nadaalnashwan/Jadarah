@@ -26,8 +26,8 @@ export async function EvaluationTab({ supabase, period, demo, locale }: Omit<Tab
       {b.generationsAccess === "rls_only" && (
         <p className="bg-warning-soft text-warning rounded-xl px-4 py-2 text-sm">
           {L(
-            "Draft records are readable only by each company's recruiters. Apply proposal 0031 (metadata-only monitoring function) to include them; figures below that depend on drafts are incomplete.",
-            "سجلات المسودات متاحة فقط لمسؤولي التوظيف في كل شركة. طبّق المقترح 0031 (دالة مراقبة للبيانات الوصفية فقط) لتضمينها؛ الأرقام المعتمدة على المسودات أدناه غير مكتملة.",
+            "Draft records are readable only by each company's recruiters. Apply proposal 0031 (metadata-only monitoring function) to include them; figures below that depend on drafts are incomplete",
+            "سجلات المسودات متاحة فقط لمسؤولي التوظيف في كل شركة. طبّق المقترح 0031 (دالة مراقبة للبيانات الوصفية فقط) لتضمينها؛ الأرقام المعتمدة على المسودات أدناه غير مكتملة",
           )}
         </p>
       )}
@@ -75,8 +75,8 @@ export async function EvaluationTab({ supabase, period, demo, locale }: Omit<Tab
                 {n(cv.metrics.unsupported_claims)} {L("unsupported claims", "ادعاءات غير مدعومة")}
               </Badge>
               {L(
-                `${cv.metrics.negation_cases_with_false_positive} of ${cv.metrics.negation_cases} CVs with negations ("no experience with…") produced a false skill.`,
-                `${cv.metrics.negation_cases_with_false_positive} من ${cv.metrics.negation_cases} سير تحتوي نفيًا («لا خبرة لدي في…») أنتجت مهارة خاطئة.`,
+                `${cv.metrics.negation_cases_with_false_positive} of ${cv.metrics.negation_cases} CVs with negations ("no experience with…") produced a false skill`,
+                `${cv.metrics.negation_cases_with_false_positive} من ${cv.metrics.negation_cases} سير تحتوي نفيًا («لا خبرة لدي في…») أنتجت مهارة خاطئة`,
               )}
             </p>
             <ul className="text-subtle mt-3 list-disc space-y-0.5 ps-5 text-xs">
@@ -93,8 +93,8 @@ export async function EvaluationTab({ supabase, period, demo, locale }: Omit<Tab
               <NotEvaluated
                 locale={locale}
                 reason={L(
-                  "Needs live provider calls on a labelled benchmark; not run, to avoid spending AI credits. Live CV parsing counts are in AI monitoring.",
-                  "يتطلب استدعاءات حية للمزوّد على معيار مُعلَّم؛ لم يُشغَّل تجنبًا لاستهلاك أرصدة الذكاء الاصطناعي. أعداد التحليل الحية في مراقبة الذكاء الاصطناعي.",
+                  "Needs live provider calls on a labelled benchmark; not run, to avoid spending AI credits. Live CV parsing counts are in AI monitoring",
+                  "يتطلب استدعاءات حية للمزوّد على معيار مُعلَّم؛ لم يُشغَّل تجنبًا لاستهلاك أرصدة الذكاء الاصطناعي. أعداد التحليل الحية في مراقبة الذكاء الاصطناعي",
                 )}
               />
             </Card>
@@ -105,8 +105,8 @@ export async function EvaluationTab({ supabase, period, demo, locale }: Omit<Tab
               <NotEvaluated
                 locale={locale}
                 reason={L(
-                  "No labelled relevance benchmark exists yet (relevant jobs, ranking, negation, skill equivalence). Similarity scores are not proof of competence.",
-                  "لا يوجد بعد معيار مُعلَّم للملاءمة (الوظائف الملائمة، الترتيب، النفي، تكافؤ المهارات). درجات التشابه ليست دليلًا على الكفاءة.",
+                  "No labelled relevance benchmark exists yet (relevant jobs, ranking, negation, skill equivalence). Similarity scores are not proof of competence",
+                  "لا يوجد بعد معيار مُعلَّم للملاءمة (الوظائف الملائمة، الترتيب، النفي، تكافؤ المهارات). درجات التشابه ليست دليلًا على الكفاءة",
                 )}
               />
             </Card>
@@ -123,13 +123,11 @@ export async function EvaluationTab({ supabase, period, demo, locale }: Omit<Tab
         </p>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <KpiCard
-            tone="sage"
             label={L("Passed every automatic check", "اجتازت كل الفحوص الآلية")}
             value={lc.generated ? pct(lc.validated / lc.generated, locale) : "—"}
             hint={`${n(lc.validated)}/${n(lc.generated)}`}
           />
           <KpiCard
-            tone="sand"
             label={L("Human correction frequency", "تكرار التصحيح البشري")}
             value={
               lc.generated && b.instrumentedSamples ? pct(b.editedAssessments / lc.generated, locale) : "—"
@@ -144,7 +142,6 @@ export async function EvaluationTab({ supabase, period, demo, locale }: Omit<Tab
             }
           />
           <KpiCard
-            tone="blue"
             label={L("Eventual approval rate", "نسبة الاعتماد النهائي")}
             value={decided ? pct(lc.approved / decided, locale) : "—"}
             hint={
@@ -198,8 +195,8 @@ export async function EvaluationTab({ supabase, period, demo, locale }: Omit<Tab
           </ul>
           <p className="text-subtle mt-3 text-xs">
             {L(
-              "Pass rates come from the rule-based checks stored with each draft. Relevance and difficulty need human-labelled judgements, which are not collected yet; no AI quality score is invented.",
-              "نسب الاجتياز من الفحوص الآلية المحفوظة مع كل مسودة. الملاءمة والصعوبة تتطلب أحكامًا بشرية مُعلَّمة لم تُجمع بعد؛ ولا تُختلق أي درجة جودة.",
+              "Pass rates come from the rule-based checks stored with each draft. Relevance and difficulty need human-labelled judgements, which are not collected yet; no AI quality score is invented",
+              "نسب الاجتياز من الفحوص الآلية المحفوظة مع كل مسودة. الملاءمة والصعوبة تتطلب أحكامًا بشرية مُعلَّمة لم تُجمع بعد؛ ولا تُختلق أي درجة جودة",
             )}
           </p>
         </Card>
@@ -218,8 +215,8 @@ export async function EvaluationTab({ supabase, period, demo, locale }: Omit<Tab
           <NotEvaluated
             locale={locale}
             reason={L(
-              `At least ${MIN_COMPARE} criteria scored by both the AI assistant and a reviewer are needed; ${h.comparedCriteria} exist.`,
-              `يلزم ${MIN_COMPARE} معيارًا على الأقل قيّمها المساعد الآلي والمراجع معًا؛ الموجود ${h.comparedCriteria}.`,
+              `At least ${MIN_COMPARE} criteria scored by both the AI assistant and a reviewer are needed; ${h.comparedCriteria} exist`,
+              `يلزم ${MIN_COMPARE} معيارًا على الأقل قيّمها المساعد الآلي والمراجع معًا؛ الموجود ${h.comparedCriteria}`,
             )}
           />
         ) : (
@@ -241,8 +238,8 @@ export async function EvaluationTab({ supabase, period, demo, locale }: Omit<Tab
         )}
         <p className="text-subtle mt-3 text-xs">
           {L(
-            "Agreement between AI and reviewers is not proof of fairness or correctness; reviewers always decide.",
-            "اتفاق الذكاء الاصطناعي مع المراجعين ليس دليلًا على العدالة أو الصحة؛ القرار دائمًا للمراجع.",
+            "Agreement between AI and reviewers is not proof of fairness or correctness; reviewers always decide",
+            "اتفاق الذكاء الاصطناعي مع المراجعين ليس دليلًا على العدالة أو الصحة؛ القرار دائمًا للمراجع",
           )}
         </p>
       </section>

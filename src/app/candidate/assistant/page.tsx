@@ -18,8 +18,8 @@ export default async function AssistantPage() {
         description={
           ai.configured
             ? L(
-                "Uses only your profile data. You decide.",
-                "يستخدم بيانات ملفك فقط. والقرار لك.",
+                "Uses only your profile data. You decide",
+                "يستخدم بيانات ملفك فقط. والقرار لك",
               )
             : t.common.ruleBased
         }

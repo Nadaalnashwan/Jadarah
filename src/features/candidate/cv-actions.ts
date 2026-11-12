@@ -37,19 +37,19 @@ export async function registerCvUpload(input: z.infer<typeof registerSchema>): P
   const type = resolveCvType(parsed.data.file_name, parsed.data.mime_type);
   if (!type) {
     await discard();
-    return { ok: false, error: cvMsg(locale, "Only PDF or Word (DOCX) files are accepted.", "يُقبل ملف PDF أو Word (DOCX) فقط.") };
+    return { ok: false, error: cvMsg(locale, "Only PDF or Word (DOCX) files are accepted", "يُقبل ملف PDF أو Word (DOCX) فقط") };
   }
   // Verify the stored object really is a PDF/Word file of the stated size (never trust the client).
   const { data: blob, error: dlErr } = await supabase.storage.from("candidate-cvs").download(parsed.data.path);
   if (dlErr || !blob)
-    return { ok: false, error: cvMsg(locale, "We couldn't find the uploaded file. Please upload it again.", "تعذّر العثور على الملف المرفوع. ارفعه مرة أخرى.") };
+    return { ok: false, error: cvMsg(locale, "We couldn't find the uploaded file. Please upload it again", "تعذّر العثور على الملف المرفوع. ارفعه مرة أخرى") };
   const head = new Uint8Array(await blob.slice(0, 1100).arrayBuffer());
   const sniffed = sniffCvBytes(head);
   if (sniffed !== type.kind || blob.size > MAX_CV_BYTES || blob.size === 0) {
     await discard();
     return {
       ok: false,
-      error: cvMsg(locale, "This file doesn't look like a valid PDF or Word document.", "لا يبدو هذا الملف مستند PDF أو Word صالحًا."),
+      error: cvMsg(locale, "This file doesn't look like a valid PDF or Word document", "لا يبدو هذا الملف مستند PDF أو Word صالحًا"),
     };
   }
 
@@ -166,8 +166,8 @@ export async function deleteCv(documentId: string): Promise<ActionResult> {
       ok: true,
       message:
         locale === "ar"
-          ? "هذه النسخة مرتبطة بطلب مقدَّم، فأرشفناها ولم نحذفها."
-          : "This version is attached to a submitted application, so it was archived instead of deleted.",
+          ? "هذه النسخة مرتبطة بطلب مقدَّم، فأرشفناها ولم نحذفها"
+          : "This version is attached to a submitted application, so it was archived instead of deleted",
     };
   }
   await supabase.storage.from(doc.bucket).remove([doc.storage_path]);
@@ -234,8 +234,8 @@ export async function parseCv(documentId: string): Promise<ActionResult<{ parsed
   }
   if (doc.mime_type === "application/msword")
     return unreadable(
-      "Reading legacy .doc files isn't supported. Your file is saved — upload a PDF or DOCX to extract, or complete your profile manually.",
-      "قراءة ملفات ‎.doc‎ القديمة غير مدعومة. حُفظ ملفك — ارفع PDF أو DOCX للاستخراج، أو أكمل ملفك يدويًا.",
+      "Reading legacy .doc files isn't supported. Your file is saved — upload a PDF or DOCX to extract, or complete your profile manually",
+      "قراءة ملفات ‎.doc‎ القديمة غير مدعومة. حُفظ ملفك — ارفع PDF أو DOCX للاستخراج، أو أكمل ملفك يدويًا",
     );
 
   let parsed: ParsedCv | null = null;
@@ -254,8 +254,8 @@ export async function parseCv(documentId: string): Promise<ActionResult<{ parsed
   if (!parsed) {
     if (text.length < 40)
       return unreadable(
-        "We couldn't read text from this file (it may be a scanned image). Your CV is saved — complete your profile manually.",
-        "تعذّرت قراءة نص من هذا الملف (قد يكون صورة ممسوحة). حُفظت سيرتك — أكمل ملفك يدويًا.",
+        "We couldn't read text from this file (it may be a scanned image). Your CV is saved — complete your profile manually",
+        "تعذّرت قراءة نص من هذا الملف (قد يكون صورة ممسوحة). حُفظت سيرتك — أكمل ملفك يدويًا",
       );
     const { data: taxonomy } = await supabase.from("skills").select("slug, name_en, aliases");
     parsed = parseCvRuleBased(text, taxonomy ?? []);
@@ -265,8 +265,8 @@ export async function parseCv(documentId: string): Promise<ActionResult<{ parsed
   parsed = { ...grounded.parsed, grounding: grounded.grounding };
   if (isEmptyExtraction(parsed))
     return unreadable(
-      "We couldn't find profile details in this CV. Your file is saved — complete your profile manually.",
-      "لم نعثر على بيانات للملف في هذه السيرة. حُفظ ملفك — أكمل ملفك يدويًا.",
+      "We couldn't find profile details in this CV. Your file is saved — complete your profile manually",
+      "لم نعثر على بيانات للملف في هذه السيرة. حُفظ ملفك — أكمل ملفك يدويًا",
     );
 
   await supabase
@@ -321,8 +321,8 @@ export async function confirmExtractedSkills(
     ok: true,
     message:
       locale === "ar"
-        ? `أُضيفت ${rows.length} مهارة كأدلة من السيرة الذاتية.`
-        : `${rows.length} skills added with CV evidence.`,
+        ? `أُضيفت ${rows.length} مهارة كأدلة من السيرة الذاتية`
+        : `${rows.length} skills added with CV evidence`,
   };
 }
 
@@ -371,7 +371,7 @@ export async function applyCvReview(documentId: string, input: CvReviewInput): P
   if (!parsed.success)
     return {
       ok: false,
-      error: locale === "ar" ? "راجع الحقول: التواريخ بصيغة سنة-شهر والأسماء مطلوبة." : "Check the fields: dates as YYYY-MM and names are required.",
+      error: locale === "ar" ? "راجع الحقول: التواريخ بصيغة سنة-شهر والأسماء مطلوبة" : "Check the fields: dates as YYYY-MM and names are required",
     };
   const v = parsed.data;
   const uid = session.userId;
@@ -464,6 +464,6 @@ export async function applyCvReview(documentId: string, input: CvReviewInput): P
   return {
     ok: true,
     data: { added },
-    message: locale === "ar" ? `حُفظت المعلومات المعتمدة (${added} عنصرًا جديدًا).` : `Approved information saved (${added} new items).`,
+    message: locale === "ar" ? `حُفظت المعلومات المعتمدة (${added} عنصرًا جديدًا)` : `Approved information saved (${added} new items)`,
   };
 }

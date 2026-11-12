@@ -42,7 +42,7 @@ export default async function AssessmentBuilder({
   const supabase = await createClient();
   const { data: a } = await supabase
     .from("assessments")
-    .select("*, assessment_questions(*, assessment_options(*)), assessment_rubrics(id, criteria)")
+    .select("*, assessment_questions(*, assessment_options(*)), assessment_rubrics(id, criteria, question_id)")
     .eq("id", id)
     .eq("company_id", s.activeMembership.company_id)
     .maybeSingle();
@@ -66,7 +66,12 @@ export default async function AssessmentBuilder({
   const qs = [...a.assessment_questions].sort((x, y) => x.position - y.position);
   const draft = a.status === "draft";
   const total = qs.reduce((n, q) => n + q.points, 0);
-  const rubric = (a.assessment_rubrics?.[0]?.criteria ?? []) as {
+  // The assessment-wide rubric (manual builder) and each question's own rubric (practical tasks, migration 0033).
+  const rubrics = a.assessment_rubrics ?? [];
+  const questionRubrics = qs
+    .map((q, i) => ({ q, i, r: rubrics.find((r) => r.question_id === q.id && r.id === q.rubric_id) }))
+    .filter((x): x is { q: (typeof qs)[number]; i: number; r: (typeof rubrics)[number] } => Boolean(x.r));
+  const rubric = (rubrics.find((r) => !r.question_id)?.criteria ?? []) as {
     key: string;
     name_en: string;
     name_ar: string;
@@ -127,8 +132,8 @@ export default async function AssessmentBuilder({
       {inUse && (
         <p className="bg-surface-2 text-muted mb-6 rounded-xl px-4 py-3 text-sm">
           {L(
-            "Candidates have received this task, so its content is locked and everyone is assessed on the same version. Duplicate it to make changes.",
-            "استلم مرشحون هذه المهمة، لذا أصبح محتواها ثابتًا ليُقيَّم الجميع على النسخة نفسها. أنشئ نسخة منها لإجراء تعديلات.",
+            "Candidates have received this task, so its content is locked and everyone is assessed on the same version. Duplicate it to make changes",
+            "استلم مرشحون هذه المهمة، لذا أصبح محتواها ثابتًا ليُقيَّم الجميع على النسخة نفسها. أنشئ نسخة منها لإجراء تعديلات",
           )}
         </p>
       )}
@@ -146,7 +151,7 @@ export default async function AssessmentBuilder({
                   <li key={i} className="rounded-2xl border p-4">
                     <div className="flex items-start justify-between gap-2">
                       <p className="font-bold">
-                        <span className="ltr-nums text-subtle me-1">{i + 1}.</span> {locale === "ar" ? task.title_ar : task.title_en}
+                        <span className="ltr-nums text-subtle me-1">{i + 1}</span> {locale === "ar" ? task.title_ar : task.title_en}
                       </p>
                       <span className="text-subtle ltr-nums shrink-0 text-xs">{task.time_minutes} {t.common.minutes}</span>
                     </div>
@@ -244,21 +249,21 @@ export default async function AssessmentBuilder({
               draft
                 ? undefined
                 : L(
-                    "Published assessments are read-only. Move back to draft to edit.",
-                    "التقييمات المنشورة للقراءة فقط. أعدها إلى مسودة للتعديل.",
+                    "Published assessments are read-only. Move back to draft to edit",
+                    "التقييمات المنشورة للقراءة فقط. أعدها إلى مسودة للتعديل",
                   )
             }
           />
           <CardBody>
             {qs.length === 0 && (
-              <p className="text-subtle text-sm">{L("No questions yet.", "لا توجد أسئلة بعد.")}</p>
+              <p className="text-subtle text-sm">{L("No questions yet", "لا توجد أسئلة بعد")}</p>
             )}
             <ol className="flex flex-col gap-3">
               {qs.map((q, i) => (
                 <li key={q.id} className="rounded-2xl border p-4">
                   <div className="flex items-start justify-between gap-3">
                     <p className="text-sm font-semibold">
-                      <span className="ltr-nums text-subtle">{i + 1}.</span> {pick(q, "prompt", locale)}
+                      <span className="ltr-nums text-subtle">{i + 1}</span> {pick(q, "prompt", locale)}
                     </p>
                     <div className="flex shrink-0 items-center gap-2">
                       <Badge tone="info">{q.type}</Badge>
@@ -319,8 +324,8 @@ export default async function AssessmentBuilder({
               <CardHeader
                 title={L("Draft with AI", "صياغة بالذكاء الاصطناعي")}
                 description={L(
-                  "Suggestions are added to this draft for your review — never published automatically.",
-                  "تُضاف الاقتراحات إلى هذه المسودة لمراجعتك — ولا تُنشر تلقائيًا.",
+                  "Suggestions are added to this draft for your review — never published automatically",
+                  "تُضاف الاقتراحات إلى هذه المسودة لمراجعتك — ولا تُنشر تلقائيًا",
                 )}
               />
               <CardBody>
@@ -339,10 +344,10 @@ export default async function AssessmentBuilder({
               description={
                 draft
                   ? L(
-                      "Reviewers score open answers with these criteria. Edit AI-drafted criteria before publishing.",
-                      "يقيّم المراجعون الإجابات المفتوحة بهذه المعايير. عدّل المعايير المقترحة آليًا قبل النشر.",
+                      "Reviewers score open answers with these criteria. Edit AI-drafted criteria before publishing",
+                      "يقيّم المراجعون الإجابات المفتوحة بهذه المعايير. عدّل المعايير المقترحة آليًا قبل النشر",
                     )
-                  : L("Locked after publishing.", "مقفلة بعد النشر.")
+                  : L("Locked after publishing", "مقفلة بعد النشر")
               }
             />
             <CardBody>
@@ -350,6 +355,23 @@ export default async function AssessmentBuilder({
             </CardBody>
           </Card>
         )}
+        {questionRubrics.map(({ q, i, r }) => (
+          <Card key={r.id} className="xl:col-span-2">
+            <CardHeader
+              title={L(`Rubric · Question ${i + 1}`, `المعايير · السؤال ${i + 1}`)}
+              description={`${pick(q, "prompt", locale).split("\n")[0].slice(0, 140)} · ${L("graded only against these criteria", "يُقيَّم بهذه المعايير فقط")}`}
+            />
+            <CardBody>
+              <RubricEditor
+                key={JSON.stringify(r.criteria)}
+                assessmentId={a.id}
+                rubricId={r.id}
+                initial={(r.criteria ?? []) as typeof rubric}
+                editable={draft}
+              />
+            </CardBody>
+          </Card>
+        ))}
       </div>
     </>
   );

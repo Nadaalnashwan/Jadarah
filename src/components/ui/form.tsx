@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 const fieldBase =
-  "w-full rounded-xl border border-border-strong bg-input px-3.5 text-sm text-foreground placeholder:text-subtle shadow-[inset_0_1px_0_rgb(var(--shadow-color)/0.03)] transition-[border,box-shadow] duration-150 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-60 aria-[invalid=true]:border-danger aria-[invalid=true]:ring-danger/15";
+  "w-full rounded-[0.625rem] border border-border-strong bg-input px-3.5 text-sm text-foreground placeholder:text-subtle transition-[border-color,box-shadow] duration-150 hover:border-primary/40 focus:border-primary focus:outline-none focus:ring-[3px] focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60 aria-[invalid=true]:border-danger aria-[invalid=true]:ring-danger/15";
 
 export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cn(fieldBase, "h-11", className)} {...props} />;
@@ -105,7 +105,7 @@ export function FormMessage({
   return (
     <div
       role={tone === "danger" ? "alert" : "status"}
-      className={cn("rounded-xl px-4 py-3 text-sm font-medium", tones[tone])}
+      className={cn("jd-enter rounded-[0.625rem] px-4 py-3 text-sm font-medium", tones[tone])}
     >
       {children}
     </div>

@@ -18,29 +18,31 @@ export type Database = {
         Row: {
           id: string
           submission_id: string
-          question_id: string
+          question_id: string | null
           candidate_id: string
           storage_path: string
           file_name: string
           mime_type: string
           size_bytes: number
           created_at: string
+          kind: string
         }
         Insert: {
           id?: string
           submission_id: string
-          question_id: string
+          question_id?: string | null
           candidate_id: string
           storage_path: string
           file_name: string
           mime_type: string
           size_bytes: number
           created_at?: string
+          kind?: string
         }
         Update: {
           id?: string
           submission_id?: string
-          question_id?: string
+          question_id?: string | null
           candidate_id?: string
           storage_path?: string
           file_name?: string
@@ -1791,6 +1793,79 @@ export type Database = {
           },
         ]
       }
+      assessment_ai_evaluations: {
+        Row: {
+          id: string
+          submission_id: string
+          question_id: string
+          company_id: string
+          requested_by: string | null
+          status: "completed" | "no_submission" | "extraction_failed"
+          rubric_source: "employer_question" | "employer_shared" | "ai_derived" | "none"
+          criteria: Json
+          requirements: Json
+          strengths: Json
+          issues: Json
+          improvements: Json
+          concerns: Json
+          files: Json
+          answer_present: boolean
+          score: number | null
+          max_score: number
+          explanation: string | null
+          provider: string | null
+          model: string | null
+          input_sha256: string | null
+          created_at: string
+        }
+        Insert: { [key: string]: never }
+        Update: { [key: string]: never }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_ai_evaluations_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_ai_evaluations_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessment_evaluation_history: {
+        Row: {
+          id: number
+          evaluation_id: string
+          submission_id: string
+          question_id: string | null
+          evaluator_id: string | null
+          action: "baseline" | "created" | "updated"
+          points: number | null
+          previous_points: number | null
+          rubric_scores: Json | null
+          comments: string | null
+          candidate_feedback: Json | null
+          source: string | null
+          ai_evaluation_id: string | null
+          changed_at: string
+        }
+        Insert: { [key: string]: never }
+        Update: { [key: string]: never }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_evaluation_history_evaluator_id_fkey"
+            columns: ["evaluator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assessment_evaluations: {
         Row: {
           comments: string | null
@@ -1801,6 +1876,10 @@ export type Database = {
           question_id: string | null
           rubric_scores: Json
           submission_id: string
+          ai_evaluation_id: string | null
+          source: string
+          candidate_feedback: Json | null
+          updated_at: string | null
         }
         Insert: {
           comments?: string | null
@@ -1811,6 +1890,10 @@ export type Database = {
           question_id?: string | null
           rubric_scores?: Json
           submission_id: string
+          ai_evaluation_id?: string | null
+          source?: string
+          candidate_feedback?: Json | null
+          updated_at?: string | null
         }
         Update: {
           comments?: string | null
@@ -1821,6 +1904,10 @@ export type Database = {
           question_id?: string | null
           rubric_scores?: Json
           submission_id?: string
+          ai_evaluation_id?: string | null
+          source?: string
+          candidate_feedback?: Json | null
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -1959,6 +2046,8 @@ export type Database = {
           id: string
           title_ar: string
           title_en: string
+          question_id: string | null
+          derived_from: string | null
         }
         Insert: {
           assessment_id: string
@@ -1967,6 +2056,8 @@ export type Database = {
           id?: string
           title_ar: string
           title_en: string
+          question_id?: string | null
+          derived_from?: string | null
         }
         Update: {
           assessment_id?: string
@@ -1975,6 +2066,8 @@ export type Database = {
           id?: string
           title_ar?: string
           title_en?: string
+          question_id?: string | null
+          derived_from?: string | null
         }
         Relationships: [
           {
@@ -4197,6 +4290,20 @@ export type Database = {
     Functions: {
       register_assessment_file: { Args: { p_assignment: string; p_question: string; p_path: string; p_name: string; p_mime: string; p_size: number }; Returns: string }
       remove_assessment_file: { Args: { p_file: string }; Returns: string }
+      register_task_solution_file: { Args: { p_assignment: string; p_path: string; p_name: string; p_mime: string; p_size: number }; Returns: string }
+      record_ai_question_evaluation: { Args: { p_submission: string; p_question: string; p_result: Json }; Returns: string }
+      review_assessment_question: {
+        Args: {
+          p_submission: string
+          p_question: string
+          p_points: number
+          p_rubric_scores?: Json
+          p_comments?: string
+          p_candidate_feedback?: Json
+          p_ai_evaluation?: string
+        }
+        Returns: undefined
+      }
       register_interview_attachment: { Args: { p_interview: string; p_path: string; p_name: string; p_mime: string; p_size: number; p_share?: boolean }; Returns: string }
       set_interview_attachment_shared: { Args: { p_attachment: string; p_share: boolean }; Returns: undefined }
       remove_interview_attachment: { Args: { p_attachment: string }; Returns: string }

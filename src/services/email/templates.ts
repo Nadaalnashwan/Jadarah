@@ -96,14 +96,14 @@ export function renderNotification(locale: Locale, p: NotificationPayload, siteU
     heading: p.title_ar,
     body: [p.body_ar ?? ""].filter(Boolean),
     cta: url ? { label: "افتح في جدارة", url } : undefined,
-    footnote: "يمكنك تعديل تفضيلات البريد من الإعدادات في حسابك.",
+    footnote: "يمكنك تعديل تفضيلات البريد من الإعدادات في حسابك",
   };
   const en: Block = {
     locale: "en",
     heading: p.title_en,
     body: [p.body_en ?? ""].filter(Boolean),
     cta: url ? { label: "Open in JADARAH", url } : undefined,
-    footnote: "You can change email preferences in your account settings.",
+    footnote: "You can change email preferences in your account settings",
   };
   const [a, b] = ordered(locale, ar, en);
   return { subject: locale === "ar" ? `${p.title_ar} · جدارة` : `${p.title_en} · JADARAH`, ...layout(a, b) };
@@ -146,20 +146,20 @@ export function renderInvitation(locale: Locale, p: InvitationPayload, siteUrl: 
     heading: `دعوة للانضمام إلى فريق ${p.company_ar} على جدارة`,
     body: [
       `${p.inviter ? `دعاك ${p.inviter}` : "تمت دعوتك"} للانضمام بدور «${roleAr}».`,
-      "سجّل الدخول أو أنشئ حسابًا بنفس عنوان البريد الذي وصلتك عليه هذه الرسالة، ثم اقبل الدعوة.",
+      "سجّل الدخول أو أنشئ حسابًا بنفس عنوان البريد الذي وصلتك عليه هذه الرسالة، ثم اقبل الدعوة",
     ],
     cta: { label: "عرض الدعوة", url },
-    footnote: `تنتهي صلاحية الدعوة في ${formatDate(p.expires_at, "ar")}. إن لم تكن تتوقع هذه الرسالة فتجاهلها.`,
+    footnote: `تنتهي صلاحية الدعوة في ${formatDate(p.expires_at, "ar")}. إن لم تكن تتوقع هذه الرسالة فتجاهلها`,
   };
   const en: Block = {
     locale: "en",
     heading: `Join the ${p.company_en} team on JADARAH`,
     body: [
       `${p.inviter ? `${p.inviter} invited you` : "You were invited"} to join as ${roleEn}.`,
-      "Sign in or create an account with the same email address this message was sent to, then accept the invitation.",
+      "Sign in or create an account with the same email address this message was sent to, then accept the invitation",
     ],
     cta: { label: "View invitation", url },
-    footnote: `The invitation expires on ${formatDate(p.expires_at, "en")}. If you weren't expecting it, you can ignore this email.`,
+    footnote: `The invitation expires on ${formatDate(p.expires_at, "en")}. If you weren't expecting it, you can ignore this email`,
   };
   const [a, b] = ordered(locale, ar, en);
   return {

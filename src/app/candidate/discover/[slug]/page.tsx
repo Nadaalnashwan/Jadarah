@@ -8,7 +8,7 @@ import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import type { Criterion } from "@/lib/domain/discovery";
 import { ExplorationForm } from "./form";
-import { LISTED_JOB_FILTER } from "@/lib/domain/listings";
+import { LISTED_JOB_FILTER, openDeadlineFilter } from "@/lib/domain/listings";
 
 type Feedback = {
   source: "ai" | "rule_based";
@@ -45,7 +45,7 @@ export default async function ExplorationTaskPage({
       .from("jobs")
       .select("id, title_en, title_ar, job_skills(skill:skills(name_en, name_ar))")
       .eq("status", "published")
-      .or(LISTED_JOB_FILTER)
+      .or(LISTED_JOB_FILTER).or(openDeadlineFilter())
       .eq("category_id", task.category_id)
       .limit(4),
   ]);
@@ -58,8 +58,8 @@ export default async function ExplorationTaskPage({
         eyebrow={`${L("Exploratory task", "مهمة استكشافية")} · ${pick(task.category, "name", locale)}`}
         title={pick(task, "title", locale)}
         description={L(
-          "A short learning exercise to experience the work. Not a job application, not an employer assessment, and never a hiring score.",
-          "تمرين قصير لتعيش طبيعة العمل. ليس تقديمًا على وظيفة ولا تقييمًا من جهة توظيف، ولا يُعدّ درجة توظيف.",
+          "A short learning exercise to experience the work. Not a job application, not an employer assessment, and never a hiring score",
+          "تمرين قصير لتعيش طبيعة العمل. ليس تقديمًا على وظيفة ولا تقييمًا من جهة توظيف، ولا يُعدّ درجة توظيف",
         )}
       />
       <div className="grid gap-6 xl:grid-cols-[1fr_1.3fr]">
@@ -93,7 +93,7 @@ export default async function ExplorationTaskPage({
               <CardHeader title={L("Related opportunities", "فرص ذات صلة")} />
               <CardBody className="flex flex-col gap-1.5 text-sm">
                 {jobs!.map((j) => (
-                  <Link key={j.id} href={`/candidate/jobs/${j.id}`} className="text-primary font-semibold dark:text-lavender">
+                  <Link key={j.id} href={`/candidate/jobs/${j.id}`} className="text-primary font-semibold">
                     {pick(j, "title", locale)} →
                   </Link>
                 ))}
@@ -121,7 +121,7 @@ export default async function ExplorationTaskPage({
             <Card>
               <CardHeader
                 title={L("Feedback", "الملاحظات")}
-                description={L("For your learning only — not shared with employers, not a hiring score.", "لتعلّمك فقط — لا تُشارك مع جهات التوظيف وليست درجة توظيف.")}
+                description={L("For your learning only — not shared with employers, not a hiring score", "لتعلّمك فقط — لا تُشارك مع جهات التوظيف وليست درجة توظيف")}
                 action={<Badge tone={fb.source === "ai" ? "progress" : "neutral"}>{fb.source === "ai" ? t.common.aiGenerated : t.common.ruleBased}</Badge>}
               />
               <CardBody className="flex flex-col gap-5 text-sm">
@@ -160,9 +160,9 @@ export default async function ExplorationTaskPage({
                   <p className="text-muted mt-2 whitespace-pre-wrap" dir="auto">{attempt.response}</p>
                 </details>
                 <div className="flex flex-wrap gap-3 border-t pt-3">
-                  <Link href={`/candidate/discover/${slug}`} className="text-primary font-semibold dark:text-lavender">{L("Try again", "حاول مجددًا")}</Link>
-                  <Link href="/candidate/career" className="text-primary font-semibold dark:text-lavender">{L("Development plan", "خطة التطوير")}</Link>
-                  <Link href="/candidate/discover" className="text-primary font-semibold dark:text-lavender">{L("Other fields", "مجالات أخرى")}</Link>
+                  <Link href={`/candidate/discover/${slug}`} className="text-primary font-semibold">{L("Try again", "حاول مجددًا")}</Link>
+                  <Link href="/candidate/career" className="text-primary font-semibold">{L("Development plan", "خطة التطوير")}</Link>
+                  <Link href="/candidate/discover" className="text-primary font-semibold">{L("Other fields", "مجالات أخرى")}</Link>
                 </div>
               </CardBody>
             </Card>

@@ -10,7 +10,7 @@ import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCandidateSkills, JOB_LIST_SELECT, matchJob, toSkillRecords } from "@/services/candidate";
 import { SaveJobButton } from "./save-button";
-import { LISTED_JOB_FILTER } from "@/lib/domain/listings";
+import { LISTED_JOB_FILTER, openDeadlineFilter } from "@/lib/domain/listings";
 
 type SP = {
   q?: string;
@@ -33,7 +33,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
   const L = tx(locale);
   const supabase = await createClient();
 
-  let query = supabase.from("jobs").select(JOB_LIST_SELECT).eq("status", "published").or(LISTED_JOB_FILTER);
+  let query = supabase.from("jobs").select(JOB_LIST_SELECT).eq("status", "published").or(LISTED_JOB_FILTER).or(openDeadlineFilter());
   if (sp.q)
     query = query.or(
       `title_en.ilike.%${sp.q.replace(/[%,()]/g, "")}%,title_ar.ilike.%${sp.q.replace(/[%,()]/g, "")}%`,
@@ -198,7 +198,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
                   {j.company && <CompanyIdentity company={j.company} locale={locale} size="sm" showSector={false} />}
                   <Link
                     href={`/candidate/jobs/${j.id}`}
-                    className="group-hover:text-primary dark:group-hover:text-lavender mt-3 block text-lg leading-snug font-bold after:absolute after:inset-0"
+                    className="group-hover:text-primary mt-3 block text-lg leading-snug font-bold after:absolute after:inset-0"
                   >
                     {pick(j, "title", locale)}
                   </Link>

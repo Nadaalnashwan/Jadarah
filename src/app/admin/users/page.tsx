@@ -91,7 +91,7 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
                   <td className="p-4">
                     <Link
                       href={`/admin/users/${u.id}`}
-                      className="hover:text-primary dark:hover:text-lavender font-semibold"
+                      className="hover:text-primary font-semibold"
                     >
                       {u.full_name || "—"}
                     </Link>

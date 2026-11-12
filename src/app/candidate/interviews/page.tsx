@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { InterviewCalendar, type CalendarEvent } from "@/components/app/interview-calendar";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/primitives";
 import { requireCandidate } from "@/lib/auth/session";
-import { notEnded } from "@/lib/domain/calendar";
+import { interviewPhase } from "@/lib/domain/calendar";
 import { formatDateTime, pick, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
@@ -36,15 +36,16 @@ export default async function CandidateInterviews() {
     confirmed: Boolean(r.candidate_confirmed_at),
     href: `/candidate/applications/${r.application?.id}`,
   }));
-  const upcoming = rows.filter((r) => r.status === "scheduled" && notEnded(r.ends_at));
+  // Same rule as everywhere else: upcoming or happening now, by real start/end instants.
+  const upcoming = rows.filter((r) => ["upcoming", "in_progress"].includes(interviewPhase(r)));
   return (
     <>
       <GroupTabs group="candidate-applications" />
       <PageHeader
         title={L("My interviews", "مقابلاتي")}
         description={L(
-          "Times are shown in Riyadh time. Confirm your attendance so the team knows you'll be there.",
-          "تُعرض الأوقات بتوقيت الرياض. أكّد حضورك ليعلم الفريق بقدومك.",
+          "Times are shown in Riyadh time. Confirm your attendance so the team knows you'll be there",
+          "تُعرض الأوقات بتوقيت الرياض. أكّد حضورك ليعلم الفريق بقدومك",
         )}
       />
       {upcoming.length > 0 && (
@@ -53,7 +54,7 @@ export default async function CandidateInterviews() {
             <li key={r.id}>
               <Card className="flex flex-col gap-3 p-5">
                 <div className="flex items-start gap-3">
-                  <span className="bg-navy text-lavender flex size-11 shrink-0 items-center justify-center rounded-xl">
+                  <span className="ink text-primary-ink flex size-11 shrink-0 items-center justify-center rounded-xl">
                     <CalendarClock className="size-5" />
                   </span>
                   <div className="min-w-0 flex-1">
@@ -112,8 +113,8 @@ export default async function CandidateInterviews() {
         <EmptyState
           title={L("No interviews yet", "لا توجد مقابلات بعد")}
           body={L(
-            "When a company shortlists you and schedules an interview, it appears here.",
-            "عندما تضعك شركة في القائمة المختصرة وتجدول مقابلة، ستظهر هنا.",
+            "When a company shortlists you and schedules an interview, it appears here",
+            "عندما تضعك شركة في القائمة المختصرة وتجدول مقابلة، ستظهر هنا",
           )}
         />
       ) : (

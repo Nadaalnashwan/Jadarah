@@ -36,8 +36,8 @@ export function ApplyForm({
           cvs.length
             ? undefined
             : L(
-                "No CV yet — you can apply without one, or upload first.",
-                "لا توجد سيرة بعد — يمكنك التقديم بدونها أو رفعها أولًا.",
+                "No CV yet — you can apply without one, or upload first",
+                "لا توجد سيرة بعد — يمكنك التقديم بدونها أو رفعها أولًا",
               )
         }
       >
@@ -51,7 +51,7 @@ export function ApplyForm({
         </Select>
       </Field>
       {!cvs.length && (
-        <Link href="/candidate/cvs" className="text-primary dark:text-lavender text-xs font-semibold">
+        <Link href="/candidate/cvs" className="text-primary text-xs font-semibold">
           {L("Upload a CV", "ارفع سيرة ذاتية")}
         </Link>
       )}
@@ -71,8 +71,8 @@ export function ApplyForm({
       {hasTask && (
         <p className="bg-sky-soft text-navy rounded-xl px-3 py-2 text-sm dark:text-sky">
           {L(
-            "Next: the practical task opens immediately. Your application is complete once you submit it.",
-            "التالي: تُفتح المهمة العملية فورًا، ويكتمل طلبك عند تسليمها.",
+            "Next: the practical task opens immediately. Your application is complete once you submit it",
+            "التالي: تُفتح المهمة العملية فورًا، ويكتمل طلبك عند تسليمها",
           )}
         </p>
       )}
@@ -81,8 +81,8 @@ export function ApplyForm({
       </Button>
       <p className="text-subtle text-xs">
         {L(
-          "The company sees your profile, the CV you choose and your answers. AI never makes the hiring decision.",
-          "ترى الشركة ملفك والسيرة التي تختارها وإجاباتك. الذكاء الاصطناعي لا يتخذ قرار التوظيف.",
+          "The company sees your profile, the CV you choose and your answers. AI never makes the hiring decision",
+          "ترى الشركة ملفك والسيرة التي تختارها وإجاباتك. الذكاء الاصطناعي لا يتخذ قرار التوظيف",
         )}
       </p>
     </form>

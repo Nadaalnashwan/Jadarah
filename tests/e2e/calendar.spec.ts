@@ -53,7 +53,7 @@ test("calendar: availability → slot finder scheduling → candidate confirms �
   await iv.goto("/company/availability");
   await iv.getByRole("button", { name: "Sun–Thu, 9–5" }).click();
   await iv.getByRole("button", { name: "Save availability" }).click();
-  await expect(iv.getByText("Availability saved.")).toBeVisible();
+  await expect(iv.getByText("Availability saved")).toBeVisible();
   await ivCtx.close();
 
   // 2) Recruiter schedules with the slot finder.
@@ -82,7 +82,7 @@ test("calendar: availability → slot finder scheduling → candidate confirms �
   await cd.goto("/candidate/interviews");
   await expect(cd.getByText("Awaiting your confirmation").first()).toBeVisible();
   await cd.getByRole("button", { name: "Confirm attendance" }).first().click();
-  await expect(cd.getByText("Attendance confirmed.")).toBeVisible();
+  await expect(cd.getByText("Attendance confirmed")).toBeVisible();
   await cdCtx.close();
 
   // 4) Recruiter calendar renders all three views; the upcoming agenda links to the interview.

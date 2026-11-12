@@ -22,17 +22,17 @@ export function SiteHeader({ dashboardHref }: { dashboardHref?: string | null })
   }, []);
 
   const links = [
-    { href: "/companies", label: t.nav.companies },
     { href: "/jobs", label: t.nav.opportunities },
-    { href: "/how-it-works", label: t.nav.howItWorks },
-    { href: "/for-companies", label: t.nav.forCompanies },
+    { href: "/companies", label: t.nav.companies },
     { href: "/for-candidates", label: t.nav.forCandidates },
+    { href: "/for-companies", label: t.nav.forCompanies },
+    { href: "/how-it-works", label: t.nav.howItWorks },
   ];
 
   return (
     <header
       className={cn(
-        "fixed inset-x-0 top-0 z-50 transition-[background,box-shadow,backdrop-filter] duration-300",
+        "fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow,backdrop-filter] duration-300",
         scrolled || open
           ? "bg-background/85 shadow-[0_1px_0_var(--border)] backdrop-blur-xl"
           : "bg-transparent",
@@ -47,10 +47,10 @@ export function SiteHeader({ dashboardHref }: { dashboardHref?: string | null })
             <li key={l.href}>
               <Link
                 href={l.href}
-                className="group text-muted hover:text-foreground relative rounded-full px-3.5 py-2 text-sm font-semibold transition"
+                className="group text-muted hover:text-foreground relative rounded-full px-3 py-2 text-sm font-semibold transition-colors"
               >
                 {l.label}
-                <span className="bg-primary absolute inset-x-3.5 -bottom-0.5 h-px origin-center scale-x-0 transition-transform duration-300 group-hover:scale-x-100" />
+                <span className="absolute inset-x-3 -bottom-0.5 h-px origin-center scale-x-0 bg-current transition-transform duration-300 group-hover:scale-x-100" aria-hidden />
               </Link>
             </li>
           ))}

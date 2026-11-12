@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/ui/primitives";
 import { formatDate, pick, tx } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
-import { LISTED_JOB_FILTER } from "@/lib/domain/listings";
+import { LISTED_JOB_FILTER, openDeadlineFilter } from "@/lib/domain/listings";
 
 export const metadata = { title: "Jobs" };
 export default async function PublicJobs() {
@@ -18,7 +18,7 @@ export default async function PublicJobs() {
       "id, title_en, title_ar, city, work_mode, employment_type, deadline, listing_type, created_by, company:company_profiles(id, slug, name_en, name_ar, sector_en, sector_ar, organization_type, company_brand_profiles(identity_status, usage_permission, logo_source_url, primary_hex))",
     )
     .eq("status", "published")
-    .or(LISTED_JOB_FILTER)
+    .or(LISTED_JOB_FILTER).or(openDeadlineFilter())
     .order("published_at", { ascending: false })
     .limit(60);
   const jobs = data ?? [];
@@ -30,8 +30,8 @@ export default async function PublicJobs() {
       </h1>
       <p className="text-muted mt-3">
         {L(
-          "Sign in as a candidate to see your evidence match and apply.",
-          "سجّل الدخول كمرشح لترى مطابقتك وتتقدّم.",
+          "Sign in as a candidate to see your evidence match and apply",
+          "سجّل الدخول كمرشح لترى مطابقتك وتتقدّم",
         )}
       </p>
       {jobs.length === 0 && (
@@ -39,11 +39,11 @@ export default async function PublicJobs() {
           className="mt-10"
           title={L("No open opportunities right now", "لا توجد فرص متاحة حاليًا")}
           body={L(
-            "Organizations publish their roles here as they open. Create a candidate profile to be ready when they do.",
-            "تنشر الجهات وظائفها هنا عند فتحها. أنشئ ملفك كمرشح لتكون جاهزًا عندها.",
+            "Organizations publish their roles here as they open. Create a candidate profile to be ready when they do",
+            "تنشر الجهات وظائفها هنا عند فتحها. أنشئ ملفك كمرشح لتكون جاهزًا عندها",
           )}
           action={
-            <Link href="/sign-up" className="text-primary dark:text-lavender text-sm font-semibold">
+            <Link href="/sign-up" className="text-primary text-sm font-semibold">
               {L("Create a candidate profile", "أنشئ ملفك كمرشح")}
             </Link>
           }

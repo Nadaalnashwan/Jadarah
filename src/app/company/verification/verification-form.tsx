@@ -26,14 +26,14 @@ export function VerificationForm({ companyId }: { companyId: string }) {
   async function onFile(f: File) {
     setErr(null);
     if (!OK.includes(f.type) || f.size > 10 * 1024 * 1024)
-      return setErr(L("PDF/PNG/JPEG up to 10 MB.", "PDF/PNG/JPEG حتى 10 ميجابايت."));
+      return setErr(L("PDF/PNG/JPEG up to 10 MB", "PDF/PNG/JPEG حتى 10 ميجابايت"));
     setUploading(true);
     const path = `${companyId}/${crypto.randomUUID()}-${f.name.replace(/[^\w.\-]+/g, "_").slice(-60)}`;
     const { error } = await getBrowserClient()
       .storage.from("company-documents")
       .upload(path, f, { contentType: f.type });
     setUploading(false);
-    if (error) return setErr(L("Upload failed.", "فشل الرفع."));
+    if (error) return setErr(L("Upload failed", "فشل الرفع"));
     setPaths((p) => [...p, { path, name: f.name }]);
   }
 

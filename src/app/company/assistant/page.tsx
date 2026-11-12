@@ -17,8 +17,8 @@ export default async function CompanyAssistant() {
         description={
           ai.configured
             ? L(
-                "Uses only your organization's data. Your team decides.",
-                "يستخدم بيانات جهتك فقط. والقرار لفريقك.",
+                "Uses only your organization's data. Your team decides",
+                "يستخدم بيانات جهتك فقط. والقرار لفريقك",
               )
             : t.common.ruleBased
         }

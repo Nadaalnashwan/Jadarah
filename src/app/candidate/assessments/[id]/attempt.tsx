@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useIsPresent } from "motion/react";
 import { toast } from "sonner";
 import {
   AlertTriangle,
@@ -24,7 +24,8 @@ import {
   type Attempt,
   type AttemptQuestion,
 } from "@/features/assessments/candidate-actions";
-import { listAttemptFiles, type AnswerFile } from "@/features/assessments/file-actions";
+import { listAttemptFiles, removeAssessmentFile, type AnswerFile } from "@/features/assessments/file-actions";
+import { questionAcceptsFiles, type QuestionType } from "@/lib/domain/scoring";
 import { FileAnswer } from "@/features/assessments/file-answer";
 import { useI18n } from "@/lib/i18n/client";
 import { tx } from "@/lib/i18n/config";
@@ -77,7 +78,7 @@ export function AttemptGate({
   return (
     <div className="mx-auto max-w-2xl">
       <Card className="overflow-hidden">
-        <div className="bg-navy text-ivory p-8">
+        <div className="ink p-8">
           {brand ?? <p className="eyebrow !text-lavender">{L("Practical assessment", "تقييم عملي")}</p>}
           <h1 className="editorial mt-3 text-4xl font-extrabold">{intro.title}</h1>
           <p className="text-sky/90 mt-3 whitespace-pre-line">{intro.description}</p>
@@ -104,16 +105,16 @@ export function AttemptGate({
             <li>
               •{" "}
               {L(
-                "The timer starts when you begin and continues if you leave.",
-                "يبدأ المؤقت عند البدء ويستمر إذا غادرت.",
+                "The timer starts when you begin and continues if you leave",
+                "يبدأ المؤقت عند البدء ويستمر إذا غادرت",
               )}
             </li>
-            <li>• {L("Every answer is saved automatically.", "تُحفظ كل إجابة تلقائيًا.")}</li>
+            <li>• {L("Every answer is saved automatically", "تُحفظ كل إجابة تلقائيًا")}</li>
             <li>
               •{" "}
               {L(
-                "You can submit once. Correct answers appear after submission.",
-                "يمكنك التسليم مرة واحدة. تظهر الإجابات الصحيحة بعد التسليم.",
+                "You can submit once. Correct answers appear after submission",
+                "يمكنك التسليم مرة واحدة. تظهر الإجابات الصحيحة بعد التسليم",
               )}
             </li>
           </ul>
@@ -124,7 +125,7 @@ export function AttemptGate({
           )}
           {unavailable ? (
             <p className="text-muted text-sm">
-              {L("This assessment is no longer available.", "هذا التقييم لم يعد متاحًا.")}
+              {L("This assessment is no longer available", "هذا التقييم لم يعد متاحًا")}
             </p>
           ) : (
             <Button size="lg" onClick={begin} loading={loading}>
@@ -161,21 +162,21 @@ function AttemptWorkspace({ attempt }: { attempt: Attempt }) {
   const [submitting, setSubmitting] = useState(false);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const [files, setFiles] = useState<Record<string, AnswerFile[]>>({});
-  const hasFileQuestions = qs.some((q) => q.type === "file_upload");
+  /** Task Solution Files are keyed under this id; question files under their question id. */
+  const SOLUTION = "__solution";
 
   useEffect(() => {
-    if (!hasFileQuestions) return;
     let alive = true;
     void listAttemptFiles(attempt.submission_id).then((rows) => {
       if (!alive) return;
       const by: Record<string, AnswerFile[]> = {};
-      for (const r of rows) (by[r.question_id] ??= []).push(r);
+      for (const r of rows) (by[r.question_id ?? SOLUTION] ??= []).push(r);
       setFiles(by);
     });
     return () => {
       alive = false;
     };
-  }, [attempt.submission_id, hasFileQuestions]);
+  }, [attempt.submission_id]);
 
   useEffect(() => {
     const t = setInterval(() => setRemaining(new Date(attempt.ends_at).getTime() - Date.now()), 1000);
@@ -286,7 +287,7 @@ function AttemptWorkspace({ attempt }: { attempt: Attempt }) {
                       i === index
                         ? "bg-primary text-primary-foreground"
                         : done
-                          ? "bg-accent-soft text-primary dark:text-lavender"
+                          ? "bg-accent-soft text-primary"
                           : "bg-surface-2 text-subtle hover:bg-border",
                     )}
                   >
@@ -302,6 +303,7 @@ function AttemptWorkspace({ attempt }: { attempt: Attempt }) {
         </Button>
       </aside>
 
+      <div className="flex min-w-0 flex-col gap-6">
       <Card>
         <CardBody>
           <div className="mb-4 flex items-center justify-between gap-3">
@@ -317,8 +319,8 @@ function AttemptWorkspace({ attempt }: { attempt: Attempt }) {
             <p className="bg-danger-soft text-danger mb-4 flex items-center gap-2 rounded-xl p-3 text-sm">
               <AlertTriangle className="size-4" />{" "}
               {L(
-                "Time is up — submit now. Further edits won't be saved.",
-                "انتهى الوقت — سلّم الآن. لن تُحفظ التعديلات اللاحقة.",
+                "Time is up — submit now. Further edits won't be saved",
+                "انتهى الوقت — سلّم الآن. لن تُحفظ التعديلات اللاحقة",
               )}
             </p>
           )}
@@ -330,6 +332,7 @@ function AttemptWorkspace({ attempt }: { attempt: Attempt }) {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.22 }}
             >
+              <LeavingGuard>
               <h2 className="text-xl leading-relaxed font-bold">
                 {locale === "ar" ? q.prompt_ar : q.prompt_en}
               </h2>
@@ -365,6 +368,28 @@ function AttemptWorkspace({ attempt }: { attempt: Attempt }) {
                     onChange={(patch, delay) => update(q, patch, delay)}
                   />
                 )}
+                {/* Solution files for THIS question: stored under its question id and reviewed with this question only */}
+                {q.type !== "file_upload" && questionAcceptsFiles(q.type as QuestionType) && (
+                  <section className="bg-surface-2 mt-6 rounded-2xl p-4" aria-labelledby={`files-${q.id}`}>
+                    <h3 id={`files-${q.id}`} className="text-sm font-bold">
+                      {L(`Solution files for question ${index + 1}`, `ملفات الحل للسؤال ${index + 1}`)}
+                    </h3>
+                    <p className="text-muted mt-1 mb-3 text-xs">
+                      {L(
+                        "Attach the files that answer this question. They are reviewed with this question only and only the hiring team can open them",
+                        "أرفق الملفات التي تجيب عن هذا السؤال. تُراجَع مع هذا السؤال فقط ولا يطّلع عليها إلا فريق التوظيف",
+                      )}
+                    </p>
+                    <FileAnswer
+                      assignmentId={attempt.assignment_id}
+                      submissionId={attempt.submission_id}
+                      questionId={q.id}
+                      files={files[q.id] ?? []}
+                      disabled={timeUp}
+                      onFilesChange={(update) => setFiles((f) => ({ ...f, [q.id]: update(f[q.id] ?? []) }))}
+                    />
+                  </section>
+                )}
               </div>
               {q.rubric && (
                 <details className="bg-surface-2 mt-6 rounded-2xl p-4 text-sm">
@@ -381,6 +406,7 @@ function AttemptWorkspace({ attempt }: { attempt: Attempt }) {
                   </ul>
                 </details>
               )}
+              </LeavingGuard>
             </motion.div>
           </AnimatePresence>
           <div className="mt-8 flex justify-between">
@@ -401,6 +427,15 @@ function AttemptWorkspace({ attempt }: { attempt: Attempt }) {
           </div>
         </CardBody>
       </Card>
+      {/* Files uploaded before per-question uploads existed: not linked to any question, so not evaluated as an answer */}
+      {(files[SOLUTION]?.length ?? 0) > 0 && (
+        <UnlinkedFiles
+          files={files[SOLUTION] ?? []}
+          disabled={timeUp}
+          onRemoved={(id) => setFiles((f) => ({ ...f, [SOLUTION]: (f[SOLUTION] ?? []).filter((x) => x.id !== id) }))}
+        />
+      )}
+      </div>
     </div>
   );
 }
@@ -446,7 +481,7 @@ function QuestionInput({
     const multi = q.type === "multiple_select";
     return (
       <div role={multi ? "group" : "radiogroup"} className="flex flex-col gap-2">
-        {multi && <p className="text-subtle text-xs">{L("Select all that apply.", "اختر كل ما ينطبق.")}</p>}
+        {multi && <p className="text-subtle text-xs">{L("Select all that apply", "اختر كل ما ينطبق")}</p>}
         {q.options.map((o, i) => {
           const on = draft.selected.includes(o.id);
           return (
@@ -527,12 +562,63 @@ function QuestionInput({
         spellCheck={!code}
         dir={code ? "ltr" : "auto"}
         className={cn(
-          code && "bg-navy text-ivory caret-lavender focus:bg-navy font-mono text-[0.82rem] leading-6",
+          code && "bg-navy text-ivory caret-[var(--sky)] focus:bg-navy font-mono text-[0.82rem] leading-6",
         )}
         aria-label={L("Your answer", "إجابتك")}
         maxLength={20000}
       />
       <p className="ltr-nums text-subtle mt-1 text-end text-xs">{draft.text.length}/20000</p>
+    </div>
+  );
+}
+
+function UnlinkedFiles({ files, disabled, onRemoved }: { files: AnswerFile[]; disabled: boolean; onRemoved: (id: string) => void }) {
+  const { locale } = useI18n();
+  const L = tx(locale);
+  const [busy, setBusy] = useState<string | null>(null);
+  return (
+    <Card>
+      <CardBody>
+        <h2 className="text-base font-bold">{L("Files not linked to a question", "ملفات غير مرتبطة بسؤال")}</h2>
+        <p className="text-muted mt-1 mb-3 text-sm">
+          {L(
+            "These files were attached to the whole task. Each question is reviewed only with its own files: remove these and attach them to the question they answer",
+            "أُرفقت هذه الملفات بالمهمة كاملة. يُراجَع كل سؤال بملفاته فقط: أزلها وأرفقها بالسؤال الذي تجيب عنه",
+          )}
+        </p>
+        <ul className="flex flex-col gap-2">
+          {files.map((f) => (
+            <li key={f.id} className="bg-surface-2 flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-sm">
+              <span className="truncate">{f.file_name}</span>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                disabled={disabled || busy === f.id}
+                onClick={async () => {
+                  setBusy(f.id);
+                  const res = await removeAssessmentFile(f.id);
+                  setBusy(null);
+                  if (!res.ok) return toast.error(res.error);
+                  onRemoved(f.id);
+                }}
+              >
+                {L("Remove", "إزالة")}
+              </Button>
+            </li>
+          ))}
+        </ul>
+      </CardBody>
+    </Card>
+  );
+}
+
+/** While a question animates out, it is inert: nothing typed during the transition can reach the previous question. */
+function LeavingGuard({ children }: { children: React.ReactNode }) {
+  const present = useIsPresent();
+  return (
+    <div inert={!present} aria-hidden={!present || undefined}>
+      {children}
     </div>
   );
 }

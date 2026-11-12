@@ -79,7 +79,7 @@ export default async function AdminUserDetail({ params }: { params: Promise<{ id
         <Card>
           <CardHeader
             title={L("Company role", "الدور في شركة")}
-            description={L("Assign or change company administrators.", "تعيين مديري الشركات أو تغييرهم.")}
+            description={L("Assign or change company administrators", "تعيين مديري الشركات أو تغييرهم")}
           />
           <CardBody>
             <MembershipForm

@@ -130,8 +130,8 @@ export function InterviewAttachments({
       ) : items.length === 0 ? (
         <p className="text-subtle text-sm">
           {viewer === "staff"
-            ? L("No documents yet. Add a brief, task or agenda.", "لا توجد مستندات بعد. أضف موجزًا أو مهمة أو جدول أعمال.")
-            : L("No documents shared for this interview yet.", "لم تُشارك مستندات لهذه المقابلة بعد.")}
+            ? L("No documents yet. Add a brief, task or agenda", "لا توجد مستندات بعد. أضف موجزًا أو مهمة أو جدول أعمال")
+            : L("No documents shared for this interview yet", "لم تُشارك مستندات لهذه المقابلة بعد")}
         </p>
       ) : (
         <ul className="flex flex-col gap-2">

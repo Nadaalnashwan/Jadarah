@@ -33,7 +33,7 @@ export default async function MeetPage({ params }: { params: Promise<{ id: strin
             {locale === "ar" ? v.company_name_ar : v.company_name_en} · {formatDateTime(v.scheduled_at, locale, v.timezone)} ({v.timezone})
           </p>
         </div>
-        <span className="bg-accent-soft text-primary dark:text-lavender hidden rounded-full px-3 py-1 text-xs font-semibold sm:inline">
+        <span className="bg-accent-soft text-primary hidden rounded-full px-3 py-1 text-xs font-semibold sm:inline">
           {role === "candidate" ? L("Candidate", "مرشح") : L("Interviewer", "مُقابِل")}
         </span>
       </header>

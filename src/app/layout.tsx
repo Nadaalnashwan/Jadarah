@@ -26,16 +26,16 @@ export async function generateMetadata(): Promise<Metadata> {
       template: ar ? "%s · جدارة" : "%s · JADARAH",
     },
     description: ar
-      ? "منصة ذكاء المواهب التي تكشف القدرات الحقيقية بالأدلة والتقييم العملي."
-      : "The talent intelligence platform that reveals real capability through evidence and practical assessment.",
+      ? "منصة ذكاء المواهب التي تكشف القدرات الحقيقية بالأدلة والتقييم العملي"
+      : "The talent intelligence platform that reveals real capability through evidence and practical assessment",
     applicationName: "JADARAH",
   };
 }
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#CECCC7" },
-    { media: "(prefers-color-scheme: dark)", color: "#172C43" },
+    { media: "(prefers-color-scheme: light)", color: "#F7F4E9" },
+    { media: "(prefers-color-scheme: dark)", color: "#1C2045" },
   ],
 };
 

@@ -209,12 +209,12 @@ export function JobContextBanner({
   const { locale } = useI18n();
   const L = tx(locale);
   const next = !attached
-    ? L("Created for this job but not attached to it.", "أُنشئت لهذه الوظيفة لكنها غير مرتبطة بها.")
+    ? L("Created for this job but not attached to it", "أُنشئت لهذه الوظيفة لكنها غير مرتبطة بها")
     : !taskPublished
-      ? L("Review the task, then publish it. The job stays a draft.", "راجع المهمة ثم انشرها. تبقى الوظيفة مسودة.")
+      ? L("Review the task, then publish it. The job stays a draft", "راجع المهمة ثم انشرها. تبقى الوظيفة مسودة")
       : jobPublished
-        ? L("Applicants receive this task right after applying.", "يستلم المتقدمون هذه المهمة فور التقديم.")
-        : L("Task published. Return to the job to review and publish it.", "نُشرت المهمة. عُد إلى الوظيفة لمراجعتها ونشرها.");
+        ? L("Applicants receive this task right after applying", "يستلم المتقدمون هذه المهمة فور التقديم")
+        : L("Task published. Return to the job to review and publish it", "نُشرت المهمة. عُد إلى الوظيفة لمراجعتها ونشرها");
   return (
     <div className="border-primary/30 bg-accent-soft/40 mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3">
       <div className="min-w-0 text-sm">
@@ -285,10 +285,13 @@ export function RubricEditor({
   assessmentId,
   initial,
   editable,
+  rubricId,
 }: {
   assessmentId: string;
   initial: Criterion[];
   editable: boolean;
+  /** A question's own rubric; omitted for the assessment-wide rubric. */
+  rubricId?: string;
 }) {
   const { locale } = useI18n();
   const L = tx(locale);
@@ -335,8 +338,9 @@ export function RubricEditor({
           />
           <Input
             type="number"
-            min={1}
+            min={0.5}
             max={10}
+            step={0.5}
             value={c.max_points}
             onChange={(e) => set(i, { max_points: Number(e.target.value) })}
             aria-label={L("Max points", "الحد الأقصى")}
@@ -381,7 +385,7 @@ export function RubricEditor({
           loading={pending}
           onClick={() =>
             start(async () => {
-              const r = await updateRubric(assessmentId, rows);
+              const r = await updateRubric(assessmentId, rows, rubricId);
               if (r.ok) {
                 toast.success(r.message);
                 router.refresh();

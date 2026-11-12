@@ -68,7 +68,7 @@ export function SignInForm({ next, linkError }: { next?: string; linkError?: str
         <div className="flex justify-end">
           <Link
             href="/forgot-password"
-            className="text-primary dark:text-lavender text-sm font-semibold hover:underline"
+            className="text-primary text-sm font-semibold hover:underline"
           >
             {t.auth.forgot}
           </Link>
@@ -81,11 +81,11 @@ export function SignInForm({ next, linkError }: { next?: string; linkError?: str
       {state?.needsConfirmation && state.email && <ResendForm email={state.email} />}
       <p className="text-muted text-center text-sm">
         {t.auth.noAccount}{" "}
-        <Link href="/sign-up" className="text-primary dark:text-lavender font-semibold hover:underline">
+        <Link href="/sign-up" className="text-primary font-semibold hover:underline">
           {t.auth.signUp}
         </Link>
         <span className="mx-2">·</span>
-        <Link href="/employer/request-access" className="text-primary dark:text-lavender font-semibold hover:underline">
+        <Link href="/employer/request-access" className="text-primary font-semibold hover:underline">
           {t.auth.employerAccess}
         </Link>
       </p>
@@ -161,11 +161,11 @@ export function SignUpForm() {
           <Checkbox name="consent" required className="mt-1" aria-invalid={!!fe.consent} />
           <span>
             {t.auth.consent}{" "}
-            <Link href="/terms" className="text-primary dark:text-lavender font-semibold">
+            <Link href="/terms" className="text-primary font-semibold">
               {t.landing.footerTerms}
             </Link>{" "}
             ·{" "}
-            <Link href="/privacy" className="text-primary dark:text-lavender font-semibold">
+            <Link href="/privacy" className="text-primary font-semibold">
               {t.landing.footerPrivacy}
             </Link>
           </span>
@@ -178,7 +178,7 @@ export function SignUpForm() {
       </form>
       <p className="text-muted text-center text-sm">
         {t.auth.haveAccount}{" "}
-        <Link href="/sign-in" className="text-primary dark:text-lavender font-semibold hover:underline">
+        <Link href="/sign-in" className="text-primary font-semibold hover:underline">
           {t.auth.signIn}
         </Link>
       </p>
@@ -205,7 +205,7 @@ export function ForgotPasswordForm() {
           {t.auth.sendReset}
         </Button>
       </form>
-      <Link href="/sign-in" className="text-primary dark:text-lavender text-center text-sm font-semibold">
+      <Link href="/sign-in" className="text-primary text-center text-sm font-semibold">
         {t.auth.signIn}
       </Link>
     </div>

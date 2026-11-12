@@ -9,7 +9,8 @@ import { tx } from "@/lib/i18n/config";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { UploadError, randomPrefix, uploadErrorMessage, uploadWithProgress } from "@/lib/upload/client";
 import {
-  ASSESSMENT_FILE_RULES as RULES,
+  ASSESSMENT_FILE_RULES,
+  TASK_SOLUTION_RULES,
   acceptAttribute,
   checkFile,
   formatBytes,
@@ -18,7 +19,13 @@ import {
   safeObjectName,
 } from "@/lib/upload/rules";
 import { cn } from "@/lib/utils";
-import { assessmentFileUrl, registerAssessmentFile, removeAssessmentFile, type AnswerFile } from "./file-actions";
+import {
+  assessmentFileUrl,
+  registerAssessmentFile,
+  registerTaskSolutionFile,
+  removeAssessmentFile,
+  type AnswerFile,
+} from "./file-actions";
 
 type Pending = {
   key: string;
@@ -29,7 +36,10 @@ type Pending = {
   abort?: AbortController;
 };
 
-/** Deliverable upload for a `file_upload` question (candidate side). */
+/**
+ * Deliverable upload (candidate side). With a `questionId` the files answer that `file_upload` question; with
+ * `questionId = null` they are the task's Solution Files (ملفات حل المهمة) for the whole submission.
+ */
 export function FileAnswer({
   assignmentId,
   submissionId,
@@ -40,7 +50,7 @@ export function FileAnswer({
 }: {
   assignmentId: string;
   submissionId: string;
-  questionId: string;
+  questionId: string | null;
   files: AnswerFile[];
   disabled: boolean;
   /** Functional update so concurrent uploads never overwrite each other. */
@@ -48,6 +58,8 @@ export function FileAnswer({
 }) {
   const { locale } = useI18n();
   const L = tx(locale);
+  const RULES = questionId ? ASSESSMENT_FILE_RULES : TASK_SOLUTION_RULES;
+  const folder = questionId ?? "solution";
   const input = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState<Pending[]>([]);
   const [drag, setDrag] = useState(false);
@@ -62,7 +74,7 @@ export function FileAnswer({
     try {
       const { data } = await getBrowserClient().auth.getUser();
       if (!data.user) throw new UploadError("session");
-      const path = `${data.user.id}/${submissionId}/${questionId}/${randomPrefix()}-${safeObjectName(item.file.name)}`;
+      const path = `${data.user.id}/${submissionId}/${folder}/${randomPrefix()}-${safeObjectName(item.file.name)}`;
       await uploadWithProgress({
         bucket: "assessment-attachments",
         path,
@@ -72,15 +84,10 @@ export function FileAnswer({
         onProgress: (f) => patch(item.key, { progress: Math.round(f * 100) }),
       });
       patch(item.key, { state: "saving", progress: 100 });
-      const res = await registerAssessmentFile({
-        assignmentId,
-        questionId,
-        submissionId,
-        path,
-        name: item.file.name.slice(0, 200),
-        mime,
-        size: item.file.size,
-      });
+      const meta = { assignmentId, submissionId, path, name: item.file.name.slice(0, 200), mime, size: item.file.size };
+      const res = questionId
+        ? await registerAssessmentFile({ ...meta, questionId })
+        : await registerTaskSolutionFile(meta);
       if (!res.ok) throw new Error(res.error);
       setPending((xs) => xs.filter((x) => x.key !== item.key));
       const added = res.data;
@@ -121,7 +128,7 @@ export function FileAnswer({
     setBusyId(f.id);
     const res = await assessmentFileUrl(f.id);
     setBusyId(null);
-    if (!res.ok || !res.data) return toast.error(res.ok ? L("Download failed.", "تعذّر التنزيل.") : res.error);
+    if (!res.ok || !res.data) return toast.error(res.ok ? L("Download failed", "تعذّر التنزيل") : res.error);
     window.location.assign(res.data.url);
   }
 
@@ -149,8 +156,8 @@ export function FileAnswer({
         <p className="font-semibold">{L("Drag files here or choose them", "اسحب الملفات هنا أو اخترها")}</p>
         <p className="text-subtle text-xs">
           {L(
-            `Up to ${RULES.maxFiles} files · ${formatBytes(RULES.maxBytes)} each · PDF, Office, images, CSV, ZIP, text`,
-            `حتى ${RULES.maxFiles} ملفات · ${formatBytes(RULES.maxBytes)} لكل ملف · PDF ومستندات Office والصور وCSV وZIP والنصوص`,
+            `Up to ${RULES.maxFiles} files · ${formatBytes(RULES.maxBytes)} each · PDF, Word (DOC, DOCX), Office, images (JPG, PNG), CSV, ZIP, text`,
+            `حتى ${RULES.maxFiles} ملفات · ${formatBytes(RULES.maxBytes)} لكل ملف · PDF وWord (DOC وDOCX) ومستندات Office والصور (JPG وPNG) وCSV وZIP والنصوص`,
           )}
         </p>
         <input
@@ -159,7 +166,7 @@ export function FileAnswer({
           multiple
           accept={acceptAttribute(RULES)}
           className="sr-only"
-          id={`file-${questionId}`}
+          id={`file-${folder}`}
           disabled={disabled || full}
           onChange={(e) => add(e.target.files)}
         />

@@ -158,3 +158,53 @@ export function isoDaysAgo(days: number): string {
 export function notEnded(endsAtIso: string): boolean {
   return Date.parse(endsAtIso) > Date.now();
 }
+
+/** Interview timing relative to "now" — the single rule every list, calendar and dashboard uses. */
+export type InterviewPhase =
+  | "upcoming" // scheduled and not started yet
+  | "in_progress" // scheduled, started, not ended yet
+  | "awaiting_update" // scheduled but already over: past, its outcome has not been recorded
+  | "completed"
+  | "cancelled";
+
+/** Interviews without an end time are treated as lasting this long. */
+export const DEFAULT_INTERVIEW_MINUTES = 60;
+
+/**
+ * Classify an interview by its real instants (UTC ISO strings with offsets, compared as epoch ms — the time zone of
+ * the viewer never changes the result) and its recorded status. A past interview is never "upcoming", even when its
+ * status was not updated; it is "awaiting_update" instead (the workflow still requires an explicit outcome).
+ */
+export function interviewPhase(
+  iv: { status: string; scheduled_at: string; ends_at?: string | null },
+  nowMs: number = Date.now(),
+): InterviewPhase {
+  if (iv.status === "cancelled") return "cancelled";
+  if (iv.status === "completed") return "completed";
+  const start = Date.parse(iv.scheduled_at);
+  const end = iv.ends_at ? Date.parse(iv.ends_at) : start + DEFAULT_INTERVIEW_MINUTES * 60_000;
+  if (Number.isNaN(start)) return "awaiting_update";
+  if (start > nowMs) return "upcoming";
+  if (end > nowMs) return "in_progress";
+  return "awaiting_update";
+}
+
+/** Split interviews into the "upcoming" section (soonest first) and history (most recent first). */
+export function splitInterviews<T extends { status: string; scheduled_at: string; ends_at?: string | null }>(
+  rows: T[],
+  nowMs: number = Date.now(),
+) {
+  const withPhase = rows.map((r) => ({ row: r, phase: interviewPhase(r, nowMs) }));
+  const current = withPhase
+    .filter((x) => x.phase === "upcoming" || x.phase === "in_progress")
+    .sort((a, b) => Date.parse(a.row.scheduled_at) - Date.parse(b.row.scheduled_at));
+  const history = withPhase
+    .filter((x) => x.phase !== "upcoming" && x.phase !== "in_progress")
+    .sort((a, b) => Date.parse(b.row.scheduled_at) - Date.parse(a.row.scheduled_at));
+  return { current, history };
+}
+
+/** Calendar date (YYYY-MM-DD) of an instant in `timeZone` (default Asia/Riyadh). */
+export function zonedDate(iso: string, timeZone: string = DEFAULT_TZ): string {
+  return toZoned(Date.parse(iso), timeZone).date;
+}

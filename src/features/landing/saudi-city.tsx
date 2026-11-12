@@ -4,9 +4,11 @@
  *
  * The existing Three.js scene (city/scene.ts) is the stage: the camera flies along the luminous path between
  * stations while the overlay plays three scenes like a short film — opening → candidates → companies.
- * The timeline autoplays (no audio), shows a continuously filling progress bar, and can be paused, replayed, scrubbed
- * per scene or skipped. It pauses when off-screen or when the tab is hidden. With prefers-reduced-motion there is no
- * autoplay and no camera flight (instant cuts); without WebGL a pre-rendered poster of the same scene is shown.
+ * The film starts by itself on page load and loops (no audio, no click, hover or scroll needed). Between flights the
+ * city keeps moving: the camera orbits slowly, windows, water and the portal breathe, light travels along the path.
+ * A progress bar fills per scene; the film can be paused, scrubbed per scene or skipped, and it pauses while
+ * off-screen or when the tab is hidden. With prefers-reduced-motion the scenes still advance, as instant cuts with no
+ * camera flight or ambient motion. Without WebGL a pre-rendered poster of the same scene is shown.
  * CTAs only lead into the existing authentication journeys (candidate sign-up; employer access request — approval
  * and subscriptions stay with the Super Admin).
  */
@@ -15,7 +17,7 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ArrowLeft, ArrowRight, ChevronDown, Pause, Play, RotateCcw } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronDown, Pause, Play } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n/client";
@@ -43,34 +45,34 @@ const SCENES: Scene[] = [
     key: "opening",
     chapter: "enter",
     eyebrow: ["JADARAH · From skill to opportunity", "جدارة · من المهارة إلى الفرصة"],
-    title: ["Your next opportunity starts here.", "مستقبلك المهني يبدأ بخطوة."],
+    title: ["Skills proven in practice, matched to real roles", "مهارات تُثبتها بالعمل، وفرص تُبنى عليها"],
     body: [
-      "Explore opportunities, build your skills, and show employers what you can do.",
-      "اكتشف فرصك، وطوّر مهاراتك، وخلّ إنجازك يتكلم عنك.",
+      "Candidates show what they can do through practical tasks. Employers review the evidence and make the call",
+      "يُظهر المرشح قدراته في مهام عملية، ويراجع صاحب العمل الأدلة ثم يتخذ قراره",
     ],
   },
   {
     key: "candidates",
     chapter: "develop",
     eyebrow: ["For candidates", "للمرشحين"],
-    title: ["Ready for your next opportunity?", "تبحث عن فرصة جديدة؟"],
+    title: ["Let your work speak for you", "دع عملك يتحدث عنك"],
     body: [
-      "Explore jobs, put your skills into practice, and let your work speak for itself.",
-      "استكشف الوظائف، وجرّب مهاراتك في مهام عملية، وخلّ أصحاب العمل يشوفون قدراتك.",
+      "Build a profile from your CV, apply to roles and complete the practical task that comes with each one",
+      "ابنِ ملفك من سيرتك الذاتية، وتقدّم إلى الوظائف، وأنجز المهمة العملية المرتبطة بكل وظيفة",
     ],
-    cta: { label: ["Start your journey", "ابدأ رحلتك"], href: "/sign-up" },
-    secondary: { label: ["Browse jobs", "تصفّح الوظائف"], href: "/jobs" },
+    cta: { label: ["Create a candidate profile", "أنشئ ملفك كمرشح"], href: "/sign-up?type=candidate" },
+    secondary: { label: ["Browse open roles", "تصفّح الفرص المتاحة"], href: "/jobs" },
   },
   {
     key: "companies",
     chapter: "converge",
-    eyebrow: ["For companies", "للشركات"],
-    title: ["Looking for the right talent?", "تبحث عن الشخص المناسب لفريقك؟"],
+    eyebrow: ["For employers", "لأصحاب العمل"],
+    title: ["Hire on what candidates can do", "وظّف بناءً على ما يستطيع المرشح فعله"],
     body: [
-      "See what candidates can actually do through practical assessments, and hire with confidence.",
-      "تعرّف على مهارات المتقدمين من خلال تجارب عملية، واتخذ قرارك بثقة.",
+      "Attach a practical task to each role, compare candidates requirement by requirement and keep every decision with your team",
+      "أرفق مهمة عملية بكل وظيفة، وقارن المرشحين متطلبًا بمتطلب، واترك كل قرار لفريقك",
     ],
-    cta: { label: ["Discover talent", "اكتشف المواهب"], href: "/employer/request-access" },
+    cta: { label: ["Request employer access", "اطلب وصول جهة توظيف"], href: "/employer/request-access" },
     secondary: { label: ["Employer sign-in", "دخول أصحاب العمل"], href: "/sign-in?next=/company" },
   },
 ];
@@ -105,7 +107,6 @@ export function SaudiCity() {
   const [index, setIndex] = useState(0);
   const [take, setTake] = useState(0); // restarts the progress animation of the current scene
   const [userPaused, setUserPaused] = useState(false);
-  const [ended, setEnded] = useState(false);
   const [visible, setVisible] = useState(true);
   const [ready, setReady] = useState(false);
   const [webgl, setWebgl] = useState<boolean | null>(null);
@@ -114,11 +115,9 @@ export function SaudiCity() {
   const copyRef = useRef<HTMLDivElement>(null);
   const elapsed = useRef({ take: 0, ms: 0 }); // playing time already spent in the current take
   const Next = ar ? ArrowLeft : ArrowRight;
-  const Prev = ar ? ArrowRight : ArrowLeft;
   const scene = SCENES[index];
   const last = SCENES.length - 1;
-  const autoplay = !reduce;
-  const playing = autoplay && !userPaused && !ended && visible;
+  const playing = !userPaused && visible;
 
   useEffect(() => {
     const conn = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
@@ -156,10 +155,9 @@ export function SaudiCity() {
     const started = performance.now();
     const t = window.setTimeout(
       () => {
-        if (index < last) {
-          setIndex(index + 1);
-          setTake((n) => n + 1);
-        } else setEnded(true);
+        // Loop: after the last scene the camera returns along the path to the opening.
+        setIndex(index < last ? index + 1 : 0);
+        setTake((n) => n + 1);
       },
       Math.max(0, SCENE_MS - elapsed.current.ms),
     );
@@ -173,15 +171,10 @@ export function SaudiCity() {
     (i: number) => {
       setIndex(Math.max(0, Math.min(last, i)));
       setTake((n) => n + 1);
-      setEnded(false);
       requestAnimationFrame(() => copyRef.current?.focus({ preventScroll: true }));
     },
     [last],
   );
-  const replay = () => {
-    setUserPaused(false);
-    go(0);
-  };
   const skip = () => {
     setUserPaused(true);
     const el = document.getElementById("after-city");
@@ -206,7 +199,7 @@ export function SaudiCity() {
       className="text-foreground relative isolate overflow-hidden"
     >
       <h1 className="sr-only">
-        {L("JADARAH — your next opportunity starts here", "جدارة — مستقبلك المهني يبدأ بخطوة")}
+        {L("JADARAH — skills proven in practice, matched to real roles", "جدارة — مهارات تُثبتها بالعمل وفرص تُبنى عليها")}
       </h1>
       {/* Fills the first viewport exactly: the next section starts at the fold. */}
       <div className="relative h-svh min-h-[600px] w-full">
@@ -248,27 +241,27 @@ export function SaudiCity() {
           <AnimatePresence mode="wait">
             <motion.div
               key={scene.key}
-              initial={reduce ? false : { opacity: 0, y: 18, filter: "blur(6px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              exit={reduce ? { opacity: 0 } : { opacity: 0, y: -12, filter: "blur(4px)" }}
+              initial={reduce ? { opacity: 0 } : { opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduce ? { opacity: 0 } : { opacity: 0, y: -12 }}
               transition={{
-                duration: 0.8,
+                duration: reduce ? 0.3 : 0.8,
                 ease: [0.22, 1, 0.36, 1],
-                delay: reduce || index === 0 ? 0 : 0.35,
+                delay: reduce || (index === 0 && take === 0) ? 0 : 0.35,
               }}
               className="max-w-xl"
             >
               {scene.key === "opening" && (
                 <LogoMark className="mb-6 size-14 drop-shadow-[0_8px_24px_rgb(var(--shadow-color)/0.35)]" />
               )}
-              <p className="text-primary-ink flex items-center gap-3 text-sm font-bold">
+              <p className="text-violet-ink flex items-center gap-3 text-sm font-bold">
                 <span className="h-px w-10 bg-current opacity-60" aria-hidden />
                 {P(scene.eyebrow)}
               </p>
-              <h2 className="editorial mt-4 text-[2.4rem] leading-[1.12] font-bold text-balance sm:text-6xl">
+              <h2 className="editorial mt-4 text-[2.3rem] font-extrabold text-balance sm:text-[3.4rem] lg:text-[3.75rem]">
                 {P(scene.title)}
               </h2>
-              <p className="text-muted mt-5 max-w-lg text-lg sm:text-xl">{P(scene.body)}</p>
+              <p className="text-muted mt-5 max-w-lg text-base leading-relaxed sm:text-lg">{P(scene.body)}</p>
               {scene.cta && (
                 <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
                   <Button asChild size="lg">
@@ -291,7 +284,7 @@ export function SaudiCity() {
                   <Button
                     variant="outline"
                     size="lg"
-                    className="bg-surface/70 backdrop-blur"
+                    className="bg-surface/70 backdrop-blur-sm"
                     onClick={() => go(1)}
                   >
                     {L("I'm a candidate", "أنا مرشح")}
@@ -299,7 +292,7 @@ export function SaudiCity() {
                   <Button
                     variant="outline"
                     size="lg"
-                    className="bg-surface/70 backdrop-blur"
+                    className="bg-surface/70 backdrop-blur-sm"
                     onClick={() => go(2)}
                   >
                     {L("I'm hiring", "أنا شركة")}
@@ -310,32 +303,17 @@ export function SaudiCity() {
           </AnimatePresence>
         </div>
 
-        {/* Player bar: play/pause · timeline (one segment per scene, the current one fills over time) · replay · skip */}
+        {/* Player bar: play/pause · timeline (one segment per scene, the current one fills over time) · skip */}
         <div className="absolute inset-x-0 bottom-5 px-4 sm:px-6">
-          <div className="bg-surface/75 mx-auto flex max-w-7xl items-center gap-2 rounded-full border p-1.5 shadow-[var(--glow)] backdrop-blur sm:gap-3">
-            {autoplay && (
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => (ended ? replay() : setUserPaused((p) => !p))}
-                aria-label={
-                  ended ? L("Replay", "إعادة") : userPaused ? L("Play", "تشغيل") : L("Pause", "إيقاف مؤقت")
-                }
-              >
-                {ended ? <RotateCcw /> : userPaused ? <Play /> : <Pause />}
-              </Button>
-            )}
-            {!autoplay && (
-              <Button
-                size="icon"
-                variant="ghost"
-                disabled={index === 0}
-                onClick={() => go(index - 1)}
-                aria-label={L("Previous", "السابق")}
-              >
-                <Prev />
-              </Button>
-            )}
+          <div className="bg-surface/75 mx-auto flex max-w-7xl items-center gap-2 rounded-full border p-1.5 shadow-[var(--glow)] backdrop-blur-md sm:gap-3">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setUserPaused((p) => !p)}
+              aria-label={userPaused ? L("Play", "تشغيل") : L("Pause", "إيقاف مؤقت")}
+            >
+              {userPaused ? <Play /> : <Pause />}
+            </Button>
             <ol
               className="flex flex-1 items-center gap-1.5"
               aria-label={L("Introduction timeline", "مراحل التعريف")}
@@ -353,12 +331,12 @@ export function SaudiCity() {
                       <span
                         key={i === index ? `${take}` : "idle"}
                         className={cn(
-                          "absolute inset-y-0 start-0 rounded-full bg-[var(--primary)]",
-                          i < index || (i === index && (ended || !autoplay)) ? "w-full" : "w-0",
-                          i === index && autoplay && !ended && "jd-progress-fill",
+                          "fill-signature absolute inset-y-0 start-0 rounded-full bg-[var(--primary)]",
+                          i < index ? "w-full" : "w-0",
+                          i === index && "jd-progress-fill",
                         )}
                         style={
-                          i === index && autoplay && !ended
+                          i === index
                             ? {
                                 animationDuration: `${SCENE_MS}ms`,
                                 animationPlayState: playing ? "running" : "paused",
@@ -371,21 +349,6 @@ export function SaudiCity() {
                 </li>
               ))}
             </ol>
-            {!autoplay && index < last && (
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => go(index + 1)}
-                aria-label={L("Next", "التالي")}
-              >
-                <Next />
-              </Button>
-            )}
-            {autoplay && ended && (
-              <span className="text-subtle hidden text-xs font-semibold sm:inline">
-                {L("Replay", "إعادة التشغيل")}
-              </span>
-            )}
             <button
               type="button"
               onClick={skip}
@@ -398,8 +361,8 @@ export function SaudiCity() {
       </div>
       <p className="sr-only">
         {L(
-          "Kingdom Centre, the KAFD skyline, Jeddah Tower and the Al Khobar Water Tower appear as illustrated landmarks; the layered forms are JADARAH architecture.",
-          "يظهر برج المملكة وأفق مركز الملك عبدالله المالي وبرج جدة وبرج مياه الخبر كمعالم توضيحية؛ والأشكال الطبقية عمارة من هوية جدارة.",
+          "Kingdom Centre, the KAFD skyline, Jeddah Tower and the Al Khobar Water Tower appear as illustrated landmarks; the layered forms are JADARAH architecture",
+          "يظهر برج المملكة وأفق مركز الملك عبدالله المالي وبرج جدة وبرج مياه الخبر كمعالم توضيحية؛ والأشكال الطبقية عمارة من هوية جدارة",
         )}
       </p>
     </section>

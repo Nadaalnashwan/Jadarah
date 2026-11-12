@@ -5,7 +5,7 @@ test.skip(!DEMO_PASSWORD, "DEMO_USER_PASSWORD not set");
 
 test("candidate: discover → job detail with explainable match → apply → tracking", async ({ page }) => {
   await signIn(page, "candidate31");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Good to see you");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Welcome");
   await page.goto("/candidate/jobs?sort=recent");
   const links = page.locator("main ul li a[href^='/candidate/jobs/']");
   await links.first().waitFor();

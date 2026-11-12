@@ -52,8 +52,8 @@ export async function generateFinalAiReport(applicationId: string): Promise<Acti
   const { s, cid, supabase, locale } = await ctx();
   const L = (en: string, ar: string) => (locale === "ar" ? ar : en);
   const report = await loadFinalReport(supabase, applicationId, cid, locale);
-  if (!report) return { ok: false, error: L("Application not found.", "الطلب غير موجود.") };
-  if (report.final?.status === "finalized") return { ok: false, error: L("This evaluation is finalized.", "هذا التقييم نهائي.") };
+  if (!report) return { ok: false, error: L("Application not found", "الطلب غير موجود") };
+  if (report.final?.status === "finalized") return { ok: false, error: L("This evaluation is finalized", "هذا التقييم نهائي") };
   try {
     const { data, provider, model } = await generateJSON(
       {
@@ -66,7 +66,7 @@ Rules:
 - Distinguish clearly what is demonstrated vs. claimed vs. inferred. Point out interviewer disagreement.
 - Never consider or mention age, gender, nationality, religion, marital status, disability or any protected characteristic.
 - You do NOT make the hiring decision; you recommend with a transparent basis. Write in ${locale === "ar" ? "Modern Standard Arabic" : "English"}.
-Return JSON {summary, strengths:[{point,evidence,source}], gaps:[{point,evidence,source}], verify_next:[], development:[], recommendation:{stance, confidence, basis}}.`,
+Return JSON {summary, strengths:[{point,evidence,source}], gaps:[{point,evidence,source}], verify_next:[], development:[], recommendation:{stance, confidence, basis}}`,
         prompt: `EVIDENCE PACK (de-identified):\n${JSON.stringify(evidencePack(report))}`,
       },
       aiReportSchema,
@@ -95,10 +95,10 @@ Return JSON {summary, strengths:[{point,evidence,source}], gaps:[{point,evidence
       output: { stance: data.recommendation.stance, confidence: data.recommendation.confidence },
     });
     revalidatePath(`/company/applications/${applicationId}/report`);
-    return { ok: true, message: L("AI analysis ready. Review it before deciding.", "التحليل الآلي جاهز. راجعه قبل القرار.") };
+    return { ok: true, message: L("AI analysis ready. Review it before deciding", "التحليل الآلي جاهز. راجعه قبل القرار") };
   } catch (e) {
     if (e instanceof AIUnavailableError)
-      return { ok: false, error: L("AI analysis is unavailable right now. The evidence report remains usable.", "التحليل الآلي غير متاح الآن، ويبقى تقرير الأدلة صالحًا للاستخدام.") };
+      return { ok: false, error: L("AI analysis is unavailable right now. The evidence report remains usable", "التحليل الآلي غير متاح الآن، ويبقى تقرير الأدلة صالحًا للاستخدام") };
     throw e;
   }
 }
@@ -109,7 +109,7 @@ export async function saveFinalSummary(applicationId: string, summary: string): 
   const { error } = await supabase.from("final_evaluations").update({ summary: summary.slice(0, 4000) }).eq("id", draft.id);
   if (error) return { ok: false, error: localizeError(error, locale) };
   revalidatePath(`/company/applications/${applicationId}/report`);
-  return { ok: true, message: locale === "ar" ? "حُفظت الخلاصة." : "Summary saved." };
+  return { ok: true, message: locale === "ar" ? "حُفظت الخلاصة" : "Summary saved" };
 }
 
 export async function addFinalComment(applicationId: string, body: string): Promise<ActionResult> {
@@ -134,7 +134,7 @@ export async function decideFinal(applicationId: string, input: unknown): Promis
   const { cid, supabase, locale } = await ctx();
   const parsed = decisionSchema.safeParse(input);
   if (!parsed.success)
-    return { ok: false, error: locale === "ar" ? "اكتب مبررًا للقرار (10 أحرف على الأقل)." : "Explain the decision (at least 10 characters)." };
+    return { ok: false, error: locale === "ar" ? "اكتب مبررًا للقرار (10 أحرف على الأقل)" : "Explain the decision (at least 10 characters)" };
   const draft = await ensureDraft(supabase, applicationId, cid);
   const { error } = await supabase.rpc("decide_final_evaluation", {
     p_eval: draft.id,
@@ -145,7 +145,7 @@ export async function decideFinal(applicationId: string, input: unknown): Promis
   if (error) return { ok: false, error: localizeError(error, locale) };
   kickEmailDispatch();
   revalidatePath(`/company/applications/${applicationId}`, "layout");
-  return { ok: true, message: locale === "ar" ? "سُجّل القرار واعتُمد التقييم." : "Decision recorded; evaluation finalized." };
+  return { ok: true, message: locale === "ar" ? "سُجّل القرار واعتُمد التقييم" : "Decision recorded; evaluation finalized" };
 }
 
 export async function shareFinalFeedback(applicationId: string, feedback: string): Promise<ActionResult> {
@@ -155,7 +155,7 @@ export async function shareFinalFeedback(applicationId: string, feedback: string
   if (error) return { ok: false, error: localizeError(error, locale) };
   kickEmailDispatch();
   revalidatePath(`/company/applications/${applicationId}/report`);
-  return { ok: true, message: locale === "ar" ? "تمت مشاركة الملاحظات مع المرشح." : "Feedback shared with the candidate." };
+  return { ok: true, message: locale === "ar" ? "تمت مشاركة الملاحظات مع المرشح" : "Feedback shared with the candidate" };
 }
 
 /** Edit the company's structured interview rubric (recruiters/admins). */
@@ -163,11 +163,11 @@ export async function saveInterviewRubric(criteria: unknown): Promise<ActionResu
   const { s, cid, supabase, locale } = await ctx();
   const parsed = rubricSchema.safeParse(criteria);
   if (!parsed.success)
-    return { ok: false, error: locale === "ar" ? "تحقق من المعايير (اسم ووزن لكل معيار، دون تكرار)." : "Check the criteria (name and weight each, no duplicates)." };
+    return { ok: false, error: locale === "ar" ? "تحقق من المعايير (اسم ووزن لكل معيار، دون تكرار)" : "Check the criteria (name and weight each, no duplicates)" };
   const { error } = await supabase
     .from("interview_rubrics")
     .upsert({ company_id: cid, criteria: parsed.data, updated_by: s.userId, updated_at: new Date().toISOString() });
   if (error) return { ok: false, error: localizeError(error, locale) };
   revalidatePath("/company/interviews", "layout");
-  return { ok: true, message: locale === "ar" ? "حُفظت معايير المقابلة." : "Interview rubric saved." };
+  return { ok: true, message: locale === "ar" ? "حُفظت معايير المقابلة" : "Interview rubric saved" };
 }

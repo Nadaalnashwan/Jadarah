@@ -28,7 +28,7 @@ export default async function InvitationsPage({
       <h1 className="editorial text-3xl font-extrabold">{L("Team invitations", "دعوات الفرق")}</h1>
       {sp.error && (
         <p className="text-danger text-sm">
-          {L("That invitation could not be accepted.", "تعذّر قبول تلك الدعوة.")}
+          {L("That invitation could not be accepted", "تعذّر قبول تلك الدعوة")}
         </p>
       )}
       {(data ?? []).length === 0 ? (

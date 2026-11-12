@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
@@ -113,21 +114,29 @@ function Items({
               onClick={onNavigate}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors",
-                active ? "text-foreground" : "text-muted hover:bg-surface hover:text-foreground",
+                "relative flex items-center gap-3 rounded-[0.625rem] px-3 py-2.5 text-sm font-semibold transition-colors duration-200",
+                active ? "text-foreground" : "text-muted hover:text-foreground hover:bg-white/[0.06]",
               )}
             >
               {active && (
                 <motion.span
                   layoutId={`nav-active-${layoutKey}`}
-                  className="bg-tone-blue absolute inset-0 -z-0 rounded-xl"
+                  className="absolute inset-0 -z-0 rounded-[0.625rem] bg-white/[0.09]"
                   transition={{ type: "spring", stiffness: 420, damping: 34 }}
                 />
               )}
               {active && (
-                <span className="bg-primary absolute start-0 top-2 bottom-2 w-1 rounded-full" aria-hidden />
+                <span
+                  className="absolute start-0 top-2.5 bottom-2.5 w-[3px] rounded-full bg-[var(--violet-ink)]"
+                  aria-hidden
+                />
               )}
-              <Icon className={cn("relative size-4", active && "text-primary dark:text-lavender")} />
+              <Icon
+                className={cn(
+                  "relative size-4 transition-colors",
+                  active ? "text-[var(--violet-ink)]" : "opacity-80",
+                )}
+              />
               <span className="relative flex-1">{item.label}</span>
               {item.badge ? (
                 <span className="ltr-nums bg-primary text-primary-foreground relative rounded-full px-1.5 text-[0.65rem] font-bold">
@@ -144,7 +153,10 @@ function Items({
 
 export function WorkspaceNav({ items, mobile }: { items: NavItem[]; mobile?: boolean }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- the drawer portal targets <body>, client only
+  useEffect(() => setMounted(true), []);
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setOpen(false), [pathname]);
   // Drawer: Escape closes it and the page behind does not scroll while it is open.
@@ -177,45 +189,50 @@ export function WorkspaceNav({ items, mobile }: { items: NavItem[]; mobile?: boo
       >
         <Menu className="size-5" />
       </button>
-      <AnimatePresence>
-        {open && (
-          <>
-            <motion.div
-              className="bg-navy/40 fixed inset-0 z-50 backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setOpen(false)}
-            />
-            <motion.nav
-              aria-label="Workspace"
-              className="bg-sidebar fixed inset-y-0 start-0 z-50 flex w-[min(18rem,85vw)] flex-col py-4 shadow-2xl"
-              initial={{ x: "var(--drawer-from)" }}
-              animate={{ x: 0 }}
-              exit={{ x: "var(--drawer-from)" }}
-              transition={{ type: "spring", stiffness: 380, damping: 36 }}
-              style={{
-                ["--drawer-from" as string]:
-                  typeof document !== "undefined" && document.dir === "rtl" ? "100%" : "-100%",
-              }}
-            >
-              <div className="mb-3 flex justify-end px-3">
-                <button
+      {/* Rendered into <body>: the sticky header's backdrop-filter would otherwise clip this fixed drawer. */}
+      {mounted &&
+        createPortal(
+          <AnimatePresence>
+            {open && (
+              <>
+                <motion.div
+                  className="fixed inset-0 z-50 bg-[#0b1626]/50 backdrop-blur-sm"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   onClick={() => setOpen(false)}
-                  className="hover:bg-surface-2 flex size-10 items-center justify-center rounded-full"
-                  aria-label="Close"
-                  autoFocus
+                />
+                <motion.nav
+                  aria-label="Workspace"
+                  className="ink fixed inset-y-0 start-0 z-50 flex w-[min(18rem,85vw)] flex-col py-4 shadow-2xl"
+                  initial={{ x: "var(--drawer-from)" }}
+                  animate={{ x: 0 }}
+                  exit={{ x: "var(--drawer-from)" }}
+                  transition={{ type: "spring", stiffness: 380, damping: 36 }}
+                  style={{
+                    ["--drawer-from" as string]:
+                      typeof document !== "undefined" && document.dir === "rtl" ? "100%" : "-100%",
+                  }}
                 >
-                  <X className="size-5" />
-                </button>
-              </div>
-              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-6">
-                <Items items={items} onNavigate={() => setOpen(false)} layoutKey="mobile" />
-              </div>
-            </motion.nav>
-          </>
+                  <div className="mb-3 flex justify-end px-3">
+                    <button
+                      onClick={() => setOpen(false)}
+                      className="flex size-10 items-center justify-center rounded-full hover:bg-white/10"
+                      aria-label="Close"
+                      autoFocus
+                    >
+                      <X className="size-5" />
+                    </button>
+                  </div>
+                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-6">
+                    <Items items={items} onNavigate={() => setOpen(false)} layoutKey="mobile" />
+                  </div>
+                </motion.nav>
+              </>
+            )}
+          </AnimatePresence>,
+          document.body,
         )}
-      </AnimatePresence>
     </>
   );
 }

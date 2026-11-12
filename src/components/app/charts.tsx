@@ -123,10 +123,11 @@ export function BarList({
               <span>{d.label}</span>
               <span className="ltr-nums text-subtle">{formatNumber(d.value, locale)}</span>
             </div>
-            <div className="bg-surface-2 h-2.5 overflow-hidden rounded-full">
+            <div className="bg-surface-2 h-2 overflow-hidden rounded-full">
               <motion.div
                 className="h-full rounded-full"
-                style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
+                // One series: length carries the value, so every bar uses the primary series colour.
+                style={{ backgroundColor: SERIES.primary }}
                 initial={{ width: 0 }}
                 animate={{ width: `${(d.value / max) * 100}%` }}
                 transition={{ duration: 0.8, delay: i * 0.05, ease: [0.22, 1, 0.36, 1] }}

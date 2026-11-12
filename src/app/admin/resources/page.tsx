@@ -47,7 +47,7 @@ export default async function AdminResources() {
                       href={r.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="hover:text-primary dark:hover:text-lavender font-semibold"
+                      className="hover:text-primary font-semibold"
                     >
                       {pick(r, "title", locale)}
                     </a>

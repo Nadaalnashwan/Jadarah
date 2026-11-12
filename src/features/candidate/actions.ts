@@ -45,7 +45,7 @@ export async function saveCandidateProfile(_: ActionResult | null, form: FormDat
     );
     return {
       ok: false,
-      error: locale === "ar" ? "راجع الحقول المظللة." : "Please review the highlighted fields.",
+      error: locale === "ar" ? "راجع الحقول المظللة" : "Please review the highlighted fields",
       fieldErrors,
     };
   }
@@ -80,7 +80,7 @@ export async function saveCandidateProfile(_: ActionResult | null, form: FormDat
   });
   if (e1 || e2) return { ok: false, error: localizeError(e1 ?? e2, locale) };
   revalidatePath("/candidate", "layout");
-  return { ok: true, message: locale === "ar" ? "تم حفظ ملفك." : "Profile saved." };
+  return { ok: true, message: locale === "ar" ? "تم حفظ ملفك" : "Profile saved" };
 }
 
 export async function completeCandidateOnboarding(
@@ -153,7 +153,7 @@ export async function addProfileItem(
     return {
       ok: false,
       error:
-        locale === "ar" ? "أكمل الحقول المطلوبة بقيم صالحة." : "Fill the required fields with valid values.",
+        locale === "ar" ? "أكمل الحقول المطلوبة بقيم صالحة" : "Fill the required fields with valid values",
     };
   const supabase = await createClient();
   const { error } = await supabase
@@ -181,7 +181,7 @@ export async function upsertSkill(_: ActionResult | null, form: FormData): Promi
   const { locale } = await getI18n();
   const parsed = skillSchema.safeParse(Object.fromEntries(form));
   if (!parsed.success)
-    return { ok: false, error: locale === "ar" ? "اختر مهارة ومستوى." : "Choose a skill and level." };
+    return { ok: false, error: locale === "ar" ? "اختر مهارة ومستوى" : "Choose a skill and level" };
   const supabase = await createClient();
   // A candidate can only self-declare or attach evidence; 'assessment'/'verified' sources are never set by the candidate.
   const { data: existing } = await supabase

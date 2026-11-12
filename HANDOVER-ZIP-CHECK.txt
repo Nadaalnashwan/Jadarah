@@ -1,0 +1,13 @@
+JADARAH-FULL-HANDOVER.zip — clean-copy verification, 2026-11-12 (Linux container, Node 22.23)
+Source: branch preview/premium-redesign, commit b57ebca (git archive HEAD; no node_modules, no build output, no .env with values)
+Extracted fresh, then:
+  npm ci                      exit 0
+  npm run typecheck           exit 0
+  npm run lint                exit 0
+  npm test                    16 files, 129/129 passed
+  bash tests/db/run-local.sh  30 migrations applied; PASS 0029_platform, 0032_task_solution_files, 0033_question_level_evaluation
+  npm run build               exit 0
+  next start + /api/health    status ok; database ok; database_schema 0029; task_solution_files ready; question_evaluation ready;
+                              auth ok; server_key missing; email not_configured; video_webhooks not_configured (hosted Supabase)
+  GET / /jobs /sign-in        200 200 200
+Secret scan: no values of the configured environment variables and no key patterns found; only .env.example is present.

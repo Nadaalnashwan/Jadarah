@@ -67,8 +67,8 @@ export default async function ApplicationDetail({
         <div className="mb-4">
           <FormMessage tone="success">
             {L(
-              "Application submitted. You'll be notified at every step.",
-              "تم إرسال طلبك. سنبلغك في كل خطوة.",
+              "Application submitted. You'll be notified at every step",
+              "تم إرسال طلبك. سنبلغك في كل خطوة",
             )}
           </FormMessage>
         </div>
@@ -84,8 +84,8 @@ export default async function ApplicationDetail({
             <p className="font-bold">{L("One step left: the practical task", "خطوة واحدة متبقية: المهمة العملية")}</p>
             <p className="text-muted text-sm">
               {L(
-                "Your application is not complete until you submit the job's practical task.",
-                "لا يكتمل طلبك حتى تسلّم المهمة العملية الخاصة بالوظيفة.",
+                "Your application is not complete until you submit the job's practical task",
+                "لا يكتمل طلبك حتى تسلّم المهمة العملية الخاصة بالوظيفة",
               )}
             </p>
           </div>
@@ -167,7 +167,7 @@ export default async function ApplicationDetail({
               <CardBody className="flex flex-col gap-3">
                 {messages.map((m, i) => (
                   <blockquote key={i} className="bg-accent-soft/50 rounded-2xl p-4 text-sm">
-                    <MessageSquareQuote className="text-primary dark:text-lavender mb-2 size-4" />
+                    <MessageSquareQuote className="text-primary mb-2 size-4" />
                     {m.candidate_message}
                     <footer className="text-subtle mt-2 text-xs">
                       {t.status[m.to_status]} · {formatDate(m.created_at, locale)}
@@ -240,7 +240,7 @@ export default async function ApplicationDetail({
                         href={iv.meeting_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-primary dark:text-lavender mt-2 inline-flex items-center gap-1.5 text-sm font-semibold"
+                        className="text-primary mt-2 inline-flex items-center gap-1.5 text-sm font-semibold"
                       >
                         <Video className="size-4" /> {L("Join link", "رابط الانضمام")}
                       </a>
@@ -256,7 +256,7 @@ export default async function ApplicationDetail({
             <Card className="border-primary/30">
               <CardHeader
                 title={L("Feedback on your application", "ملاحظات على طلبك")}
-                description={L("Written for you by the hiring team after the final evaluation.", "كتبها فريق التوظيف لك بعد التقييم النهائي.")}
+                description={L("Written for you by the hiring team after the final evaluation", "كتبها فريق التوظيف لك بعد التقييم النهائي")}
               />
               <CardBody>
                 <p className="bg-accent-soft/60 rounded-xl p-3 text-sm leading-relaxed whitespace-pre-line">{finalFeedback![0].feedback}</p>
@@ -267,7 +267,7 @@ export default async function ApplicationDetail({
             <Card>
               <CardHeader
                 title={L("Shared feedback", "ملاحظات مُشارَكة")}
-                description={L("The company chose to share this with you.", "اختارت الشركة مشاركة هذا معك.")}
+                description={L("The company chose to share this with you", "اختارت الشركة مشاركة هذا معك")}
               />
               <CardBody className="flex flex-col gap-3">
                 {feedback!.map((f) => (
@@ -293,8 +293,8 @@ export default async function ApplicationDetail({
               <CardHeader
                 title={L("Withdraw application", "سحب الطلب")}
                 description={L(
-                  "The company will be notified. This cannot be undone.",
-                  "سيتم إبلاغ الشركة. لا يمكن التراجع.",
+                  "The company will be notified. This cannot be undone",
+                  "سيتم إبلاغ الشركة. لا يمكن التراجع",
                 )}
               />
               <CardBody>

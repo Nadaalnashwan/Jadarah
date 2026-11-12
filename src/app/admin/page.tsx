@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BarList, Columns, Donut } from "@/components/app/charts";
-import { Card, CardBody, CardHeader, PageHeader, Stat } from "@/components/ui/primitives";
+import { Card, CardBody, CardHeader, Spotlight, SpotlightStat, Stat } from "@/components/ui/primitives";
 import { requireSuperAdmin } from "@/lib/auth/session";
 import { APPLICATION_STATUSES } from "@/lib/domain/application-status";
 import { formatNumber, tx } from "@/lib/i18n/config";
@@ -35,52 +35,33 @@ export default async function AdminOverview() {
   const n = (v: number) => formatNumber(v, locale);
   return (
     <>
-      <PageHeader
+      <Spotlight
+        variant="admin"
         eyebrow={t.roles.super_admin}
-        title={L("Platform control center", "مركز التحكم بالمنصة")}
-        description={L(
-          "Every figure is a live database query.",
-          "كل رقم هنا استعلام مباشر من قاعدة البيانات.",
-        )}
-      />
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card className="p-5">
-          <Stat
-            label={L("Users", "المستخدمون")}
-            value={n(s.users)}
-            hint={`${n(s.candidates)} ${L("candidates", "مرشح")}`}
-          />
-        </Card>
-        <Card className="p-5">
-          <Stat
+        title={L("Platform overview", "نظرة عامة على المنصة")}
+        description={L("Live figures from the platform database", "أرقام مباشرة من قاعدة بيانات المنصة")}
+      >
+        <div className="grid grid-cols-2 gap-y-5 xl:grid-cols-4">
+          <SpotlightStat look="inline" label={L("Users", "المستخدمون")} value={n(s.users)} hint={`${n(s.candidates)} ${L("candidates", "مرشح")}`} />
+          <SpotlightStat look="inline"
+            emphasis={s.pending_companies > 0}
             label={L("Companies", "الشركات")}
             value={n(s.companies)}
             hint={
-              <Link
-                href="/admin/companies?status=pending"
-                className="text-primary dark:text-lavender font-semibold"
-              >
+              <Link href="/admin/companies?status=pending" className="text-primary font-semibold">
                 {n(s.pending_companies)} {L("awaiting review", "بانتظار المراجعة")}
               </Link>
             }
           />
-        </Card>
-        <Card className="p-5">
-          <Stat
-            label={L("Active jobs", "وظائف نشطة")}
-            value={n(s.active_jobs)}
-            hint={`${n(s.applications)} ${L("applications", "طلب")}`}
-          />
-        </Card>
-        <Card className="p-5">
-          <Stat
+          <SpotlightStat look="inline" label={L("Active jobs", "وظائف نشطة")} value={n(s.active_jobs)} hint={`${n(s.applications)} ${L("applications", "طلب")}`} />
+          <SpotlightStat look="inline"
             label={L("Hires", "التعيينات")}
             value={n(s.hires)}
             hint={`${n(s.interviews)} ${L("interviews", "مقابلة")} · ${n(s.assessments_submitted)} ${L("assessments", "تقييم")}`}
           />
-        </Card>
-      </div>
-      <div className="mt-6 grid gap-6 xl:grid-cols-2">
+        </div>
+      </Spotlight>
+      <div className="jd-enter-stagger mt-6 grid gap-6 xl:grid-cols-2">
         <Card>
           <CardHeader title={L("Applications by stage", "الطلبات حسب المرحلة")} />
           <CardBody>

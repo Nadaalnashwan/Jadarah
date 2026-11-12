@@ -29,12 +29,23 @@ export interface SessionContext {
   serviceActive: boolean;
 }
 
-/** Resolve the signed-in user with roles from the database (never from client claims). Cached per request. */
+/**
+ * Resolve the signed-in user with roles from the database (never from client claims). Cached per request.
+ * Identity comes from the access token verified locally against the project's signing keys (getClaims; the JWKS is
+ * cached), which removes a network round trip to Supabase Auth on every page. Roles, status and memberships are still
+ * read from the database each request, so a suspended or demoted user loses access immediately.
+ */
 export const getSession = cache(async (): Promise<SessionContext | null> => {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
-  const user = auth.user;
-  if (!user) return null;
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const claims = claimsData?.claims;
+  if (!claims?.sub) return null;
+  const user = {
+    id: claims.sub,
+    email: typeof claims.email === "string" ? claims.email : undefined,
+    // Supabase marks the address as verified in user_metadata once confirmed; the invitation flow re-checks with Auth.
+    email_confirmed_at: (claims.user_metadata as { email_verified?: boolean } | undefined)?.email_verified ? "verified" : null,
+  };
 
   const [{ data: profile }, { data: roles }, { data: memberships }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),

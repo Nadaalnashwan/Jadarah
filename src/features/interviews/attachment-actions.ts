@@ -69,7 +69,7 @@ export async function registerInterviewAttachment(input: z.infer<typeof register
   }
   if (!(await rateLimitUser("interview-upload", s.userId, 30, 10 * 60_000))) {
     await cleanup();
-    return { ok: false, error: locale === "ar" ? "محاولات رفع كثيرة. انتظر قليلًا." : "Too many uploads. Please wait a moment." };
+    return { ok: false, error: locale === "ar" ? "محاولات رفع كثيرة. انتظر قليلًا" : "Too many uploads. Please wait a moment" };
   }
   const { error } = await supabase.rpc("register_interview_attachment", {
     p_interview: parsed.data.interviewId,

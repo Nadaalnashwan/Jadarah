@@ -44,25 +44,21 @@ export async function OverviewTab({ supabase, period, demo, locale, params = {} 
         </h2>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <KpiCard
-            tone="blue"
             label={L("Registered accounts", "الحسابات المسجلة")}
             value={n(o.registered)}
             hint={`${n(o.candidates)} ${L("candidates", "مرشح")} · ${n(o.employers)} ${L("employer accounts", "حساب جهة")}`}
           />
           <KpiCard
-            tone="sand"
             label={L("Organizations", "الجهات")}
             value={n(o.companies)}
             hint={`${n(o.pendingAccess)} ${L("access requests pending", "طلب وصول معلّق")}`}
           />
           <KpiCard
-            tone="sage"
             label={L("Active paid subscriptions", "الاشتراكات المدفوعة النشطة")}
             value={n(o.activeSubs)}
             hint={`${n(o.demoSubs)} ${L("active demonstration subscriptions (not revenue)", "اشتراك تجريبي نشط (ليس إيرادًا)")}`}
           />
           <KpiCard
-            tone="mist"
             label={L("Published jobs", "الوظائف المنشورة")}
             value={n(o.published)}
             hint={`${n(o.drafts)} ${L("drafts", "مسودة")}`}
@@ -99,8 +95,8 @@ export async function OverviewTab({ supabase, period, demo, locale, params = {} 
           title={L("Sign-ups and applications per day", "التسجيلات والطلبات يوميًا")}
           sample={`${L(period.label_en, period.label_ar)} · ${n(trend.reduce((a, d) => a + d.signups, 0))} ${L("sign-ups", "تسجيل")} · ${n(trend.reduce((a, d) => a + d.applications, 0))} ${L("applications", "طلب")}`}
           definition={L(
-            "Counted by Riyadh calendar day from account creation and application submission times.",
-            "تُحسب حسب يوم الرياض من وقت إنشاء الحساب وتقديم الطلب.",
+            "Counted by Riyadh calendar day from account creation and application submission times",
+            "تُحسب حسب يوم الرياض من وقت إنشاء الحساب وتقديم الطلب",
           )}
         >
           <LineSeries

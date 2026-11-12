@@ -61,8 +61,8 @@ export async function AiTab({ supabase, period, demo, locale, params = {} }: Tab
   const sample = `${L("Period", "الفترة")}: ${L(period.label_en, period.label_ar)} · ${n(s.attempts)} ${L("attempts", "محاولة")}`;
   const empty = s.attempts === 0;
   const emptyText = L(
-    "No AI attempts were recorded for these filters.",
-    "لم تُسجَّل محاولات ذكاء اصطناعي لهذه المرشحات.",
+    "No AI attempts were recorded for these filters",
+    "لم تُسجَّل محاولات ذكاء اصطناعي لهذه المرشحات",
   );
 
   // Individual attempts, paginated separately from the aggregates.
@@ -89,26 +89,23 @@ export async function AiTab({ supabase, period, demo, locale, params = {} }: Tab
       {truncated && (
         <p className="bg-warning-soft text-warning rounded-xl px-4 py-2 text-sm">
           {L(
-            "The period has more than 50,000 attempts; narrow it for complete figures.",
-            "تتجاوز الفترة 50٬000 محاولة؛ ضيّقها للحصول على أرقام كاملة.",
+            "The period has more than 50,000 attempts; narrow it for complete figures",
+            "تتجاوز الفترة 50٬000 محاولة؛ ضيّقها للحصول على أرقام كاملة",
           )}
         </p>
       )}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          tone="blue"
           label={L("AI attempts", "محاولات الذكاء الاصطناعي")}
           value={n(s.attempts)}
           hint={`${n(fb.operations)} ${L("logical requests", "طلبًا منطقيًا")}`}
         />
         <KpiCard
-          tone="sage"
           label={L("Success rate", "معدل النجاح")}
           value={pct(s.successRate, locale, 1)}
           hint={`${n(s.success)} ${L("succeeded", "نجحت")} · ${n(s.failed)} ${L("failed", "فشلت")} (${pct(s.attempts ? s.failed / s.attempts : null, locale, 1)})`}
         />
         <KpiCard
-          tone="mist"
           label={L("Latency p50 / p95", "زمن الاستجابة p50 / p95")}
           value={`${ms(s.latency.p50, locale)} / ${ms(s.latency.p95, locale)}`}
           hint={`${L("avg", "المتوسط")} ${ms(s.latency.avg, locale)} · p99 ${
@@ -118,7 +115,6 @@ export async function AiTab({ supabase, period, demo, locale, params = {} }: Tab
           } · n=${n(s.latency.samples)}`}
         />
         <KpiCard
-          tone="sand"
           label={L("Tokens (input / output)", "الرموز (مدخلة / مخرجة)")}
           value={`${n(s.tokens.input)} / ${n(s.tokens.output)}`}
           hint={`${L("total", "الإجمالي")} ${n(s.tokens.total)} · ${L("reported on", "مُبلَّغ عنها في")} ${n(s.tokens.samples)}/${n(s.attempts)}`}
@@ -144,8 +140,8 @@ export async function AiTab({ supabase, period, demo, locale, params = {} }: Tab
           empty={empty}
           emptyText={emptyText}
           definition={L(
-            "Attempts per bucket (each provider call, including retries and fallbacks). Empty buckets are zero, not interpolated.",
-            "المحاولات في كل فترة (كل استدعاء للمزوّد بما فيه إعادة المحاولة والبدائل). الفترات الفارغة صفر دون استيفاء.",
+            "Attempts per bucket (each provider call, including retries and fallbacks). Empty buckets are zero, not interpolated",
+            "المحاولات في كل فترة (كل استدعاء للمزوّد بما فيه إعادة المحاولة والبدائل). الفترات الفارغة صفر دون استيفاء",
           )}
         >
           <LineSeries
@@ -185,10 +181,10 @@ export async function AiTab({ supabase, period, demo, locale, params = {} }: Tab
           title={L("6 · Error breakdown", "6 · تصنيف الأخطاء")}
           sample={`${n(s.failed)} ${L("failed attempts", "محاولة فاشلة")}`}
           empty={!s.failed}
-          emptyText={L("No failed attempts in this period.", "لا توجد محاولات فاشلة في هذه الفترة.")}
+          emptyText={L("No failed attempts in this period", "لا توجد محاولات فاشلة في هذه الفترة")}
           definition={L(
-            "Categorised from the recorded provider error code.",
-            "مصنّفة حسب رمز الخطأ المسجل من المزوّد.",
+            "Categorised from the recorded provider error code",
+            "مصنّفة حسب رمز الخطأ المسجل من المزوّد",
           )}
         >
           <BarList
@@ -202,8 +198,8 @@ export async function AiTab({ supabase, period, demo, locale, params = {} }: Tab
           empty={!s.latency.samples}
           emptyText={emptyText}
           definition={L(
-            "Nearest-rank percentiles per bucket over every attempt with a latency (successful and failed). Buckets without attempts are gaps.",
-            "مئينات بأسلوب الرتبة الأقرب لكل فترة على كل محاولة لها زمن (ناجحة وفاشلة). الفترات بلا محاولات تظهر فراغًا.",
+            "Nearest-rank percentiles per bucket over every attempt with a latency (successful and failed). Buckets without attempts are gaps",
+            "مئينات بأسلوب الرتبة الأقرب لكل فترة على كل محاولة لها زمن (ناجحة وفاشلة). الفترات بلا محاولات تظهر فراغًا",
           )}
         >
           <LineSeries
@@ -223,10 +219,10 @@ export async function AiTab({ supabase, period, demo, locale, params = {} }: Tab
           emptyText={emptyText}
           definition={
             traced && fb.exactShare === 1
-              ? L("Attempts grouped exactly by request id.", "تُجمع المحاولات بدقة حسب معرّف الطلب.")
+              ? L("Attempts grouped exactly by request id", "تُجمع المحاولات بدقة حسب معرّف الطلب")
               : L(
-                  `Attempts with a request id are grouped exactly (${pct(fb.exactShare, locale)} of requests); older attempts are grouped by user and operation within 2 minutes of a failed attempt — approximate.`,
-                  `تُجمع المحاولات ذات معرّف الطلب بدقة (${pct(fb.exactShare, locale)} من الطلبات)؛ والأقدم تُجمع حسب المستخدم والعملية خلال دقيقتين من محاولة فاشلة — تقريبي.`,
+                  `Attempts with a request id are grouped exactly (${pct(fb.exactShare, locale)} of requests); older attempts are grouped by user and operation within 2 minutes of a failed attempt — approximate`,
+                  `تُجمع المحاولات ذات معرّف الطلب بدقة (${pct(fb.exactShare, locale)} من الطلبات)؛ والأقدم تُجمع حسب المستخدم والعملية خلال دقيقتين من محاولة فاشلة — تقريبي`,
                 )
           }
         >
@@ -262,12 +258,12 @@ export async function AiTab({ supabase, period, demo, locale, params = {} }: Tab
           sample={`${n(s.tokens.samples)}/${n(s.attempts)} ${L("attempts reported tokens", "محاولة أبلغت عن الرموز")}`}
           empty={!s.tokens.samples}
           emptyText={L(
-            "Providers reported no token usage for these attempts.",
-            "لم يبلّغ المزوّدون عن استهلاك رموز لهذه المحاولات.",
+            "Providers reported no token usage for these attempts",
+            "لم يبلّغ المزوّدون عن استهلاك رموز لهذه المحاولات",
           )}
           definition={L(
-            "Sums of provider-reported input and output tokens. No cost is estimated.",
-            "مجموع الرموز المدخلة والمخرجة كما أبلغ المزوّد. لا تُقدَّر أي تكلفة.",
+            "Sums of provider-reported input and output tokens. No cost is estimated",
+            "مجموع الرموز المدخلة والمخرجة كما أبلغ المزوّد. لا تُقدَّر أي تكلفة",
           )}
         >
           <StackedBars
@@ -282,8 +278,8 @@ export async function AiTab({ supabase, period, demo, locale, params = {} }: Tab
         <Panel
           title={L("Configured routing", "التوجيه المضبوط")}
           definition={L(
-            "Keys stay on the server; only their presence is shown.",
-            "المفاتيح تبقى على الخادم؛ يُعرض وجودها فقط.",
+            "Keys stay on the server; only their presence is shown",
+            "المفاتيح تبقى على الخادم؛ يُعرض وجودها فقط",
           )}
         >
           <ul className="flex flex-col gap-2 text-sm">
@@ -407,8 +403,8 @@ export async function AiTab({ supabase, period, demo, locale, params = {} }: Tab
         )}
         <p className="text-subtle mt-3 text-xs">
           {L(
-            "Logs contain no prompts, CV text or answers — only provider, model, operation, timing, token counts and error codes.",
-            "لا تحتوي السجلات على أي مطالبات أو نصوص سير ذاتية أو إجابات — فقط المزوّد والنموذج والعملية والتوقيت وعدد الرموز ورموز الأخطاء.",
+            "Logs contain no prompts, CV text or answers — only provider, model, operation, timing, token counts and error codes",
+            "لا تحتوي السجلات على أي مطالبات أو نصوص سير ذاتية أو إجابات — فقط المزوّد والنموذج والعملية والتوقيت وعدد الرموز ورموز الأخطاء",
           )}
         </p>
       </Card>

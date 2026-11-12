@@ -8,17 +8,23 @@ test("landing film: Arabic/English copy, autoplay with progress, pause, scenes a
   // The WebGL scene renders in software in CI browsers; allow for slow frames.
   test.setTimeout(150_000);
   await page.goto("/");
+  const film = page.getByRole("region", { name: "تعريف بجدارة" });
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("جدارة");
-  await expect(page.getByRole("heading", { name: "مستقبلك المهني يبدأ بخطوة." })).toBeVisible();
-  await expect(page.getByText("اكتشف فرصك، وطوّر مهاراتك، وخلّ إنجازك يتكلم عنك.")).toBeVisible();
+  await expect(film.getByRole("heading", { level: 2, name: "مهارات تُثبتها بالعمل، وفرص تُبنى عليها" })).toBeVisible();
+  await expect(
+    page.getByText("يُظهر المرشح قدراته في مهام عملية، ويراجع صاحب العمل الأدلة ثم يتخذ قراره"),
+  ).toBeVisible();
   // Scenes are reachable directly from the opening; each CTA leads into the existing auth journeys.
-  await page.getByRole("button", { name: "أنا مرشح" }).click();
-  await expect(page.getByRole("heading", { name: "تبحث عن فرصة جديدة؟" })).toBeVisible();
-  await expect(page.getByRole("link", { name: /ابدأ رحلتك/ })).toHaveAttribute("href", "/sign-up");
-  await page.getByRole("button", { name: /^3 \/ 3/ }).click();
-  await expect(page.getByRole("heading", { name: "تبحث عن الشخص المناسب لفريقك؟" })).toBeVisible();
-  await expect(page.getByRole("link", { name: /اكتشف المواهب/ })).toHaveAttribute(
+  await film.getByRole("button", { name: "أنا مرشح" }).click();
+  await expect(film.getByRole("heading", { level: 2, name: "دع عملك يتحدث عنك" })).toBeVisible();
+  await expect(film.getByRole("link", { name: /أنشئ ملفك كمرشح/ })).toHaveAttribute(
+    "href",
+    "/sign-up?type=candidate",
+  );
+  await film.getByRole("button", { name: /^3 \/ 3/ }).click();
+  await expect(film.getByRole("heading", { level: 2, name: "وظّف بناءً على ما يستطيع المرشح فعله" })).toBeVisible();
+  await expect(film.getByRole("link", { name: /اطلب وصول جهة توظيف/ })).toHaveAttribute(
     "href",
     "/employer/request-access",
   );
@@ -26,47 +32,55 @@ test("landing film: Arabic/English copy, autoplay with progress, pause, scenes a
 
   await context.addCookies([{ name: "jadarah_locale", value: "en", url: page.url() }]);
   await page.goto("/");
+  const filmEn = page.getByRole("region", { name: "JADARAH introduction" });
   await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
-  await expect(page.getByRole("heading", { name: "Your next opportunity starts here." })).toBeVisible();
+  await expect(
+    filmEn.getByRole("heading", { level: 2, name: "Skills proven in practice, matched to real roles" }),
+  ).toBeVisible();
   // Plays like a film: the current segment fills and the next scene follows without interaction.
   const fill = page.locator('ol[aria-label="Introduction timeline"] li').first().locator("span span");
-  await expect.poll(async () => (await fill.boundingBox())?.width ?? 0, { timeout: 5000 }).toBeGreaterThan(5);
-  await expect(page.getByRole("heading", { name: "Ready for your next opportunity?" })).toBeVisible({
+  await expect.poll(async () => (await fill.boundingBox())?.width ?? 0, { timeout: 15000 }).toBeGreaterThan(5);
+  await expect(filmEn.getByRole("heading", { level: 2, name: "Let your work speak for you" })).toBeVisible({
     timeout: 30000,
   });
-  await expect(page.getByRole("link", { name: /Start your journey/ })).toHaveAttribute("href", "/sign-up");
+  await expect(filmEn.getByRole("link", { name: /Create a candidate profile/ })).toHaveAttribute(
+    "href",
+    "/sign-up?type=candidate",
+  );
   // Pause holds the current scene.
-  const film = page.getByRole("region", { name: "JADARAH introduction" });
-  await film.getByRole("button", { name: "Pause" }).click();
+  await filmEn.getByRole("button", { name: "Pause" }).click();
   await page.waitForTimeout(10000);
-  await expect(page.getByRole("heading", { name: "Ready for your next opportunity?" })).toBeVisible();
-  await film.getByRole("button", { name: "Play" }).click();
-  await expect(page.getByRole("heading", { name: "Looking for the right talent?" })).toBeVisible({
+  await expect(filmEn.getByRole("heading", { level: 2, name: "Let your work speak for you" })).toBeVisible();
+  await filmEn.getByRole("button", { name: "Play" }).click();
+  await expect(filmEn.getByRole("heading", { level: 2, name: "Hire on what candidates can do" })).toBeVisible({
     timeout: 30000,
   });
-  await expect(page.getByRole("link", { name: /Discover talent/ })).toHaveAttribute(
+  await expect(filmEn.getByRole("link", { name: /Request employer access/ })).toHaveAttribute(
     "href",
     "/employer/request-access",
   );
   // Skip jumps past the film; jobs stay reachable outside it.
-  await film.getByRole("button", { name: "Skip" }).click();
+  await filmEn.getByRole("button", { name: "Skip" }).click();
   await expect(page.locator("#after-city")).toBeFocused();
   await expect(page.locator('a[href="/jobs"]').first()).toBeAttached();
 });
 
-test("landing film respects reduced motion: no autoplay, manual scenes", async ({ browser }) => {
+test("landing film with reduced motion still starts by itself, as instant cuts", async ({ browser }) => {
+  test.setTimeout(90_000);
   const ctx = await browser.newContext({ reducedMotion: "reduce" });
   await ctx.addCookies([{ name: "jadarah_locale", value: "en", url: "http://localhost" }]);
   const page = await ctx.newPage();
   await page.goto(`${process.env.E2E_BASE_URL ?? "http://localhost:3000"}/`);
-  await expect(page.getByRole("heading", { name: "Your next opportunity starts here." })).toBeVisible();
-  await page.waitForTimeout(10000);
-  await expect(page.getByRole("heading", { name: "Your next opportunity starts here." })).toBeVisible();
-  await page
-    .getByRole("region", { name: "JADARAH introduction" })
-    .getByRole("button", { name: "Next", exact: true })
-    .click();
-  await expect(page.getByRole("heading", { name: "Ready for your next opportunity?" })).toBeVisible();
+  await expect(
+    page
+      .getByRole("region", { name: "JADARAH introduction" })
+      .getByRole("heading", { level: 2, name: "Skills proven in practice, matched to real roles" }),
+  ).toBeVisible();
+  await expect(
+    page
+      .getByRole("region", { name: "JADARAH introduction" })
+      .getByRole("heading", { level: 2, name: "Let your work speak for you" }),
+  ).toBeVisible({ timeout: 30000 });
   await ctx.close();
 });
 

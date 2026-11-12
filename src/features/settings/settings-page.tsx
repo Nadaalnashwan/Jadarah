@@ -34,8 +34,8 @@ export async function SettingsPage({ candidate }: { candidate?: boolean }) {
           <CardHeader
             title={t.common.notifications}
             description={L(
-              "Email is sent only when an email provider is configured for the platform.",
-              "يُرسل البريد فقط عند ضبط مزوّد بريد للمنصة.",
+              "Email is sent only when an email provider is configured for the platform",
+              "يُرسل البريد فقط عند ضبط مزوّد بريد للمنصة",
             )}
           />
           <CardBody>
@@ -76,15 +76,15 @@ export async function SettingsPage({ candidate }: { candidate?: boolean }) {
             <CardHeader
               title={L("Privacy & data", "الخصوصية والبيانات")}
               description={L(
-                "Deactivation hides your profile from discovery immediately and asks the platform team to delete your data.",
-                "يؤدي التعطيل إلى إخفاء ملفك من الاكتشاف فورًا وطلب حذف بياناتك من فريق المنصة.",
+                "Deactivation hides your profile from discovery immediately and asks the platform team to delete your data",
+                "يؤدي التعطيل إلى إخفاء ملفك من الاكتشاف فورًا وطلب حذف بياناتك من فريق المنصة",
               )}
             />
             <CardBody>
               {session.profile.deactivation_requested_at ? (
                 <p className="text-muted text-sm">
                   {L("Deactivation requested on", "طُلب التعطيل في")}{" "}
-                  {formatDate(session.profile.deactivation_requested_at, locale)}.
+                  {formatDate(session.profile.deactivation_requested_at, locale)}
                 </p>
               ) : (
                 <form action={requestDeactivation}>

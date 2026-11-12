@@ -22,12 +22,12 @@ export default async function WorkspacePaused() {
       </header>
       <main id="main" className="mx-auto max-w-xl px-4 pb-20">
         <div className="surface-card flex flex-col items-center gap-3 p-8 text-center">
-          <span className="bg-navy text-lavender flex size-14 items-center justify-center rounded-2xl">
+          <span className="ink text-primary-ink flex size-14 items-center justify-center rounded-2xl">
             <PauseCircle className="size-7" />
           </span>
           <h1 className="text-2xl font-extrabold">{L("Workspace access paused", "الوصول إلى مساحة العمل موقوف")}</h1>
           <p className="text-muted">{c ? (locale === "ar" ? c.name_ar : c.name_en) : ""}</p>
-          <p className="text-muted text-sm">{L("Contact JADARAH to reactivate the subscription.", "تواصل مع جدارة لإعادة تفعيل الاشتراك.")}</p>
+          <p className="text-muted text-sm">{L("Contact JADARAH to reactivate the subscription", "تواصل مع جدارة لإعادة تفعيل الاشتراك")}</p>
         </div>
       </main>
     </div>

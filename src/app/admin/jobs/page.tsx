@@ -75,7 +75,7 @@ export default async function AdminJobs({ searchParams }: { searchParams: Promis
             </tbody>
           </table>
           {(data ?? []).length === 0 && (
-            <p className="text-muted p-6 text-center text-sm">{L("No jobs match these filters.", "لا توجد وظائف مطابقة.")}</p>
+            <p className="text-muted p-6 text-center text-sm">{L("No jobs match these filters", "لا توجد وظائف مطابقة")}</p>
           )}
         </div>
       </Card>

@@ -41,10 +41,10 @@ export default async function CompanyCalendar() {
         description={
           isRecruiter
             ? L(
-                "All interviews for your company. Conflicts are prevented automatically for every interviewer.",
-                "كل مقابلات شركتك. يُمنع التعارض تلقائيًا لكل مُقابِل.",
+                "All interviews for your company. Conflicts are prevented automatically for every interviewer",
+                "كل مقابلات شركتك. يُمنع التعارض تلقائيًا لكل مُقابِل",
               )
-            : L("Interviews assigned to you.", "المقابلات المسندة إليك.")
+            : L("Interviews assigned to you", "المقابلات المسندة إليك")
         }
       />
       <InterviewCalendar events={events} timeZone={DEFAULT_TZ} />

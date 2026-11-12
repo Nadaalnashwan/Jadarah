@@ -116,7 +116,7 @@ export function CompanyMark({ company, size = "md", className }: { company: Comp
   return (
     <span
       aria-hidden
-      className={cn("bg-navy text-lavender flex shrink-0 items-center justify-center", SIZE[size], className)}
+      className={cn("ink text-primary-ink flex shrink-0 items-center justify-center", SIZE[size], className)}
       style={accent ? { backgroundColor: accent, color: "#fff" } : undefined}
     >
       <SectorGlyph company={company} />

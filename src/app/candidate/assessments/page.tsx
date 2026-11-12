@@ -38,7 +38,7 @@ export default async function AssessmentsPage() {
         <Card>
           <EmptyState
             title={L("No assessments assigned yet", "لم تُسند إليك تقييمات بعد")}
-            body={L("Companies assign assessments after you apply.", "تُسند الشركات التقييمات بعد تقديمك.")}
+            body={L("Companies assign assessments after you apply", "تُسند الشركات التقييمات بعد تقديمك")}
           />
         </Card>
       ) : (
@@ -52,7 +52,7 @@ export default async function AssessmentsPage() {
                   className="surface-card group hover:border-primary/40 flex h-full flex-col p-5 transition hover:-translate-y-0.5"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="bg-accent-soft text-primary dark:text-lavender flex size-10 items-center justify-center rounded-xl">
+                    <span className="bg-accent-soft text-primary flex size-10 items-center justify-center rounded-xl">
                       <ClipboardCheck className="size-5" />
                     </span>
                     <Badge
@@ -67,7 +67,7 @@ export default async function AssessmentsPage() {
                       {label(r.status)}
                     </Badge>
                   </div>
-                  <p className="group-hover:text-primary dark:group-hover:text-lavender mt-4 text-lg font-bold">
+                  <p className="group-hover:text-primary mt-4 text-lg font-bold">
                     {pick(r.assessment, "title", locale)}
                   </p>
                   <p className="text-subtle text-xs">{pick(r.company, "name", locale)}</p>

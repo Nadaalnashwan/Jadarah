@@ -42,7 +42,7 @@ export default async function AdminCompanyDetail({ params }: { params: Promise<{
             <CardBody className="flex flex-col gap-3">
               {c.company_verification_requests.length === 0 && (
                 <p className="text-subtle text-sm">
-                  {L("No verification submitted yet.", "لم يُرسل طلب تحقق بعد.")}
+                  {L("No verification submitted yet", "لم يُرسل طلب تحقق بعد")}
                 </p>
               )}
               {c.company_verification_requests.map((r) => (

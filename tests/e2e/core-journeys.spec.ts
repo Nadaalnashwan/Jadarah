@@ -151,7 +151,7 @@ test.describe("core journeys (local Supabase)", () => {
 
     // Invalid files are refused before upload.
     await page.getByTestId("cv-file-input").setInputFiles({ name: "photo.png", mimeType: "image/png", buffer: Buffer.from([0x89, 0x50, 0x4e, 0x47]) });
-    await expect(page.getByText("Only PDF or Word (DOCX) files are accepted.")).toBeVisible();
+    await expect(page.getByText("Only PDF or Word (DOCX) files are accepted")).toBeVisible();
   });
 
   test("candidate: apply → practical task opens immediately → submit → application complete", async ({ page }) => {
@@ -184,7 +184,7 @@ test.describe("core journeys (local Supabase)", () => {
     await expect(page.getByRole("list", { name: "Attached files" }).getByText("cv-sample.pdf")).toBeVisible({ timeout: 30_000 });
     page.once("dialog", (d) => d.accept());
     await page.getByRole("button", { name: "Submit assessment" }).click();
-    await expect(page.getByText("Your application is complete.")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText("Your application is complete")).toBeVisible({ timeout: 30_000 });
     await shot(page, "05-application-complete");
     await page.getByRole("link", { name: "Track application" }).click();
     // Progress rail: practical task comes before employer review.
@@ -220,7 +220,7 @@ test.describe("core journeys (local Supabase)", () => {
     expect(choices.join("|")).toMatch(/Shortlisted/);
     expect(choices.join("|")).toMatch(/Under review/);
     await page.getByRole("button", { name: /Shortlist for interview|ترشيح للمقابلة/ }).first().click();
-    await expect(page.getByText(/Shortlisted\. Now schedule the interview\./)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/Shortlisted\. Now schedule the interview/)).toBeVisible({ timeout: 15_000 });
   });
 
   test("public: only real opportunities are listed; logo renders whole", async ({ page }) => {

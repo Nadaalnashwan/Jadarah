@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { ArrowUpRight, CalendarClock, CheckCircle2, ClipboardCheck, MessageSquareQuote, Sparkles } from "lucide-react";
+import { ArrowUpRight, CalendarClock, ClipboardCheck, MessageSquareQuote, Sparkles } from "lucide-react";
 import { StatusBadge } from "@/components/app/status-badge";
 import { Button } from "@/components/ui/button";
-import { Badge, Card, CardBody, CardHeader, EmptyState, KpiCard, PageHeader, Progress } from "@/components/ui/primitives";
+import { Badge, Card, CardBody, CardHeader, EmptyState, Progress, Spotlight, SpotlightStat } from "@/components/ui/primitives";
 import { requireCandidate } from "@/lib/auth/session";
 import { planProgress } from "@/lib/domain/career";
 import { isTerminal, type ApplicationStatus } from "@/lib/domain/application-status";
@@ -17,7 +17,7 @@ import {
   matchJob,
   toSkillRecords,
 } from "@/services/candidate";
-import { LISTED_JOB_FILTER } from "@/lib/domain/listings";
+import { LISTED_JOB_FILTER, openDeadlineFilter } from "@/lib/domain/listings";
 
 /**
  * Candidate overview, in priority order: 1) what needs action now (tasks, interview confirmations),
@@ -90,7 +90,7 @@ export default async function CandidateOverview() {
       .from("jobs")
       .select(JOB_LIST_SELECT)
       .eq("status", "published")
-      .or(LISTED_JOB_FILTER)
+      .or(LISTED_JOB_FILTER).or(openDeadlineFilter())
       .order("published_at", { ascending: false })
       .limit(60),
   ]);
@@ -121,51 +121,54 @@ export default async function CandidateOverview() {
 
   return (
     <>
-      <PageHeader title={fmt(t.candidate.overviewTitle, { name: firstName })} description={t.candidate.overviewBody} />
-
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-        <KpiCard
-          tone="peach"
-          icon={<ClipboardCheck className="size-3.5" />}
-          label={L("Needs your action", "يحتاج إجراءً منك")}
-          value={formatNumber(actionsCount, locale)}
-          hint={L("Tasks and interview confirmations", "مهام وتأكيد مقابلات")}
-        />
-        <KpiCard
-          tone="blue"
-          label={t.candidate.applicationsActive}
-          value={formatNumber(activeApps.length, locale)}
-          hint={L(`${applications.length} in total`, `${applications.length} إجمالًا`)}
-        />
-        <KpiCard
-          tone="sage"
-          icon={<CheckCircle2 className="size-3.5" />}
-          label={L("Assessments submitted", "تقييمات مُسلّمة")}
-          value={formatNumber((assignments ?? []).filter((a) => a.status === "submitted" || a.status === "evaluated").length, locale)}
-        />
-        <KpiCard
-          tone="mist"
-          label={t.candidate.profileCompletion}
-          value={`${formatNumber(completion, locale)}%`}
-          hint={
-            completion < 100 ? (
-              <Link href="/candidate/profile" className="text-primary dark:text-lavender font-semibold">
-                {L("Complete your profile", "أكمل ملفك")}
-              </Link>
-            ) : undefined
-          }
-        />
-      </div>
+      <Spotlight
+        title={fmt(t.candidate.overviewTitle, { name: firstName })}
+        description={t.candidate.overviewBody}
+        actions={
+          <Button asChild>
+            <Link href="/candidate/jobs">{t.candidate.browseJobs}</Link>
+          </Button>
+        }
+      >
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+          <SpotlightStat
+            emphasis={actionsCount > 0}
+            label={L("Needs your action", "يحتاج إجراءً منك")}
+            value={formatNumber(actionsCount, locale)}
+            hint={L("Tasks and interview confirmations", "مهام وتأكيد مقابلات")}
+          />
+          <SpotlightStat
+            label={t.candidate.applicationsActive}
+            value={formatNumber(activeApps.length, locale)}
+            hint={L(`Out of ${applications.length} applications`, `من أصل ${applications.length} طلبًا`)}
+          />
+          <SpotlightStat
+            label={L("Assessments submitted", "تقييمات مُسلّمة")}
+            value={formatNumber((assignments ?? []).filter((a) => a.status === "submitted" || a.status === "evaluated").length, locale)}
+          />
+          <SpotlightStat
+            label={t.candidate.profileCompletion}
+            value={`${formatNumber(completion, locale)}%`}
+            hint={
+              completion < 100 ? (
+                <Link href="/candidate/profile" className="text-primary font-semibold">
+                  {L("Complete your profile", "أكمل ملفك")}
+                </Link>
+              ) : undefined
+            }
+          />
+        </div>
+      </Spotlight>
 
       {/* 1. Required actions */}
-      <Card tone={actionsCount ? "peach" : "sage"} className="mt-6">
+      <Card tone={actionsCount ? "peach" : undefined} className="jd-enter mt-6">
         <CardHeader
           className={actionsCount ? undefined : "pb-5 sm:pb-6"}
           title={actionsCount ? L("Next actions", "الخطوات التالية") : L("You're all caught up", "لا شيء ينتظرك الآن")}
           description={
             actionsCount
               ? undefined
-              : L("No open tasks or interview confirmations.", "لا توجد مهام مفتوحة أو مقابلات بانتظار التأكيد.")
+              : L("No open tasks or interview confirmations", "لا توجد مهام مفتوحة أو مقابلات بانتظار التأكيد")
           }
         />
         {actionsCount > 0 && (
@@ -175,9 +178,9 @@ export default async function CandidateOverview() {
                 <li key={a.id}>
                   <Link
                     href={`/candidate/assessments/${a.id}`}
-                    className="bg-surface-glass hover:border-primary/40 flex items-center gap-3 rounded-xl border p-3 transition"
+                    className="bg-surface-elevated hover:border-primary/40 flex items-center gap-3 rounded-xl border p-3 transition"
                   >
-                    <ClipboardCheck className="text-primary dark:text-lavender size-5 shrink-0" />
+                    <ClipboardCheck className="text-primary size-5 shrink-0" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-semibold">{pick(a.assessment, "title", locale)}</span>
                       <span className="text-subtle block text-xs">
@@ -185,7 +188,7 @@ export default async function CandidateOverview() {
                         {a.due_at && ` · ${L("Due", "الموعد")} ${formatDateTime(a.due_at, locale)}`}
                       </span>
                     </span>
-                    <span className="text-primary dark:text-lavender text-xs font-bold">
+                    <span className="text-primary text-xs font-bold">
                       {a.status === "in_progress" ? L("Continue", "متابعة") : L("Start", "ابدأ")}
                     </span>
                   </Link>
@@ -195,14 +198,14 @@ export default async function CandidateOverview() {
                 <li key={i.id}>
                   <Link
                     href="/candidate/interviews"
-                    className="bg-surface-glass hover:border-primary/40 flex items-center gap-3 rounded-xl border p-3 transition"
+                    className="bg-surface-elevated hover:border-primary/40 flex items-center gap-3 rounded-xl border p-3 transition"
                   >
-                    <CalendarClock className="text-primary dark:text-lavender size-5 shrink-0" />
+                    <CalendarClock className="text-primary size-5 shrink-0" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-semibold">{pick(i.application?.job, "title", locale)}</span>
                       <span className="text-subtle block text-xs">{formatDateTime(i.scheduled_at, locale, i.timezone)}</span>
                     </span>
-                    <span className="text-primary dark:text-lavender text-xs font-bold">{L("Confirm", "أكّد الحضور")}</span>
+                    <span className="text-primary text-xs font-bold">{L("Confirm", "أكّد الحضور")}</span>
                   </Link>
                 </li>
               ))}
@@ -211,14 +214,14 @@ export default async function CandidateOverview() {
         )}
       </Card>
 
-      <div className="mt-6 grid items-start gap-6 xl:grid-cols-[1.25fr_1fr]">
+      <div className="jd-enter-stagger mt-6 grid items-start gap-6 xl:grid-cols-[1.25fr_1fr]">
         {/* 2. Current applications */}
         <Card>
           <CardHeader
             title={L("Current applications", "طلباتك الحالية")}
             action={
               applications.length ? (
-                <Link href="/candidate/applications" className="text-primary dark:text-lavender text-xs font-semibold">
+                <Link href="/candidate/applications" className="text-primary text-xs font-semibold">
                   {L("All applications", "كل الطلبات")}
                 </Link>
               ) : undefined
@@ -261,11 +264,11 @@ export default async function CandidateOverview() {
         </Card>
 
         {/* 3. Relevant opportunities */}
-        <Card tone="blue">
+        <Card>
           <CardHeader
             title={t.candidate.recommendedJobs}
             action={
-              <Link href="/candidate/jobs" className="text-primary dark:text-lavender text-xs font-semibold">
+              <Link href="/candidate/jobs" className="text-primary text-xs font-semibold">
                 {t.candidate.browseJobs}
               </Link>
             }
@@ -292,16 +295,16 @@ export default async function CandidateOverview() {
                   <li key={job.id}>
                     <Link
                       href={`/candidate/jobs/${job.id}`}
-                      className="group bg-surface-glass hover:border-primary/40 flex items-center gap-4 rounded-xl border p-3 transition"
+                      className="group bg-surface-elevated hover:border-primary/40 flex items-center gap-4 rounded-xl border p-3 transition"
                     >
                       <span
-                        className="ltr-nums bg-tone-blue text-primary dark:text-lavender flex size-11 shrink-0 flex-col items-center justify-center rounded-xl text-sm font-extrabold"
+                        className="ltr-nums bg-tone-blue text-primary flex size-11 shrink-0 flex-col items-center justify-center rounded-xl text-sm font-extrabold"
                         title={L("Evidence match out of 100", "مطابقة الأدلة من 100")}
                       >
                         {match.score}
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="group-hover:text-primary dark:group-hover:text-lavender block truncate font-semibold">
+                        <span className="group-hover:text-primary block truncate font-semibold">
                           {pick(job, "title", locale)}
                         </span>
                         <span className="text-subtle block truncate text-xs">
@@ -318,13 +321,13 @@ export default async function CandidateOverview() {
         </Card>
       </div>
 
-      <div className="mt-6 grid items-start gap-6 lg:grid-cols-2">
+      <div className="jd-enter-stagger mt-6 grid items-start gap-6 lg:grid-cols-2">
         {/* 4. Results & shared feedback */}
-        <Card tone="sage">
+        <Card>
           <CardHeader
             title={L("Results and feedback", "النتائج والملاحظات")}
             action={
-              <Link href="/candidate/assessments" className="text-primary dark:text-lavender text-xs font-semibold">
+              <Link href="/candidate/assessments" className="text-primary text-xs font-semibold">
                 {L("All assessments", "كل التقييمات")}
               </Link>
             }
@@ -332,7 +335,7 @@ export default async function CandidateOverview() {
           <CardBody>
             {results.length === 0 && !(feedback ?? []).length ? (
               <p className="text-muted text-sm">
-                {L("Results appear here after you submit an assessment.", "تظهر النتائج هنا بعد تسليمك تقييمًا.")}
+                {L("Results appear here after you submit an assessment", "تظهر النتائج هنا بعد تسليمك تقييمًا")}
               </p>
             ) : (
               <ul className="flex flex-col gap-2">
@@ -342,7 +345,7 @@ export default async function CandidateOverview() {
                     <li key={r.id}>
                       <Link
                         href={`/candidate/assessments/${r.id}`}
-                        className="bg-surface-glass hover:border-primary/40 flex items-center gap-3 rounded-xl border p-3 transition"
+                        className="bg-surface-elevated hover:border-primary/40 flex items-center gap-3 rounded-xl border p-3 transition"
                       >
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-semibold">{pick(r.assessment, "title", locale)}</span>
@@ -361,7 +364,7 @@ export default async function CandidateOverview() {
                 })}
                 {(feedback ?? []).map((f) => (
                   <li key={f.id} className="bg-surface-glass flex items-center gap-3 rounded-xl border p-3">
-                    <MessageSquareQuote className="text-primary dark:text-lavender size-4 shrink-0" />
+                    <MessageSquareQuote className="text-primary size-4 shrink-0" />
                     <span className="min-w-0 flex-1 truncate text-sm">
                       {L("Interview feedback shared", "ملاحظات مقابلة مشاركة")} · {pick(f.application?.job, "title", locale)}
                     </span>
@@ -373,11 +376,11 @@ export default async function CandidateOverview() {
         </Card>
 
         {/* 5. Career development */}
-        <Card tone="mist">
+        <Card>
           <CardHeader
             title={L("Career development", "التطوير المهني")}
             action={
-              <Link href="/candidate/career" className="text-primary dark:text-lavender text-xs font-semibold">
+              <Link href="/candidate/career" className="text-primary text-xs font-semibold">
                 {plan ? L("Open plan", "افتح الخطة") : L("Set a goal", "حدّد هدفًا")}
               </Link>
             }
@@ -393,16 +396,16 @@ export default async function CandidateOverview() {
               </div>
             ) : (
               <p className="text-muted flex items-start gap-2 text-sm">
-                <Sparkles className="text-primary dark:text-lavender mt-0.5 size-4 shrink-0" />
+                <Sparkles className="text-primary mt-0.5 size-4 shrink-0" />
                 {L(
-                  "Choose a target role to see the skills you have demonstrated and the gaps to close.",
-                  "اختر دورًا مستهدفًا لترى المهارات التي أثبتّها والفجوات المتبقية.",
+                  "Choose a target role to see the skills you have demonstrated and the gaps to close",
+                  "اختر دورًا مستهدفًا لترى المهارات التي أثبتّها والفجوات المتبقية",
                 )}
               </p>
             )}
             <p className="text-subtle text-xs">
               {L(`${records.length} skills in your profile`, `${records.length} مهارة في ملفك`)} ·{" "}
-              <Link href="/candidate/skills" className="text-primary dark:text-lavender font-semibold">
+              <Link href="/candidate/skills" className="text-primary font-semibold">
                 {L("Manage skills", "إدارة المهارات")}
               </Link>
             </p>

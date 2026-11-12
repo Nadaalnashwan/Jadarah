@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CalendarClock } from "lucide-react";
 import { BarList, Columns, Donut, TrendArea } from "@/components/app/charts";
-import { Card, CardBody, CardHeader, EmptyState, KpiCard, PageHeader } from "@/components/ui/primitives";
+import { Card, CardBody, CardHeader, EmptyState, PageHeader, Spotlight, SpotlightStat } from "@/components/ui/primitives";
 import { requireCompanyMember } from "@/lib/auth/session";
 import { APPLICATION_STATUSES } from "@/lib/domain/application-status";
 import { formatDateTime, formatNumber, pick, tx } from "@/lib/i18n/config";
@@ -26,15 +26,21 @@ export default async function CompanyOverview() {
   const supabase = await createClient();
   const cid = s.activeMembership.company_id;
   const role = s.activeMembership.role;
-  const { data: upcoming } = await supabase
-    .from("interviews")
-    .select("id, title, scheduled_at, timezone, application:applications(job:jobs(title_en, title_ar))")
-    .eq("company_id", cid)
-    .eq("status", "scheduled")
-    .gte("scheduled_at", new Date().toISOString())
-    .order("scheduled_at")
-    .limit(5);
-  if (role === "interviewer") {
+  // Independent queries run in parallel (they were sequential: interviews, then the stats RPC). Supabase query builders
+  // are lazy — they only start when awaited — so both go through Promise.all.
+  const isInterviewer = role === "interviewer";
+  const [{ data: upcoming }, statsResult] = await Promise.all([
+    supabase
+      .from("interviews")
+      .select("id, title, scheduled_at, timezone, application:applications(job:jobs(title_en, title_ar))")
+      .eq("company_id", cid)
+      .eq("status", "scheduled")
+      .gte("scheduled_at", new Date().toISOString())
+      .order("scheduled_at")
+      .limit(5),
+    isInterviewer ? Promise.resolve(null) : supabase.rpc("company_dashboard_stats", { p_company: cid }),
+  ]);
+  if (isInterviewer) {
     return (
       <>
         <PageHeader title={L("Your interviews", "مقابلاتك")} />
@@ -64,7 +70,7 @@ export default async function CompanyOverview() {
       </>
     );
   }
-  const { data, error } = await supabase.rpc("company_dashboard_stats", { p_company: cid });
+  const { data, error } = statsResult ?? { data: null, error: null };
   if (error || !data) {
     // Never hide the workspace behind an unrelated page: say what failed and keep navigation available.
     console.error("[company] dashboard stats failed", { company: cid, code: error?.code });
@@ -73,7 +79,7 @@ export default async function CompanyOverview() {
         <PageHeader eyebrow={pick(s.activeMembership.company, "name", locale)} title={L("Recruitment overview", "نظرة على التوظيف")} />
         <EmptyState
           title={L("Statistics are temporarily unavailable", "الإحصاءات غير متاحة مؤقتًا")}
-          body={L("Your jobs and applications are still available from the menu. Reload to try again.", "وظائفك وطلباتك متاحة من القائمة. أعد تحميل الصفحة للمحاولة مجددًا.")}
+          body={L("Your jobs and applications are still available from the menu. Reload to try again", "وظائفك وطلباتك متاحة من القائمة. أعد تحميل الصفحة للمحاولة مجددًا")}
           action={<Link href="/company/jobs" className="text-primary text-sm font-semibold">{L("Open jobs", "فتح الوظائف")}</Link>}
         />
       </>
@@ -93,40 +99,44 @@ export default async function CompanyOverview() {
 
   return (
     <>
-      <PageHeader
+      <Spotlight
+        variant="employer"
         eyebrow={pick(s.activeMembership.company, "name", locale)}
         title={L("Recruitment overview", "نظرة على التوظيف")}
-      />
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-        <KpiCard
-          tone="blue"
-          label={L("Jobs", "الوظائف")}
-          value={formatNumber(totalJobs, locale)}
-          hint={`${formatNumber(st.jobs_by_status.published ?? 0, locale)} ${t.jobStatus.published} · ${formatNumber(st.jobs_by_status.draft ?? 0, locale)} ${t.jobStatus.draft}`}
-        />
-        <KpiCard
-          tone="mist"
-          label={L("Applications", "الطلبات")}
-          value={formatNumber(totalApps, locale)}
-          hint={`${formatNumber(st.applications_by_status.under_review ?? 0, locale)} ${t.status.under_review}`}
-        />
-        <KpiCard
-          tone="peach"
-          label={L("Answers awaiting review", "إجابات بانتظار المراجعة")}
-          value={formatNumber(st.pending_reviews, locale)}
-          hint={
-            st.avg_assessment_score !== null
-              ? `${L("Avg. score", "متوسط الدرجة")} ${formatNumber(st.avg_assessment_score, locale)}%`
-              : undefined
-          }
-        />
-        <KpiCard
-          tone="teal"
-          label={L("Upcoming interviews", "مقابلات قادمة")}
-          value={formatNumber(st.upcoming_interviews, locale)}
-        />
-      </div>
-      <div className="mt-6 grid gap-6 xl:grid-cols-2">
+        actions={
+          <Link
+            href="/company/applications"
+            className="inline-flex h-11 items-center rounded-xl bg-[var(--mint)] px-5 text-sm font-bold text-[#0b3d2e] transition-transform hover:-translate-y-px"
+          >
+            {L("Review applications", "راجِع الطلبات")}
+          </Link>
+        }
+      >
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+          <SpotlightStat
+            label={L("Jobs", "الوظائف")}
+            value={formatNumber(totalJobs, locale)}
+            hint={`${formatNumber(st.jobs_by_status.published ?? 0, locale)} ${t.jobStatus.published} · ${formatNumber(st.jobs_by_status.draft ?? 0, locale)} ${t.jobStatus.draft}`}
+          />
+          <SpotlightStat
+            label={L("Applications", "الطلبات")}
+            value={formatNumber(totalApps, locale)}
+            hint={`${formatNumber(st.applications_by_status.under_review ?? 0, locale)} ${t.status.under_review}`}
+          />
+          <SpotlightStat
+            emphasis={st.pending_reviews > 0}
+            label={L("Answers awaiting review", "إجابات بانتظار المراجعة")}
+            value={formatNumber(st.pending_reviews, locale)}
+            hint={
+              st.avg_assessment_score !== null
+                ? `${L("Average score", "متوسط الدرجة")} ${formatNumber(st.avg_assessment_score, locale)}%`
+                : undefined
+            }
+          />
+          <SpotlightStat label={L("Upcoming interviews", "مقابلات قادمة")} value={formatNumber(st.upcoming_interviews, locale)} />
+        </div>
+      </Spotlight>
+      <div className="jd-enter-stagger mt-6 grid gap-6 xl:grid-cols-2">
         <Card>
           <CardHeader title={L("Recruitment funnel", "مسار التوظيف")} />
           <CardBody>
@@ -193,7 +203,7 @@ export default async function CompanyOverview() {
                     href={`/company/interviews/${i.id}`}
                     className="hover:border-primary/40 flex items-center gap-3 rounded-xl border p-3"
                   >
-                    <CalendarClock className="text-primary dark:text-lavender size-5" />
+                    <CalendarClock className="text-primary size-5" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-semibold">
                         {pick(i.application?.job, "title", locale)}
